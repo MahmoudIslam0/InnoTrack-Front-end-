@@ -20,6 +20,10 @@ import {
   ChevronDown,
   ChevronRight,
   KeyRound,
+  Mail,
+  Phone,
+  GraduationCap,
+  Building2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -115,12 +119,15 @@ interface JoinRequest {
   studentId: string;
   studentName: string;
   department: string;
+  major: string;
+  email: string;
+  phone: string;
   message: string;
   date: string;
 }
 
 const mockJoinRequests: JoinRequest[] = [
-  { id: "r1", studentId: "s4", studentName: "Kareem Hassan", department: "Computer Science", message: "I have experience with React Native and ARKit. I think I would be a great fit!", date: "2 hours ago" },
+  { id: "r1", studentId: "s4", studentName: "Kareem Hassan", department: "Computer Science", major: "Artificial Intelligence", email: "kareem.hassan@university.edu", phone: "+20 1012345678", message: "I have experience with React Native and ARKit. I think I would be a great fit!", date: "2 hours ago" },
 ];
 
 function getProjectStatusLabel(status: ActiveProject["status"]) {
@@ -764,6 +771,7 @@ export default function ProjectManagement() {
           </DialogHeader>
           {selectedStudent && (
             <div className="py-4 space-y-6">
+              {/* Avatar + Name */}
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-2xl shadow-md">
                   {('studentName' in selectedStudent ? selectedStudent.studentName : selectedStudent.name).split(" ").map(n => n[0]).join("")}
@@ -775,8 +783,47 @@ export default function ProjectManagement() {
                   <p className="text-muted-foreground">{selectedStudent.department}</p>
                 </div>
               </div>
-              
-              <div className="grid grid-cols-2 gap-4">
+
+              {/* Info Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border/50">
+                  <Building2 className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />
+                  <div className="space-y-0.5">
+                    <span className="text-xs text-muted-foreground block">Department</span>
+                    <span className="text-sm font-semibold text-foreground">{selectedStudent.department}</span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border/50">
+                  <GraduationCap className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
+                  <div className="space-y-0.5">
+                    <span className="text-xs text-muted-foreground block">Major</span>
+                    <span className="text-sm font-semibold text-foreground">
+                      {'major' in selectedStudent ? selectedStudent.major : 'Computer Science'}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border/50">
+                  <Mail className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                  <div className="space-y-0.5 min-w-0">
+                    <span className="text-xs text-muted-foreground block">Email</span>
+                    <span className="text-sm font-semibold text-foreground truncate block">
+                      {'email' in selectedStudent ? selectedStudent.email : 'student@university.edu'}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border/50">
+                  <Phone className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
+                  <div className="space-y-0.5">
+                    <span className="text-xs text-muted-foreground block">Phone</span>
+                    <span className="text-sm font-semibold text-foreground">
+                      {'phone' in selectedStudent ? selectedStudent.phone : 'N/A'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* GPA + Year */}
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1 p-3 bg-muted/30 rounded-lg border border-border/50">
                   <span className="text-xs text-muted-foreground block">GPA</span>
                   <span className="font-semibold text-foreground">
@@ -789,6 +836,7 @@ export default function ProjectManagement() {
                 </div>
               </div>
 
+              {/* Technical Skills */}
               <div>
                 <h4 className="text-sm font-semibold text-foreground mb-2">Technical Skills</h4>
                 <div className="flex flex-wrap gap-2">

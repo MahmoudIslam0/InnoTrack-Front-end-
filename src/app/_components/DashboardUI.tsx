@@ -346,57 +346,46 @@ export function ProjectTable({
   onAction?: (projectId: string) => void;
 }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-left text-muted-foreground border-b border-border/50 bg-muted/50">
-            <th className="px-6 py-4 font-medium">Project</th>
-            <th className="px-6 py-4 font-medium">Team</th>
-            <th className="px-6 py-4 font-medium">Status</th>
-            <th className="px-6 py-4 font-medium">Originality</th>
-            {onAction && <th className="px-6 py-4 font-medium">Action</th>}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {rows.map((row) => (
-            <tr
-              key={row.id}
-              className="hover:bg-muted/50 transition-colors"
-            >
-              <td className="px-6 py-5 min-w-72">
-                <p className="font-medium text-foreground">{row.title}</p>
-                <p className="text-xs text-muted-foreground mt-1">{row.subtitle}</p>
-              </td>
-              <td className="px-6 py-5 text-foreground">{row.team}</td>
-              <td className="px-6 py-5">
-                <StatusBadge status={row.status} />
-              </td>
-              <td className="px-6 py-5">
-                <span
-                  className={
-                    row.originalityScore < 70
-                      ? "font-semibold text-red-600 dark:text-red-400"
-                      : "font-semibold text-emerald-700 dark:text-emerald-400"
-                  }
-                >
-                  {row.originalityScore}%
-                </span>
-              </td>
-              {onAction && (
-                <td className="px-6 py-5">
-                  <Button
-                    variant="outline"
-                    className="text-indigo-600 dark:text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/100/10"
-                    onClick={() => onAction(row.id)}
-                  >
-                    {actionLabel}
-                  </Button>
-                </td>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="space-y-4">
+      {rows.map((row) => {
+        const scoreColor = 
+          row.originalityScore >= 80 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400"
+          : row.originalityScore >= 70 ? "bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400"
+          : "bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400";
+
+        return (
+          <div
+            key={row.id}
+            className="bg-card text-card-foreground rounded-2xl border border-border/50 shadow-sm hover:shadow-md hover:border-indigo-500/30 transition-all duration-200 p-6 group"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-5">
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                  <h3 className="text-lg font-semibold text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
+                    {row.title}
+                  </h3>
+                  <StatusBadge status={row.status} />
+                </div>
+                <p className="text-sm text-muted-foreground mb-1">{row.subtitle} • {row.team}</p>
+              </div>
+              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-semibold shrink-0 h-fit ${scoreColor}`}>
+                <span>{row.originalityScore}%</span>
+              </div>
+            </div>
+
+            {onAction && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-indigo-600 dark:text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/10"
+                onClick={() => onAction(row.id)}
+              >
+                {actionLabel}
+              </Button>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
