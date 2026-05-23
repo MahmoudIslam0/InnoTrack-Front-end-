@@ -28,41 +28,41 @@ const supervisors = [
     id: "s1",
     name: "Dr. Ahmed Hassan",
     department: "Computer Science",
-    tags: ["AI & Machine Learning", "Computer Vision"],
+   
     slots: 2,
-    rating: 4.8,
+   
   },
   {
     id: "s2",
     name: "Dr. Fatima Ali",
     department: "Computer Science",
-    tags: ["Web Development", "Software Engineering"],
+  
     slots: 3,
-    rating: 4.9,
+   
   },
   {
     id: "s3",
     name: "Dr. Omar Khalil",
     department: "Information Systems",
-    tags: ["Blockchain", "Distributed Systems"],
+  
     slots: 1,
-    rating: 4.7,
+    
   },
   {
     id: "s4",
     name: "Dr. Huda Nasser",
     department: "Computer Science",
-    tags: ["NLP", "Data Science"],
+
     slots: 4,
-    rating: 4.9,
+   
   },
   {
     id: "s5",
     name: "Dr. Tariq Ahmed",
     department: "Software Engineering",
-    tags: ["Mobile Development", "IoT"],
+
     slots: 0,
-    rating: 4.6,
+    
   },
 ];
 
@@ -233,15 +233,7 @@ export default function SubmitToSupervisor() {
             </div>
           </section>
 
-          <section className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-6 shadow-sm">
-            <h2 className="mb-2 text-base font-semibold text-indigo-900">
-              Your Project Summary
-            </h2>
-            <div className="text-sm text-indigo-700">
-              <span className="font-medium">Category:</span>{" "}
-              {submissionState?.formData?.category || "Blockchain"}
-            </div>
-          </section>
+         
         </div>
 
         <aside className="dashboard-surface overflow-hidden">
@@ -282,23 +274,10 @@ export default function SubmitToSupervisor() {
                     </div>
                   </div>
 
-                  <div className="mb-4 flex flex-wrap gap-2">
-                    {supervisor.tags.map((tag) => (
-                      <Badge
-                        key={tag}
-                        variant="secondary"
-                        className="bg-slate-100/80 text-slate-700 font-medium border border-slate-200/50 hover:bg-slate-200/80"
-                      >
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
+                  
 
                   <div className="flex items-center justify-between border-t border-slate-100 pt-4">
-                    <div className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
-                      <Award className="h-4 w-4 text-amber-500" />
-                      {supervisor.rating}
-                    </div>
+                   
                     <Badge
                       className={`font-medium ${
                         isFull

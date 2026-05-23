@@ -20,10 +20,6 @@ import {
   ChevronDown,
   ChevronRight,
   KeyRound,
-  Mail,
-  Phone,
-  GraduationCap,
-  Building2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -119,15 +115,12 @@ interface JoinRequest {
   studentId: string;
   studentName: string;
   department: string;
-  major: string;
-  email: string;
-  phone: string;
   message: string;
   date: string;
 }
 
 const mockJoinRequests: JoinRequest[] = [
-  { id: "r1", studentId: "s4", studentName: "Kareem Hassan", department: "Computer Science", major: "Artificial Intelligence", email: "kareem.hassan@university.edu", phone: "+20 1012345678", message: "I have experience with React Native and ARKit. I think I would be a great fit!", date: "2 hours ago" },
+  { id: "r1", studentId: "s4", studentName: "Kareem Hassan", department: "Computer Science", message: "I have experience with React Native and ARKit. I think I would be a great fit!", date: "2 hours ago" },
 ];
 
 function getProjectStatusLabel(status: ActiveProject["status"]) {
@@ -245,67 +238,72 @@ export default function ProjectManagement() {
 
   return (
     <div className="p-4 md:p-8 max-w-[1200px] mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-semibold text-foreground tracking-tight mb-1">
+      <div className="mb-8">
+        <h1 className="text-3xl font-semibold text-foreground tracking-tight mb-2">
           Project Management
         </h1>
-        <p className="text-sm md:text-base text-muted-foreground">
+        <p className="text-muted-foreground">
           Submit new ideas or manage your existing projects and drafts
         </p>
       </div>
 
-      <Tabs defaultValue="submit-idea" className="w-full">
-        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 scrollbar-none mb-6 md:mb-8">
-          <TabsList className="inline-flex w-max md:w-full bg-muted/60 border border-border/50 rounded-2xl p-1.5 gap-1 shadow-sm min-w-full">
-            <TabsTrigger
-              value="submit-idea"
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl whitespace-nowrap transition-all duration-200 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-indigo-500/25 flex-1"
-            >
-              <Lightbulb className="w-4 h-4 shrink-0" />
-              <span>Submit Idea</span>
+      <Tabs defaultValue="my-projects" className="w-full">
+        <TabsList className="mb-8 bg-muted/50 flex-wrap h-auto p-1.5">
+          <TabsTrigger value="my-projects" className="gap-2">
+            <FolderOpen className="w-4 h-4" />
+            My Projects
+          </TabsTrigger>
+          {isTeamLeader && (
+            <TabsTrigger value="join-requests" className="gap-2 relative">
+              <Users className="w-4 h-4" />
+              Join Requests
+              {joinRequests.length > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+                  {joinRequests.length}
+                </span>
+              )}
             </TabsTrigger>
-            <TabsTrigger
-              value="my-projects"
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl whitespace-nowrap transition-all duration-200 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-indigo-500/25 flex-1"
-            >
-              <FolderOpen className="w-4 h-4 shrink-0" />
-              <span className="hidden sm:inline">My Projects</span>
-              <span className="sm:hidden">Projects</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="submitted-projects"
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl whitespace-nowrap transition-all duration-200 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-indigo-500/25 flex-1"
-            >
-              <ShieldCheck className="w-4 h-4 shrink-0" />
-              <span className="hidden sm:inline">Submitted</span>
-              <span className="sm:hidden">Done</span>
-            </TabsTrigger>
-            {isTeamLeader && (
-              <TabsTrigger
-                value="join-requests"
-                className="relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl whitespace-nowrap transition-all duration-200 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-indigo-500/25 flex-1"
-              >
-                <Users className="w-4 h-4 shrink-0" />
-                <span className="hidden sm:inline">Requests</span>
-                <span className="sm:hidden">Requests</span>
-                {joinRequests.length > 0 && (
-                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white shrink-0">
-                    {joinRequests.length}
-                  </span>
-                )}
-              </TabsTrigger>
-            )}
-            <TabsTrigger
-              value="join-by-code"
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl whitespace-nowrap transition-all duration-200 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-indigo-500/25 flex-1"
-            >
-              <KeyRound className="w-4 h-4 shrink-0" />
-              <span className="hidden sm:inline">Join by Code</span>
-              <span className="sm:hidden">Join</span>
-            </TabsTrigger>
-          </TabsList>
-        </div>
+          )}
+          <TabsTrigger value="submitted-projects" className="gap-2">
+            <ShieldCheck className="w-4 h-4" />
+            Submitted Projects
+          </TabsTrigger>
+          <TabsTrigger value="submit-idea" className="gap-2">
+            <Lightbulb className="w-4 h-4" />
+            Submit New Idea
+          </TabsTrigger>
+          <TabsTrigger value="join-by-code" className="gap-2">
+            <KeyRound className="w-4 h-4" />
+            Join by Code
+          </TabsTrigger>
+        </TabsList>
 
+               {/* ─── Tab 3: Submit New Idea ─── */}
+        <TabsContent value="submit-idea">
+          <div className="bg-card text-card-foreground rounded-xl border border-border/50 shadow-sm p-8 md:p-10 text-center max-w-2xl mx-auto">
+            <div className="w-16 h-16 bg-indigo-500/10 rounded-2xl mx-auto flex items-center justify-center mb-6">
+              <Lightbulb className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <h2 className="text-2xl font-semibold text-foreground mb-3">
+              Submit a New Project Idea
+            </h2>
+            <p className="text-muted-foreground mb-8 max-w-lg mx-auto leading-relaxed">
+              Share your innovative graduation project idea and get instant
+              feedback on originality. Our AI-powered system helps you avoid
+              redundancy and ensures your project stands out.
+            </p>
+            <Button
+              asChild
+              className="bg-indigo-600 hover:bg-indigo-700 text-white h-12 px-8 text-base"
+            >
+              <Link href="/project-submission">
+                <Lightbulb className="w-5 h-5 mr-2" />
+                Start New Submission
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Link>
+            </Button>
+          </div>
+        </TabsContent>
 
         {/* ─── Tab 1: My Projects ─── */}
         <TabsContent value="my-projects">
@@ -665,32 +663,7 @@ export default function ProjectManagement() {
           </div>
         </TabsContent>
 
-        {/* ─── Tab 3: Submit New Idea ─── */}
-        <TabsContent value="submit-idea">
-          <div className="bg-card text-card-foreground rounded-xl border border-border/50 shadow-sm p-8 md:p-10 text-center max-w-2xl mx-auto">
-            <div className="w-16 h-16 bg-indigo-500/10 rounded-2xl mx-auto flex items-center justify-center mb-6">
-              <Lightbulb className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
-            </div>
-            <h2 className="text-2xl font-semibold text-foreground mb-3">
-              Submit a New Project Idea
-            </h2>
-            <p className="text-muted-foreground mb-8 max-w-lg mx-auto leading-relaxed">
-              Share your innovative graduation project idea and get instant
-              feedback on originality. Our AI-powered system helps you avoid
-              redundancy and ensures your project stands out.
-            </p>
-            <Button
-              asChild
-              className="bg-indigo-600 hover:bg-indigo-700 text-white h-12 px-8 text-base"
-            >
-              <Link href="/project-submission">
-                <Lightbulb className="w-5 h-5 mr-2" />
-                Start New Submission
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Link>
-            </Button>
-          </div>
-        </TabsContent>
+ 
 
         {/* ─── Tab 4: Join Requests ─── */}
         <TabsContent value="join-requests">
@@ -771,7 +744,6 @@ export default function ProjectManagement() {
           </DialogHeader>
           {selectedStudent && (
             <div className="py-4 space-y-6">
-              {/* Avatar + Name */}
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-2xl shadow-md">
                   {('studentName' in selectedStudent ? selectedStudent.studentName : selectedStudent.name).split(" ").map(n => n[0]).join("")}
@@ -783,47 +755,8 @@ export default function ProjectManagement() {
                   <p className="text-muted-foreground">{selectedStudent.department}</p>
                 </div>
               </div>
-
-              {/* Info Grid */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border/50">
-                  <Building2 className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />
-                  <div className="space-y-0.5">
-                    <span className="text-xs text-muted-foreground block">Department</span>
-                    <span className="text-sm font-semibold text-foreground">{selectedStudent.department}</span>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border/50">
-                  <GraduationCap className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" />
-                  <div className="space-y-0.5">
-                    <span className="text-xs text-muted-foreground block">Major</span>
-                    <span className="text-sm font-semibold text-foreground">
-                      {'major' in selectedStudent ? selectedStudent.major : 'Computer Science'}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border/50">
-                  <Mail className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
-                  <div className="space-y-0.5 min-w-0">
-                    <span className="text-xs text-muted-foreground block">Email</span>
-                    <span className="text-sm font-semibold text-foreground truncate block">
-                      {'email' in selectedStudent ? selectedStudent.email : 'student@university.edu'}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border border-border/50">
-                  <Phone className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
-                  <div className="space-y-0.5">
-                    <span className="text-xs text-muted-foreground block">Phone</span>
-                    <span className="text-sm font-semibold text-foreground">
-                      {'phone' in selectedStudent ? selectedStudent.phone : 'N/A'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* GPA + Year */}
-              <div className="grid grid-cols-2 gap-3">
+              
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1 p-3 bg-muted/30 rounded-lg border border-border/50">
                   <span className="text-xs text-muted-foreground block">GPA</span>
                   <span className="font-semibold text-foreground">
@@ -836,7 +769,6 @@ export default function ProjectManagement() {
                 </div>
               </div>
 
-              {/* Technical Skills */}
               <div>
                 <h4 className="text-sm font-semibold text-foreground mb-2">Technical Skills</h4>
                 <div className="flex flex-wrap gap-2">
