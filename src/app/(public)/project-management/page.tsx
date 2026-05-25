@@ -144,6 +144,10 @@ export default function ProjectManagement() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [isSavedDraftsOpen, setIsSavedDraftsOpen] = useState(true);
   const [joinCodeInput, setJoinCodeInput] = useState("");
+  const [isAbandonDialogOpen, setIsAbandonDialogOpen] = useState(false);
+  const [abandonReason, setAbandonReason] = useState("");
+  const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
+  const [isRemoveMemberDialogOpen, setIsRemoveMemberDialogOpen] = useState(false);
   const router = useRouter();
 
   const [availableStudents] = useState<AvailableStudent[]>(mockAvailableStudents);
@@ -215,10 +219,14 @@ export default function ProjectManagement() {
   };
 
   const handleJoinByCode = () => {
-    if (!joinCodeInput.trim()) {
-      toast.error("Please enter a valid join code.");
+    const cleaned = joinCodeInput.trim();
+    const isValid = /^\d{6}$/.test(cleaned);
+    if (!isValid) {
+      toast.error("Please enter a 6-digit numeric join code.");
       return;
     }
+
+    // Optional: compare with generated joinCode if needed
     toast.success("Successfully joined the project!");
     router.push("/team-chat");
   };
@@ -236,6 +244,57 @@ export default function ProjectManagement() {
     toast.success(`Invitation sent to ${studentName}`);
   };
 
+  const handleRemoveMember = (memberName: string) => {
+    setMemberToRemove(memberName);
+    setIsRemoveMemberDialogOpen(true);
+  };
+
+  const handleConfirmRemoveMember = () => {
+    if (memberToRemove && memberToRemove !== "John Smith") {
+      setProject(prev => ({
+        ...prev,
+        members: prev.members.filter(m => m.name !== memberToRemove)
+      }));
+      
+      // Also remove from team chat
+      const removedMembers = JSON.parse(localStorage.getItem("removedTeamMembers") || "[]");
+      removedMembers.push(memberToRemove);
+      localStorage.setItem("removedTeamMembers", JSON.stringify(removedMembers));
+      
+      toast.success(`${memberToRemove} has been removed from the team and team chat.`);
+      setIsRemoveMemberDialogOpen(false);
+      setMemberToRemove(null);
+    } else if (memberToRemove === "John Smith") {
+      toast.error("Cannot remove the team leader.");
+    }
+  };
+
+  const handleAbandonProject = () => {
+    if (!abandonReason.trim()) {
+      toast.error("Please provide a reason for abandoning the project.");
+      return;
+    }
+    
+    // Store abandonment info in localStorage for team chat to pick up
+    const abandonmentInfo = {
+      projectTitle: project.title,
+      reason: abandonReason,
+      teamLeader: "John Smith",
+      timestamp: new Date().toLocaleTimeString("en-US", { 
+        hour: "2-digit", 
+        minute: "2-digit", 
+        hour12: true 
+      })
+    };
+    localStorage.setItem("projectAbandonment", JSON.stringify(abandonmentInfo));
+    
+    toast.success("Project abandoned. Your supervisor has been notified with your reason.");
+    setIsAbandonDialogOpen(false);
+    setAbandonReason("");
+    setProject(prev => ({ ...prev, status: "cancelled" as any }));
+    setTimeout(() => router.push("/project-management"), 2000);
+  };
+
   return (
     <div className="p-4 md:p-8 max-w-[1200px] mx-auto">
       <div className="mb-8">
@@ -247,34 +306,49 @@ export default function ProjectManagement() {
         </p>
       </div>
 
-      <Tabs defaultValue="my-projects" className="w-full">
-        <TabsList className="mb-8 bg-muted/50 flex-wrap h-auto p-1.5">
-          <TabsTrigger value="my-projects" className="gap-2">
+      <Tabs defaultValue="submit-idea" className="w-full">
+        <TabsList className="mb-8 bg-transparent flex-wrap gap-2 h-auto p-0 justify-start">
+          <TabsTrigger 
+            value="submit-idea" 
+            className="gap-2 rounded-lg border border-border/50 bg-card hover:bg-card/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/10 data-[state=active]:to-indigo-600/10 data-[state=active]:border-indigo-500/30 px-4 py-2.5 font-medium text-foreground data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 transition-all"
+          >
+            <Lightbulb className="w-4 h-4" />
+            New Idea
+          </TabsTrigger>
+          <TabsTrigger 
+            value="my-projects" 
+            className="gap-2 rounded-lg border border-border/50 bg-card hover:bg-card/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/10 data-[state=active]:to-indigo-600/10 data-[state=active]:border-indigo-500/30 px-4 py-2.5 font-medium text-foreground data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 transition-all"
+          >
             <FolderOpen className="w-4 h-4" />
             My Projects
           </TabsTrigger>
+          <TabsTrigger 
+            value="submitted-projects" 
+            className="gap-2 rounded-lg border border-border/50 bg-card hover:bg-card/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/10 data-[state=active]:to-indigo-600/10 data-[state=active]:border-indigo-500/30 px-4 py-2.5 font-medium text-foreground data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 transition-all"
+          >
+            <ShieldCheck className="w-4 h-4" />
+            Submitted
+          </TabsTrigger>
           {isTeamLeader && (
-            <TabsTrigger value="join-requests" className="gap-2 relative">
+            <TabsTrigger 
+              value="join-requests" 
+              className="gap-2 relative rounded-lg border border-border/50 bg-card hover:bg-card/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/10 data-[state=active]:to-indigo-600/10 data-[state=active]:border-indigo-500/30 px-4 py-2.5 font-medium text-foreground data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 transition-all"
+            >
               <Users className="w-4 h-4" />
-              Join Requests
+              Requests
               {joinRequests.length > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ml-1">
                   {joinRequests.length}
                 </span>
               )}
             </TabsTrigger>
           )}
-          <TabsTrigger value="submitted-projects" className="gap-2">
-            <ShieldCheck className="w-4 h-4" />
-            Submitted Projects
-          </TabsTrigger>
-          <TabsTrigger value="submit-idea" className="gap-2">
-            <Lightbulb className="w-4 h-4" />
-            Submit New Idea
-          </TabsTrigger>
-          <TabsTrigger value="join-by-code" className="gap-2">
+          <TabsTrigger 
+            value="join-by-code" 
+            className="gap-2 rounded-lg border border-border/50 bg-card hover:bg-card/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/10 data-[state=active]:to-indigo-600/10 data-[state=active]:border-indigo-500/30 px-4 py-2.5 font-medium text-foreground data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 transition-all"
+          >
             <KeyRound className="w-4 h-4" />
-            Join by Code
+            Join Code
           </TabsTrigger>
         </TabsList>
 
@@ -396,7 +470,7 @@ export default function ProjectManagement() {
                     {project.members.map((member) => (
                       <div
                         key={member.name}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg border border-border/50"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg border border-border/50 group"
                       >
                         <div className="w-6 h-6 rounded-full bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 flex items-center justify-center text-xs font-bold">
                           {member.name
@@ -415,12 +489,23 @@ export default function ProjectManagement() {
                             Leader
                           </Badge>
                         ) : (
-                          <Badge
-                            variant="outline"
-                            className="text-[10px] px-1.5 py-0 text-muted-foreground"
-                          >
-                            Member
-                          </Badge>
+                          <div className="flex items-center gap-1">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] px-1.5 py-0 text-muted-foreground"
+                            >
+                              Member
+                            </Badge>
+                            {isTeamLeader && (
+                              <button
+                                onClick={() => handleRemoveMember(member.name)}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                                title="Remove member"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 text-red-500 hover:text-red-600" />
+                              </button>
+                            )}
+                          </div>
                         )}
                       </div>
                     ))}
@@ -517,6 +602,48 @@ export default function ProjectManagement() {
                           View Full Project
                         </Link>
                       </Button>
+                      <Dialog open={isAbandonDialogOpen} onOpenChange={setIsAbandonDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button variant="destructive" className="ml-auto">
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Abandon Project
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                          <DialogHeader>
+                            <DialogTitle className="text-red-600">Abandon Project</DialogTitle>
+                            <DialogDescription>
+                              Are you sure you want to abandon this project? This action cannot be undone and all progress will be marked as abandoned.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4 py-4">
+                            <div>
+                              <Label htmlFor="abandon-reason" className="text-foreground font-medium mb-2">
+                                Reason for abandoning (required)
+                              </Label>
+                              <Textarea
+                                id="abandon-reason"
+                                placeholder="Please explain why you're abandoning this project..."
+                                value={abandonReason}
+                                onChange={(e) => setAbandonReason(e.target.value)}
+                                className="mt-2 min-h-[100px]"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex gap-3 justify-end">
+                            <Button variant="outline" onClick={() => setIsAbandonDialogOpen(false)}>
+                              Cancel
+                            </Button>
+                            <Button 
+                              variant="destructive" 
+                              onClick={handleAbandonProject}
+                              disabled={!abandonReason.trim()}
+                            >
+                              Yes, Abandon Project
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   )}
                   {!isTeamLeader && (
@@ -723,10 +850,16 @@ export default function ProjectManagement() {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 max-w-sm mx-auto">
               <Input 
-                placeholder="e.g. NOVA-26" 
+                placeholder="Enter 6-digit code" 
                 value={joinCodeInput}
-                onChange={(e) => setJoinCodeInput(e.target.value)}
-                className="h-12"
+                onChange={(e) => {
+                  // allow only digits and limit to 6 chars
+                  const digits = e.target.value.replace(/\D/g, "").slice(0, 6);
+                  setJoinCodeInput(digits);
+                }}
+                className="h-12 text-center tracking-widest"
+                inputMode="numeric"
+                pattern="[0-9]*"
               />
               <Button onClick={handleJoinByCode} className="h-12 px-6 bg-indigo-600 hover:bg-indigo-700 text-white">
                 Join Team
@@ -806,6 +939,29 @@ export default function ProjectManagement() {
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setDenyRequestId(null)}>Cancel</Button>
             <Button variant="destructive" onClick={handleDenyRequest}>Deny Request</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Remove Member Dialog */}
+      <Dialog open={isRemoveMemberDialogOpen} onOpenChange={setIsRemoveMemberDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">Remove Team Member</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to remove <strong>{memberToRemove}</strong> from the team? They will lose access to the project.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 justify-end mt-6">
+            <Button variant="outline" onClick={() => setIsRemoveMemberDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleConfirmRemoveMember}
+            >
+              Remove Member
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

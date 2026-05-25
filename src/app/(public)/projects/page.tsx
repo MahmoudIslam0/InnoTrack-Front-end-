@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, X, Calendar, Archive } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProjectCatalogCard, StatusTone } from "@/app/_components/DashboardUI";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -18,6 +18,7 @@ interface Project {
   status: string;
   technologies: string[];
   students: string[];
+  originality: number;
 }
 
 const allProjects: Project[] = [
@@ -30,6 +31,7 @@ const allProjects: Project[] = [
     status: "In Progress",
     technologies: ["React Native", "ARKit", "Firebase"],
     students: ["John Smith", "Sarah Ahmed"],
+    originality: 85,
   },
   {
     id: "2",
@@ -40,6 +42,7 @@ const allProjects: Project[] = [
     status: "In Progress",
     technologies: ["Python", "OpenCV", "YOLOv8"],
     students: ["Mohammed Ali", "Noor Hassan"],
+    originality: 78,
   },
   {
     id: "3",
@@ -50,6 +53,7 @@ const allProjects: Project[] = [
     status: "Completed",
     technologies: ["Ethereum", "Solidity", "React"],
     students: ["Layla Ibrahim", "Youssef Mahmoud"],
+    originality: 92,
   },
   {
     id: "4",
@@ -60,6 +64,7 @@ const allProjects: Project[] = [
     status: "Completed",
     technologies: ["GPT-4", "Node.js", "MongoDB"],
     students: ["Amira Saleh", "Karim Zaki"],
+    originality: 88,
   },
   {
     id: "5",
@@ -70,6 +75,7 @@ const allProjects: Project[] = [
     status: "Completed",
     technologies: ["Python", "TensorFlow", "Flask"],
     students: ["Dina Farouk", "Hassan Omar"],
+    originality: 75,
   },
 ];
 
@@ -77,25 +83,69 @@ export default function Projects() {
   const [searchQuery, setSearchQuery] = useState("");
   const [requestDialogProject, setRequestDialogProject] = useState<Project | null>(null);
   const [requestMessage, setRequestMessage] = useState("");
+  const [showFilters, setShowFilters] = useState(true);
+  
+  // Filter states
+  const [filterYear, setFilterYear] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState<string>("");
+  const [filterDomain, setFilterDomain] = useState<string>("");
+  const [filterSupervisor, setFilterSupervisor] = useState<string>("");
+  const [filterTechnology, setFilterTechnology] = useState<string>("");
+  const [filterMinOriginality, setFilterMinOriginality] = useState<string>("");
 
-  const hasTeam = false; // Mocking student without a team
+  const hasTeam = false;
 
   const currentYear = 2026;
   const thisYearProjects = allProjects.filter((p) => p.year === currentYear);
   const oldProjects = allProjects.filter((p) => p.year < currentYear);
 
-  const filterProjects = (projects: Project[]) => {
-    if (!searchQuery) return projects;
+  // Extract unique values for filter dropdowns
+  const uniqueYears = Array.from(new Set(allProjects.map(p => p.year))).sort((a, b) => b - a);
+  const uniqueStatuses = Array.from(new Set(allProjects.map(p => p.status)));
+  const uniqueDomains = Array.from(new Set(allProjects.map(p => p.category))).sort();
+  const uniqueSupervisors = Array.from(new Set(allProjects.map(p => p.supervisor))).sort();
+  const uniqueTechnologies = Array.from(new Set(allProjects.flatMap(p => p.technologies))).sort();
 
-    return projects.filter(
-      (p) =>
+  const filterProjects = (projects: Project[]) => {
+    return projects.filter((p) => {
+      // Search query filter
+      const matchesSearch = !searchQuery || 
         p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.supervisor.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.students.some((s) =>
-          s.toLowerCase().includes(searchQuery.toLowerCase()),
-        ),
-    );
+        p.students.some((s) => s.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      // Year filter
+      const matchesYear = !filterYear || p.year.toString() === filterYear;
+
+      // Status filter
+      const matchesStatus = !filterStatus || p.status === filterStatus;
+
+      // Domain filter
+      const matchesDomain = !filterDomain || p.category === filterDomain;
+
+      // Supervisor filter
+      const matchesSupervisor = !filterSupervisor || p.supervisor === filterSupervisor;
+
+      // Technology filter
+      const matchesTechnology = !filterTechnology || p.technologies.includes(filterTechnology);
+
+      // Min Originality filter
+      const matchesOriginality = !filterMinOriginality || p.originality >= parseInt(filterMinOriginality);
+
+      return matchesSearch && matchesYear && matchesStatus && matchesDomain && matchesSupervisor && matchesTechnology && matchesOriginality;
+    });
+  };
+
+  const hasActiveFilters = filterYear || filterStatus || filterDomain || filterSupervisor || filterTechnology || filterMinOriginality;
+
+  const clearAllFilters = () => {
+    setFilterYear("");
+    setFilterStatus("");
+    setFilterDomain("");
+    setFilterSupervisor("");
+    setFilterTechnology("");
+    setFilterMinOriginality("");
   };
 
   const getStatusTone = (status: string): StatusTone => {
@@ -134,14 +184,169 @@ export default function Projects() {
         </div>
       </div>
 
+      {/* Filters Section */}
+      <div className="mb-8">
+        <div className="bg-gradient-to-r from-card to-card/50 border border-border/50 rounded-2xl shadow-sm overflow-hidden">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-1">Advanced Filters</h3>
+                <p className="text-sm text-muted-foreground">Refine your project search</p>
+              </div>
+              <div className="flex items-center gap-4">
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 hover:bg-indigo-500/10 rounded-lg transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                    Clear All
+                  </button>
+                )}
+                {/* Slider Toggle */}
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    {showFilters ? "Hide" : "Show"}
+                  </span>
+                  <button
+                    onClick={() => setShowFilters(!showFilters)}
+                    className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
+                      showFilters
+                        ? "bg-indigo-600 hover:bg-indigo-700"
+                        : "bg-muted hover:bg-muted/80"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform ${
+                        showFilters ? "translate-x-7" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            {showFilters && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 animate-in fade-in duration-300">
+                {/* Year Filter */}
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground uppercase tracking-wide">Year</label>
+                  <select
+                    value={filterYear}
+                    onChange={(e) => setFilterYear(e.target.value)}
+                    className="w-full px-3.5 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all text-foreground font-medium"
+                  >
+                    <option value="">All Years</option>
+                    {uniqueYears.map(year => (
+                      <option key={year} value={year.toString()}>{year}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Status Filter */}
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground uppercase tracking-wide">Status</label>
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="w-full px-3.5 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all text-foreground font-medium"
+                  >
+                    <option value="">All Statuses</option>
+                    {uniqueStatuses.map(status => (
+                      <option key={status} value={status}>{status}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Domain Filter */}
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground uppercase tracking-wide">Domain</label>
+                  <select
+                    value={filterDomain}
+                    onChange={(e) => setFilterDomain(e.target.value)}
+                    className="w-full px-3.5 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all text-foreground font-medium"
+                  >
+                    <option value="">All Domains</option>
+                    {uniqueDomains.map(domain => (
+                      <option key={domain} value={domain}>{domain}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Supervisor Filter */}
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground uppercase tracking-wide">Supervisor</label>
+                  <select
+                    value={filterSupervisor}
+                    onChange={(e) => setFilterSupervisor(e.target.value)}
+                    className="w-full px-3.5 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all text-foreground font-medium"
+                  >
+                    <option value="">All Supervisors</option>
+                    {uniqueSupervisors.map(supervisor => (
+                      <option key={supervisor} value={supervisor}>{supervisor}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Technology Filter */}
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground uppercase tracking-wide">Technology</label>
+                  <select
+                    value={filterTechnology}
+                    onChange={(e) => setFilterTechnology(e.target.value)}
+                    className="w-full px-3.5 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all text-foreground font-medium"
+                  >
+                    <option value="">All Technologies</option>
+                    {uniqueTechnologies.map(tech => (
+                      <option key={tech} value={tech}>{tech}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Min Originality Filter */}
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground uppercase tracking-wide">Min Originality</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={filterMinOriginality}
+                      onChange={(e) => setFilterMinOriginality(e.target.value)}
+                      placeholder="0"
+                      className="w-full px-3.5 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all text-foreground placeholder:text-muted-foreground font-medium"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-medium">%</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Tabs */}
       <Tabs defaultValue="current" className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="current">
-            This Year ({thisYearProjects.length})
+        <TabsList className="mb-8 bg-card border border-border/50 rounded-xl p-1 h-auto gap-1 w-fit">
+          <TabsTrigger 
+            value="current" 
+            className="rounded-lg border border-transparent data-[state=active]:border-indigo-500/30 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/10 data-[state=active]:to-indigo-600/10 data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 px-4 py-2.5 font-semibold text-foreground hover:text-indigo-600 dark:hover:text-indigo-400 transition-all flex items-center gap-2"
+          >
+            <Calendar className="w-4 h-4" />
+            <span>This Year</span>
+            <span className="ml-1 px-2 py-0.5 bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 rounded-md text-xs font-bold">
+              {filterProjects(thisYearProjects).length}
+            </span>
           </TabsTrigger>
-          <TabsTrigger value="old">
-            Old Projects ({oldProjects.length})
+          <TabsTrigger 
+            value="old"
+            className="rounded-lg border border-transparent data-[state=active]:border-indigo-500/30 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/10 data-[state=active]:to-indigo-600/10 data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 px-4 py-2.5 font-semibold text-foreground hover:text-indigo-600 dark:hover:text-indigo-400 transition-all flex items-center gap-2"
+          >
+            <Archive className="w-4 h-4" />
+            <span>Old Projects</span>
+            <span className="ml-1 px-2 py-0.5 bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 rounded-md text-xs font-bold">
+              {filterProjects(oldProjects).length}
+            </span>
           </TabsTrigger>
         </TabsList>
 

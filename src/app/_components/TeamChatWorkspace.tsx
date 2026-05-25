@@ -70,6 +70,59 @@ export function TeamChatWorkspace({
   const [inviteEmail, setInviteEmail] = useState("");
   const [isSharedFilesOpen, setIsSharedFilesOpen] = useState(true);
 
+  // Check for removed members and filter them out
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      // Check for abandoned project
+      const abandonmentInfo = localStorage.getItem("projectAbandonment");
+      if (abandonmentInfo) {
+        try {
+          const info = JSON.parse(abandonmentInfo);
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `abandonment-${Date.now()}`,
+              author: "System",
+              initials: "SYS",
+              role: "Professor",
+              content: `⚠️ **PROJECT ABANDONED** - Team Leader ${info.teamLeader} has abandoned the project "${info.projectTitle}".\n\n**Reason:** ${info.reason}`,
+              timestamp: info.timestamp,
+            }
+          ]);
+          toast.error("Project has been abandoned by the team!");
+          localStorage.removeItem("projectAbandonment");
+        } catch (e) {
+          console.error("Failed to parse abandonment info:", e);
+        }
+      }
+
+      // Check for removed members
+      const removedMembers = JSON.parse(localStorage.getItem("removedTeamMembers") || "[]");
+      if (removedMembers.length > 0) {
+        setMembers((prev) => 
+          prev.filter(member => !removedMembers.includes(member.name))
+        );
+        // Add system message for each removed member
+        removedMembers.forEach((removedName: string) => {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `sys-${Date.now()}-${removedName}`,
+              author: "System",
+              initials: "SYS",
+              role: "Professor",
+              content: `${removedName} has been removed from the team by the team leader.`,
+              timestamp: "Just now",
+            }
+          ]);
+        });
+        // Clear the removed members list
+        localStorage.removeItem("removedTeamMembers");
+        toast.info(`${removedMembers.length} member(s) removed from team chat`);
+      }
+    }
+  }, []);
+
   // Join code countdown and simulation logic
   useEffect(() => {
     if (countdown > 0) {
