@@ -40,6 +40,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MyTeamDto, PendingJoinRequestDto, studentApi } from "@/lib/student-api";
 import { api } from "@/lib/api";
 
@@ -78,7 +79,6 @@ export default function TeamsPage() {
   const [showHint, setShowHint] = useState(false);
   const [joinCodeInput, setJoinCodeInput] = useState("");
   const [newTeamName, setNewTeamName] = useState("");
-  const [newTeamMembers, setNewTeamMembers] = useState("");
   const [memberContact, setMemberContact] = useState("");
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [isEditingTeamName, setIsEditingTeamName] = useState(false);
@@ -185,14 +185,14 @@ export default function TeamsPage() {
     })),
     ...(chatSupervisorName
       ? [
-          {
-            id: "supervisor",
-            name: chatSupervisorName,
-            initials: initialsFor(chatSupervisorName),
-            role: "Professor" as const,
-            online: true,
-          },
-        ]
+        {
+          id: "supervisor",
+          name: chatSupervisorName,
+          initials: initialsFor(chatSupervisorName),
+          role: "Professor" as const,
+          online: true,
+        },
+      ]
       : []),
   ];
   const chatMessages = buildProjectChatMessages(
@@ -218,7 +218,6 @@ export default function TeamsPage() {
       const mappedTeam = mapTeam(created);
       saveTeams([mappedTeam], mappedTeam.id);
       setNewTeamName("");
-      setNewTeamMembers("");
       handleActiveViewChange("overview");
       toast.success(`Team "${name}" created.`);
     } catch (error: unknown) {
@@ -304,9 +303,9 @@ export default function TeamsPage() {
     const updated = teams.map((existingTeam) =>
       existingTeam.id === team.id
         ? {
-            ...existingTeam,
-            members: existingTeam.members.filter((member) => member !== name),
-          }
+          ...existingTeam,
+          members: existingTeam.members.filter((member) => member !== name),
+        }
         : existingTeam,
     );
 
@@ -401,318 +400,314 @@ export default function TeamsPage() {
           joinByCode={joinByCode}
           newTeamName={newTeamName}
           setNewTeamName={setNewTeamName}
-          newTeamMembers={newTeamMembers}
-          setNewTeamMembers={setNewTeamMembers}
           createTeam={createTeam}
         />
       ) : (
         <>
-        <div className="flex justify-center">
-          <div className="grid w-full max-w-[440px] grid-cols-2 rounded-xl border border-border bg-muted/40 p-1">
-            <button
-              type="button"
-              onClick={() => handleActiveViewChange("overview")}
-              className={`flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition ${
-                activeView === "overview"
+          <div className="flex justify-center">
+            <div className="grid w-full max-w-[440px] grid-cols-2 rounded-xl border border-border bg-muted/40 p-1">
+              <button
+                type="button"
+                onClick={() => handleActiveViewChange("overview")}
+                className={`flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition ${activeView === "overview"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Users className="h-4 w-4" />
-              Overview
-            </button>
-            <button
-              type="button"
-              onClick={() => handleActiveViewChange("chat")}
-              className={`flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition ${
-                activeView === "chat"
+                  }`}
+              >
+                <Users className="h-4 w-4" />
+                Overview
+              </button>
+              <button
+                type="button"
+                onClick={() => handleActiveViewChange("chat")}
+                className={`flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition ${activeView === "chat"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <MessageSquare className="h-4 w-4" />
-              Team Chat
-            </button>
+                  }`}
+              >
+                <MessageSquare className="h-4 w-4" />
+                Team Chat
+              </button>
+            </div>
           </div>
-        </div>
 
-        {activeView === "overview" ? (
-        <section className="dashboard-surface overflow-hidden">
-          <div className="border-b border-border bg-muted/30 px-5 py-5 md:px-6">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-              <div className="flex min-w-0 gap-4">
-                <Avatar className="h-14 w-14 shrink-0">
-                  <AvatarFallback className="bg-indigo-500/15 text-base font-bold text-indigo-700 dark:text-indigo-300">
-                    {initialsFor(teamName)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0">
-                  <div className="mb-2 flex flex-wrap items-center gap-2">
-                    {team?.projectTitle && (
-                      !isApproved ? (
-                        <Badge
-                          variant="secondary"
-                          className="bg-amber-500/10 text-amber-700 dark:text-amber-300"
-                        >
-                          Under Review
-                        </Badge>
-                      ) : (
+          {activeView === "overview" ? (
+            <section className="dashboard-surface overflow-hidden">
+              <div className="border-b border-border bg-muted/30 px-5 py-5 md:px-6">
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="flex min-w-0 gap-4">
+                    <Avatar className="h-14 w-14 shrink-0">
+                      <AvatarFallback className="bg-indigo-500/15 text-base font-bold text-indigo-700 dark:text-indigo-300">
+                        {initialsFor(teamName)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                        {team?.projectTitle && (
+                          !isApproved ? (
+                            <Badge
+                              variant="secondary"
+                              className="bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                            >
+                              Under Review
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant="secondary"
+                              className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                            >
+                              Approved
+                            </Badge>
+                          )
+                        )}
                         <Badge
                           variant="secondary"
                           className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
                         >
-                          Approved
+                          {isLeader ? "Leader Access" : "Member"}
                         </Badge>
-                      )
-                    )}
-                    <Badge
-                      variant="secondary"
-                      className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                    >
-                      {isLeader ? "Leader Access" : "Member"}
-                    </Badge>
-                  </div>
-                  {isEditingTeamName ? (
-                    <div className="mt-1 flex max-w-xl flex-col gap-2 sm:flex-row sm:items-center">
-                      <Input
-                        value={teamNameDraft}
-                        onChange={(event) => setTeamNameDraft(event.target.value)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") saveTeamName();
-                          if (event.key === "Escape") {
-                            setTeamNameDraft(teamName);
-                            setIsEditingTeamName(false);
-                          }
-                        }}
-                        className="h-11 text-lg font-semibold md:text-xl"
-                        autoFocus
-                      />
-                      <div className="flex gap-2">
-                        <Button size="sm" onClick={saveTeamName}>
-                          Save
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setTeamNameDraft(teamName);
-                            setIsEditingTeamName(false);
-                          }}
-                        >
-                          Cancel
-                        </Button>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="mt-1 flex min-w-0 flex-wrap items-center gap-3">
-                      <h1 className="truncate text-2xl font-semibold tracking-normal text-foreground md:text-3xl">
-                        {teamName}
-                      </h1>
-                      {isLeader && (
-                        <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="h-8 rounded-lg"
-                            onClick={() => setIsEditingTeamName(true)}
-                          >
-                            Rename
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="sm"
-                            className="h-8 rounded-lg"
-                            onClick={async () => {
-                              if (window.confirm("Are you sure you want to delete this team? This action cannot be undone.")) {
-                                try {
-                                  await api.delete("/api/Teams/me");
-                                  window.location.reload();
-                                } catch (err: any) {
-                                  alert(err.message || "Failed to delete team.");
-                                }
+                      {isEditingTeamName ? (
+                        <div className="mt-1 flex max-w-xl flex-col gap-2 sm:flex-row sm:items-center">
+                          <Input
+                            value={teamNameDraft}
+                            onChange={(event) => setTeamNameDraft(event.target.value)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") saveTeamName();
+                              if (event.key === "Escape") {
+                                setTeamNameDraft(teamName);
+                                setIsEditingTeamName(false);
                               }
                             }}
-                          >
-                            Delete
-                          </Button>
+                            className="h-11 text-lg font-semibold md:text-xl"
+                            autoFocus
+                          />
+                          <div className="flex gap-2">
+                            <Button size="sm" onClick={saveTeamName}>
+                              Save
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setTeamNameDraft(teamName);
+                                setIsEditingTeamName(false);
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-1 flex min-w-0 flex-wrap items-center gap-3">
+                          <h1 className="truncate text-2xl font-semibold tracking-normal text-foreground md:text-3xl">
+                            {teamName}
+                          </h1>
+                          {isLeader && (
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 rounded-lg"
+                                onClick={() => setIsEditingTeamName(true)}
+                              >
+                                Rename
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                className="h-8 rounded-lg"
+                                onClick={async () => {
+                                  if (window.confirm("Are you sure you want to delete this team? This action cannot be undone.")) {
+                                    try {
+                                      await api.delete("/api/Teams/me");
+                                      window.location.reload();
+                                    } catch (err: any) {
+                                      alert(err.message || "Failed to delete team.");
+                                    }
+                                  }
+                                }}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )}
+                      <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                        {supervisorName && (
+                          <span className="inline-flex items-center gap-2">
+                            <ShieldCheck className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                            {supervisorName}
+                          </span>
+                        )}
+                        <span className="inline-flex items-center gap-2">
+                          <Users className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                          {teamMembers.length} members
+                        </span>
+                        <span className="inline-flex items-center gap-2">
+                          <ClipboardList className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                          {requests.length} pending
+                        </span>
+                      </div>
                     </div>
-                  )}
-                  <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                    {supervisorName && (
-                      <span className="inline-flex items-center gap-2">
-                        <ShieldCheck className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                        {supervisorName}
-                      </span>
-                    )}
-                    <span className="inline-flex items-center gap-2">
-                      <Users className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                      {teamMembers.length} members
-                    </span>
-                    <span className="inline-flex items-center gap-2">
-                      <ClipboardList className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                      {requests.length} pending
-                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 lg:min-w-[220px]">
+                    <MetricCard label="Members" value={teamMembers.length.toString()} icon={Users} />
+                    <MetricCard label="Requests" value={requests.length.toString()} icon={ClipboardList} />
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 lg:min-w-[220px]">
-                <MetricCard label="Members" value={teamMembers.length.toString()} icon={Users} />
-                <MetricCard label="Requests" value={requests.length.toString()} icon={ClipboardList} />
-              </div>
-            </div>
-          </div>
+              {showHint && (
+                <div className="border-b border-border px-5 py-4 md:px-6">
+                  <div className="flex items-start gap-3 rounded-xl border border-indigo-500/20 bg-indigo-500/10 px-4 py-3 text-sm text-indigo-900 dark:text-indigo-200">
+                    <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+                    <p className="leading-5">
+                      Manage members, join codes, and requests in Overview. Chat is for
+                      team conversation and shared files.
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="-mr-2 -mt-1 h-7 w-7 shrink-0 hover:bg-indigo-500/10"
+                      onClick={dismissHint}
+                      aria-label="Dismiss tip"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
 
-          {showHint && (
-            <div className="border-b border-border px-5 py-4 md:px-6">
-              <div className="flex items-start gap-3 rounded-xl border border-indigo-500/20 bg-indigo-500/10 px-4 py-3 text-sm text-indigo-900 dark:text-indigo-200">
-                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
-                <p className="leading-5">
-                  Manage members, join codes, and requests in Overview. Chat is for
-                  team conversation and shared files.
-                </p>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="-mr-2 -mt-1 h-7 w-7 shrink-0 hover:bg-indigo-500/10"
-                  onClick={dismissHint}
-                  aria-label="Dismiss tip"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-
-            <div className="p-5 md:p-6">
-              <div className="space-y-8">
+              <div className="p-5 md:p-6">
                 <div className="space-y-8">
-                  <section>
-                    <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <h2 className="text-lg font-semibold text-foreground">
-                          Team Roster
-                        </h2>
-                        <p className="text-sm text-muted-foreground">
-                          Add, remove, and review members from one place.
-                        </p>
-                      </div>
-                      {isLeader && (
-                        <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
-                          <DialogTrigger asChild>
-                            <Button className="gap-2 bg-indigo-600 text-white hover:bg-indigo-700">
-                              <UserPlus className="h-4 w-4" />
-                              Add Member
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="sm:max-w-md">
-                            <DialogHeader>
-                              <DialogTitle>Add Team Member</DialogTitle>
-                              <DialogDescription>
-                                Invite a student or generate a temporary code for this team.
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="flex flex-col gap-6 py-3">
-                              <div className="space-y-3">
-                                <h4 className="text-sm font-medium">Invite via Email</h4>
-                                <div className="flex gap-2">
-                                  <Input
-                                    placeholder="student@university.edu or student name"
-                                    value={memberContact}
-                                    onChange={(event) => setMemberContact(event.target.value)}
-                                  />
-                                  <Button
-                                    className="bg-indigo-600 text-white hover:bg-indigo-700"
-                                    onClick={addMember}
-                                  >
-                                    Send
-                                  </Button>
-                                </div>
-                              </div>
-
-                              <div className="relative">
-                                <div className="absolute inset-0 flex items-center">
-                                  <span className="w-full border-t border-border/50" />
-                                </div>
-                                <div className="relative flex justify-center text-xs uppercase">
-                                  <span className="bg-popover px-2 text-muted-foreground">
-                                    Or use join code
-                                  </span>
-                                </div>
-                              </div>
-
-                              <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                  <h4 className="text-sm font-medium">Generate Temporary Code</h4>
-                                  {inviteCountdown > 0 && (
-                                    <span className="flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
-                                      <Timer className="h-3 w-3" />
-                                      {inviteCountdown}s remaining
-                                    </span>
-                                  )}
-                                </div>
-
-                                {inviteCode ? (
-                                  <div className="flex items-center justify-between rounded-xl border border-indigo-500/30 bg-indigo-500/5 p-3">
-                                    <span className="text-2xl font-bold tracking-[0.2em] text-indigo-600 dark:text-indigo-400">
-                                      {inviteCode}
-                                    </span>
-                                    <Button variant="ghost" size="icon" onClick={copyInviteCode}>
-                                      {copied ? (
-                                        <Check className="h-4 w-4 text-emerald-500" />
-                                      ) : (
-                                        <Copy className="h-4 w-4" />
-                                      )}
+                  <div className="space-y-8">
+                    <section>
+                      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <h2 className="text-lg font-semibold text-foreground">
+                            Team Roster
+                          </h2>
+                          <p className="text-sm text-muted-foreground">
+                            Add, remove, and review members from one place.
+                          </p>
+                        </div>
+                        {isLeader && (
+                          <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
+                            <DialogTrigger asChild>
+                              <Button className="gap-2 bg-indigo-600 text-white hover:bg-indigo-700">
+                                <UserPlus className="h-4 w-4" />
+                                Add Member
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-md">
+                              <DialogHeader>
+                                <DialogTitle>Add Team Member</DialogTitle>
+                                <DialogDescription>
+                                  Invite a student or generate a temporary code for this team.
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="flex flex-col gap-6 py-3">
+                                <div className="space-y-3">
+                                  <h4 className="text-sm font-medium">Invite via Email</h4>
+                                  <div className="flex gap-2">
+                                    <Input
+                                      placeholder="student@university.edu or student name"
+                                      value={memberContact}
+                                      onChange={(event) => setMemberContact(event.target.value)}
+                                    />
+                                    <Button
+                                      className="bg-indigo-600 text-white hover:bg-indigo-700"
+                                      onClick={addMember}
+                                    >
+                                      Send
                                     </Button>
                                   </div>
-                                ) : (
-                                  <Button variant="outline" className="w-full" onClick={generateInviteCode}>
-                                    Generate 6-Digit Code
-                                  </Button>
-                                )}
+                                </div>
 
-                                <p className="text-xs text-muted-foreground">
-                                  Code expires in 60 seconds.
-                                </p>
+                                <div className="relative">
+                                  <div className="absolute inset-0 flex items-center">
+                                    <span className="w-full border-t border-border/50" />
+                                  </div>
+                                  <div className="relative flex justify-center text-xs uppercase">
+                                    <span className="bg-popover px-2 text-muted-foreground">
+                                      Or use join code
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <h4 className="text-sm font-medium">Generate Temporary Code</h4>
+                                    {inviteCountdown > 0 && (
+                                      <span className="flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+                                        <Timer className="h-3 w-3" />
+                                        {inviteCountdown}s remaining
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {inviteCode ? (
+                                    <div className="flex items-center justify-between rounded-xl border border-indigo-500/30 bg-indigo-500/5 p-3">
+                                      <span className="text-2xl font-bold tracking-[0.2em] text-indigo-600 dark:text-indigo-400">
+                                        {inviteCode}
+                                      </span>
+                                      <Button variant="ghost" size="icon" onClick={copyInviteCode}>
+                                        {copied ? (
+                                          <Check className="h-4 w-4 text-emerald-500" />
+                                        ) : (
+                                          <Copy className="h-4 w-4" />
+                                        )}
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <Button variant="outline" className="w-full" onClick={generateInviteCode}>
+                                      Generate 6-Digit Code
+                                    </Button>
+                                  )}
+
+                                  <p className="text-xs text-muted-foreground">
+                                    Code expires in 60 seconds.
+                                  </p>
+                                </div>
                               </div>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      )}
-                    </div>
-                    <MembersGrid
-                      members={visibleTeamMembers}
-                      isLeaderView={isLeader}
-                      onRemove={removeMember}
-                    />
-                  </section>
-
-                  {isLeader && (
-                    <section>
-                      <div className="mb-4">
-                        <h2 className="text-lg font-semibold text-foreground">
-                          Pending Requests
-                        </h2>
-                        <p className="text-sm text-muted-foreground">
-                          Review applicants before they join this team.
-                        </p>
+                            </DialogContent>
+                          </Dialog>
+                        )}
                       </div>
-                      <PendingRequestsList
-                        requests={requests}
-                        onAccept={approve}
-                        onReject={reject}
+                      <MembersGrid
+                        members={visibleTeamMembers}
+                        isLeaderView={isLeader}
+                        onRemove={removeMember}
                       />
                     </section>
-                  )}
+
+                    {isLeader && (
+                      <section>
+                        <div className="mb-4">
+                          <h2 className="text-lg font-semibold text-foreground">
+                            Pending Requests
+                          </h2>
+                          <p className="text-sm text-muted-foreground">
+                            Review applicants before they join this team.
+                          </p>
+                        </div>
+                        <PendingRequestsList
+                          requests={requests}
+                          onAccept={approve}
+                          onReject={reject}
+                        />
+                      </section>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-        </section>
-        ) : (
+            </section>
+          ) : (
             <TeamChatWorkspace
               title="Team Chat"
               subtitle={`${team?.projectTitle || "No project yet"} - ${team?.name || ""}`}
@@ -723,7 +718,7 @@ export default function TeamsPage() {
               isTeamLeader={false}
               className="h-[calc(100vh-260px)] min-h-0"
             />
-        )}
+          )}
         </>
       )}
     </div>
@@ -736,8 +731,6 @@ function NoTeamState({
   joinByCode,
   newTeamName,
   setNewTeamName,
-  newTeamMembers,
-  setNewTeamMembers,
   createTeam,
 }: {
   joinCodeInput: string;
@@ -745,67 +738,90 @@ function NoTeamState({
   joinByCode: () => void;
   newTeamName: string;
   setNewTeamName: (value: string) => void;
-  newTeamMembers: string;
-  setNewTeamMembers: (value: string) => void;
   createTeam: () => void;
 }) {
   return (
-    <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-      <div className="dashboard-surface p-6 md:p-8">
-        <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-          <KeyRound className="h-7 w-7" />
-        </div>
-        <h1 className="text-2xl font-semibold text-foreground">Join a team</h1>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Enter the 6-digit code from your team leader to unlock the team workspace.
-        </p>
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <Input
-            placeholder="Enter 6-digit code"
-            value={joinCodeInput}
-            onChange={(event) =>
-              setJoinCodeInput(event.target.value.replace(/\D/g, "").slice(0, 6))
-            }
-            className="h-12 text-center tracking-[0.35em]"
-            inputMode="numeric"
-          />
-          <Button
-            onClick={joinByCode}
-            className="h-12 shrink-0 bg-indigo-600 px-6 text-white hover:bg-indigo-700"
-          >
-            Join Team
-          </Button>
-        </div>
-      </div>
+    <section className="mx-auto w-full max-w-3xl flex flex-col justify-center min-h-[60vh] py-8">
+      <div className="dashboard-surface p-8 md:p-12">
+        <Tabs defaultValue="join" className="w-full">
+          <TabsList className="mb-8 grid h-12 w-full grid-cols-2 rounded-xl bg-muted/50 p-1">
+            <TabsTrigger
+              value="join"
+              className="h-full rounded-lg text-sm font-medium data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all"
+            >
+              Join Team
+            </TabsTrigger>
 
-      <div className="dashboard-surface p-6 md:p-8">
-        <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-          <Plus className="h-7 w-7" />
-        </div>
-        <h2 className="text-2xl font-semibold text-foreground">Create your team</h2>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Start your own team, then invite members and manage requests from Overview.
-        </p>
-        <div className="mt-6 space-y-3">
-          <Input
-            placeholder="Team name"
-            value={newTeamName}
-            onChange={(event) => setNewTeamName(event.target.value)}
-            className="h-12"
-          />
-          <Input
-            placeholder="Optional members, comma-separated"
-            value={newTeamMembers}
-            onChange={(event) => setNewTeamMembers(event.target.value)}
-            className="h-12"
-          />
-          <Button
-            onClick={createTeam}
-            className="h-12 w-full bg-emerald-600 text-white hover:bg-emerald-700"
-          >
-            Create Team
-          </Button>
-        </div>
+            <TabsTrigger
+              value="create"
+              className="h-full rounded-lg text-sm font-medium data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all"
+            >
+              Create Team
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="join" className="mt-0 outline-none">
+            <div className="mx-auto mb-6 flex h-25 w-25 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+              <KeyRound className="h-8 w-8" />
+            </div>
+
+            <h2 className="text-center text-3xl font-semibold text-foreground">
+              Join a team
+            </h2>
+
+            <p className="mt-3 text-center text-base leading-relaxed text-muted-foreground">
+              Enter the 6-digit code from your team leader to unlock the team workspace.
+            </p>
+
+            <div className="mt-8 space-y-4">
+              <Input
+                placeholder="Enter 6-digit code"
+                value={joinCodeInput}
+                onChange={(event) =>
+                  setJoinCodeInput(event.target.value.replace(/\D/g, "").slice(0, 6))
+                }
+                className="h-14 text-center tracking-[0.4em] text-lg bg-background"
+                inputMode="numeric"
+              />
+
+              <Button
+                onClick={joinByCode}
+                className="h-14 w-full bg-indigo-600 text-base text-white hover:bg-indigo-700"
+              >
+                Join Team
+              </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="create" className="mt-0 outline-none">
+            <div className="mx-auto mb-6 flex h-25 w-25 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <Plus className="h-12 w-8" />
+            </div>
+
+            <h2 className="text-center text-3xl font-semibold text-foreground">
+              Create your team
+            </h2>
+
+            <p className="mt-3 text-center text-base leading-relaxed text-muted-foreground">
+              Start your own team, then invite members and manage requests from your Overview dashboard.
+            </p>
+
+            <div className="mt-8 space-y-4">
+              <Input
+                placeholder="Team name"
+                value={newTeamName}
+                onChange={(event) => setNewTeamName(event.target.value)}
+                className="h-14 text-lg bg-background"
+              />
+
+              <Button
+                onClick={createTeam}
+                className="h-14 w-full bg-emerald-600 text-base text-white hover:bg-emerald-700"
+              >
+                Create Team
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </section>
   );

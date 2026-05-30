@@ -142,7 +142,7 @@ async function request(endpoint: string, options: RequestOptions = {}): Promise<
 
     if (!response.ok) {
       throw new ApiError(
-        responseData.error || responseData.message || `Request failed with status ${response.status}`,
+        responseData.error || responseData.message || responseData.detail || responseData.title || `Request failed with status ${response.status}`,
         response.status,
         responseData
       );
@@ -168,4 +168,12 @@ export const api = {
     request(endpoint, { ...options, method: "PATCH", body: body ? JSON.stringify(body) : undefined }),
   delete: (endpoint: string, options: RequestOptions = {}) =>
     request(endpoint, { ...options, method: "DELETE" }),
+  notifications: {
+    getAll: (unreadOnly: boolean = false) =>
+      request(`/api/Notifications?unreadOnly=${unreadOnly}`, { method: "GET" }),
+    markAsRead: (id: number | string) =>
+      request(`/api/Notifications/${id}/read`, { method: "PATCH" }),
+    markAllAsRead: () =>
+      request(`/api/Notifications/read-all`, { method: "PATCH" }),
+  },
 };

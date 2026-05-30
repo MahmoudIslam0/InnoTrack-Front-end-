@@ -254,6 +254,26 @@ function ProjectSubmissionPage() {
     };
   }, []);
 
+  // Load teams from localStorage and pre-fill teamId from query
+  useEffect(() => {
+    queueMicrotask(() => {
+      try {
+        const raw = localStorage.getItem("teams") || "[]";
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          setTeams(parsed);
+          if (!searchParams.get("teamId") && parsed.length > 0) {
+            setSelectedTeamId(parsed[0].id);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to parse teams from localStorage", e);
+      }
+      const tid = searchParams.get("teamId");
+      if (tid) setSelectedTeamId(tid);
+    });
+  }, [searchParams]);
+
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -369,6 +389,10 @@ function ProjectSubmissionPage() {
   const handleSubmitToSupervisor = async () => {
     if (submitLockReason) {
       toast.error(submitLockReason);
+      return;
+    }
+    if (!selectedTeam) {
+      toast.error("Please create a team before submitting the project.");
       return;
     }
     

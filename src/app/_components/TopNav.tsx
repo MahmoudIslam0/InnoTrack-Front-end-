@@ -15,7 +15,23 @@ import { SidebarContent } from "./Sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { api } from "@/lib/api";
+
+function timeAgo(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  if (diffInSeconds < 60) return "Just now";
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes} m ago`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours} h ago`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays === 1) return "Yesterday";
+  if (diffInDays < 7) return `${diffInDays} d ago`;
+  return date.toLocaleDateString();
+}
 
 interface TopNavProps {
   title?: string;
@@ -40,55 +56,23 @@ export function TopNav({
 }: TopNavProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [notifications, setNotifications] = useState(
-    profileHref.startsWith("/professor")
-      ? [
-          {
-            id: 1,
-            title: "Proposal waiting for approval",
-            message: "Nova Path submitted Smart Campus Navigation System.",
-            time: "12 minutes ago",
-            unread: true,
-          },
-          {
-            id: 2,
-            title: "New team membership request",
-            message: "Youssef Mahmoud requested to join Vision Guard.",
-            time: "1 hour ago",
-            unread: true,
-          },
-          {
-            id: 3,
-            title: "Feedback viewed by students",
-            message: "Prompt Lab marked your feedback as read.",
-            time: "Yesterday",
-            unread: false,
-          },
-        ]
-      : [
-          {
-            id: 1,
-            title: "Similarity Check Completed",
-            message: "Your project scored 85% originality.",
-            time: "2 hours ago",
-            unread: true,
-          },
-          {
-            id: 2,
-            title: "Professor Response",
-            message: "Dr. Ahmed reviewed your proposal.",
-            time: "1 day ago",
-            unread: true,
-          },
-          {
-            id: 3,
-            title: "Draft Saved",
-            message: "Your project draft was saved successfully.",
-            time: "3 days ago",
-            unread: false,
-          },
-        ]
-  );
+  const [notifications, setNotifications] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (showNotifications) {
+      api.notifications.getAll()
+        .then((data) => {
+          setNotifications(data.map((n: any) => ({
+            id: n.id,
+            title: n.title,
+            message: n.message,
+            time: timeAgo(n.createdAt),
+            unread: !n.isRead,
+          })));
+        })
+        .catch(console.error);
+    }
+  }, [showNotifications]);
 
   const professorTitles: Record<string, string> = {
     "/professor/dashboard": "Professor Dashboard",
@@ -111,12 +95,25 @@ export function TopNav({
     router.push("/login");
   };
 
-  const markAsRead = (id: number) => {
-    setNotifications(notifications.map((n) => (n.id === id ? { ...n, unread: false } : n)));
+  const markAsRead = async (id: number) => {
+    const notif = notifications.find(n => n.id === id);
+    if (notif && notif.unread) {
+      setNotifications(notifications.map((n) => (n.id === id ? { ...n, unread: false } : n)));
+      try {
+        await api.notifications.markAsRead(id);
+      } catch (err) {
+        console.error(err);
+      }
+    }
   };
 
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
     setNotifications(notifications.map((n) => ({ ...n, unread: false })));
+    try {
+      await api.notifications.markAllAsRead();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const unreadCount = notifications.filter((n) => n.unread).length;

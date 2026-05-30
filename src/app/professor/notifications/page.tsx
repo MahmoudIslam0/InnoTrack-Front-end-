@@ -1,46 +1,91 @@
 "use client";
 
-import { useState } from "react";
-import { Bell, CheckCircle2, MessageSquare, UserPlus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Bell, CheckCircle2, MessageSquare, UserPlus, FileText, AlertTriangle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { notifications as initialNotifications, NotificationType } from "../_data";
 import { NotificationList } from "@/app/_components/DashboardUI";
 import { PageHeader, SectionCard } from "../_components";
+import { api } from "@/lib/api";
 
-const iconMap: Record<
-  NotificationType,
-  { icon: typeof Bell; tone: "info" | "warning" | "success" }
-> = {
-  "Project Update": {
-    icon: Bell,
-    tone: "info",
-  },
-  "Member Joined": {
-    icon: UserPlus,
-    tone: "warning",
-  },
-  "Feedback Alert": {
-    icon: MessageSquare,
-    tone: "success",
-  },
-};
+function timeAgo(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  if (diffInSeconds < 60) return "Just now";
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes} m ago`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours} h ago`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays === 1) return "Yesterday";
+  if (diffInDays < 7) return `${diffInDays} d ago`;
+  return date.toLocaleDateString();
+}
+
+function getIconForType(type: string) {
+  switch (type?.toLowerCase()) {
+    case 'success': return CheckCircle2;
+    case 'error': return AlertTriangle;
+    case 'warning': return FileText;
+    default: return Bell;
+  }
+}
+
+function getToneForType(type: string) {
+  switch (type?.toLowerCase()) {
+    case 'success': return 'success';
+    case 'error': return 'error';
+    case 'warning': return 'warning';
+    default: return 'info';
+  }
+}
 
 export default function ProfessorNotifications() {
-  const [items, setItems] = useState(initialNotifications);
+  const [items, setItems] = useState<any[]>([]);
 
-  const markAllRead = () => {
+  useEffect(() => {
+    api.notifications.getAll()
+      .then((data) => {
+        setItems(data.map((n: any) => ({
+          id: String(n.id),
+          title: n.title,
+          message: n.message,
+          timestamp: timeAgo(n.createdAt),
+          icon: getIconForType(n.type),
+          tone: getToneForType(n.type),
+          type: n.type,
+          unread: !n.isRead,
+        })));
+      })
+      .catch(console.error);
+  }, []);
+
+  const markAllRead = async () => {
     setItems((currentItems) =>
       currentItems.map((item) => ({ ...item, unread: false })),
     );
+    try {
+      await api.notifications.markAllAsRead();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const markAsRead = (id: string) => {
-    setItems((currentItems) =>
-      currentItems.map((item) =>
-        item.id === id ? { ...item, unread: false } : item
-      )
-    );
+  const markAsRead = async (id: string) => {
+    const item = items.find(i => i.id === id);
+    if (item && item.unread) {
+      setItems((currentItems) =>
+        currentItems.map((i) =>
+          i.id === id ? { ...i, unread: false } : i
+        )
+      );
+      try {
+        await api.notifications.markAsRead(id);
+      } catch (err) {
+        console.error(err);
+      }
+    }
   };
 
   const getNotificationHref = (title: string) => {
@@ -74,14 +119,7 @@ export default function ProfessorNotifications() {
         <div className="-m-6">
           <NotificationList
             items={items.map((notification) => ({
-              id: notification.id,
-              title: notification.title,
-              message: notification.message,
-              timestamp: notification.timestamp,
-              unread: notification.unread,
-              type: notification.type,
-              icon: iconMap[notification.type].icon,
-              tone: iconMap[notification.type].tone,
+              ...notification,
               href: getNotificationHref(notification.title),
             }))}
             onRead={markAsRead}

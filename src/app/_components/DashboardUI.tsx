@@ -48,6 +48,7 @@ export interface ProjectCatalogItem {
   supervisor: string;
   students: string[];
   technologies: string[];
+  originality?: number;
 }
 
 export interface OriginalProjectItem {
@@ -215,23 +216,40 @@ export function ProjectCatalogCard({
   secondaryActionLabel?: string;
   onSecondaryAction?: () => void;
 }) {
+  const scoreColor =
+    project.originality !== undefined
+      ? project.originality >= 80
+        ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400"
+        : project.originality >= 70
+        ? "bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400"
+        : "bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400"
+      : "";
+
   return (
-    <div className="dashboard-card hover:border-indigo-500/30">
-      <div className="flex items-start justify-between mb-3">
+    <div className="dashboard-card hover:border-indigo-500/30 flex flex-col h-full p-6">
+      <div className="flex items-start justify-between mb-4">
         <Badge
           variant="outline"
           className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/30"
         >
           {project.category}
         </Badge>
-        <StatusBadge status={project.status} />
+        <div className="flex items-center gap-2">
+          {project.originality !== undefined && (
+            <div className={`flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-semibold ${scoreColor}`}>
+              <Award className="w-3 h-3" />
+              <span>{project.originality}%</span>
+            </div>
+          )}
+          <StatusBadge status={project.status} />
+        </div>
       </div>
 
-      <h4 className="text-base font-semibold text-foreground mb-2">
+      <h4 className="text-lg font-semibold text-foreground mb-3 line-clamp-2" title={project.title}>
         {project.title}
       </h4>
 
-      <div className="space-y-2 mb-4">
+      <div className="space-y-2 mb-4 flex-1">
         <p className="text-sm text-muted-foreground">
           <span className="font-medium">Year:</span> {project.year}
         </p>
@@ -239,17 +257,19 @@ export function ProjectCatalogCard({
           <span className="font-medium">Supervisor:</span>{" "}
           {project.supervisor}
         </p>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground line-clamp-1" title={project.students.join(", ")}>
           <span className="font-medium">Students:</span>{" "}
-          {project.students.join(", ")}
+          {project.students.length > 0 ? project.students.join(", ") : "None"}
         </p>
       </div>
 
-      <div className="mb-4">
-        <TechChips technologies={project.technologies} />
+      <div className="mb-5 min-h-[28px]">
+        {project.technologies && project.technologies.length > 0 && (
+          <TechChips technologies={project.technologies} />
+        )}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 mt-auto">
         {href ? (
           <Button
             variant="outline"

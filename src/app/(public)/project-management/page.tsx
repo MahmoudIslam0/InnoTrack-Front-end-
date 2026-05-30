@@ -130,6 +130,7 @@ export default function ProjectManagement() {
     localStorage.setItem("projectManagementActiveTab", value);
   };
 
+  // Load teams from localStorage on mount
   useEffect(() => {
     let ignore = false;
 
@@ -388,7 +389,8 @@ export default function ProjectManagement() {
                     return;
                   }
                   if (!teams || teams.length === 0) {
-                    setIsCreateTeamOpen(true);
+                    toast.error("You must be on a team first to submit a project.");
+                    router.push("/teams");
                   } else {
                     const tid = currentTeamId || teams[0].id;
                     router.push(`/project-submission?teamId=${tid}`);
@@ -406,8 +408,8 @@ export default function ProjectManagement() {
                 </p>
               ) : (!teams || teams.length === 0) ? (
                 <p className="text-sm text-muted-foreground mt-3">
-                  You must create a team before submitting a project. 
-                  <button className="ml-1 underline text-sm" onClick={() => setIsCreateTeamOpen(true)}>Create a team</button>
+                  You must be on a team before submitting a project. 
+                  <button className="ml-1 underline text-sm text-indigo-600 hover:text-indigo-700" onClick={() => router.push("/teams")}>Go to Teams page</button>
                 </p>
               ) : (
                 <p className="text-sm text-muted-foreground mt-3">

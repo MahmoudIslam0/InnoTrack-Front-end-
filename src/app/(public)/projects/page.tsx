@@ -55,7 +55,6 @@ export default function Projects() {
   
   // Filter states
   const [filterYear, setFilterYear] = useState<string>("");
-  const [filterStatus, setFilterStatus] = useState<string>("");
   const [filterDomain, setFilterDomain] = useState<string>("");
   const [filterSupervisor, setFilterSupervisor] = useState<string>("");
   const [filterTechnology, setFilterTechnology] = useState<string>("");
@@ -97,7 +96,6 @@ export default function Projects() {
     return {
       search: searchQuery.trim() || undefined,
       year: Number.isFinite(year) && year > 0 ? year : undefined,
-      status: filterStatus || undefined,
       domainId: domain?.id,
       technologyId: technology?.id,
       supervisorId: supervisor?.id,
@@ -109,7 +107,6 @@ export default function Projects() {
     domains,
     filterDomain,
     filterMinOriginality,
-    filterStatus,
     filterSupervisor,
     filterTechnology,
     filterYear,
@@ -163,8 +160,9 @@ export default function Projects() {
   };
 
   // Extract unique values for filter dropdowns
-  const uniqueYears = Array.from(new Set(allProjects.map(p => p.year))).sort((a, b) => b - a);
-  const uniqueStatuses = ["In_Progress", "Approved", "Completed"];
+  const currentYear = new Date().getFullYear();
+  const maxYear = Math.max(currentYear, 2026);
+  const uniqueYears = Array.from({ length: maxYear - 2020 + 1 }, (_, i) => maxYear - i);
   const uniqueDomains = useMemo(
     () => domains.length ? domains.map((domain) => domain.name).sort() : Array.from(new Set(allProjects.map(p => p.category))).sort(),
     [domains, allProjects],
@@ -178,11 +176,10 @@ export default function Projects() {
     [technologies, allProjects],
   );
 
-  const hasActiveFilters = filterYear || filterStatus || filterDomain || filterSupervisor || filterTechnology || filterMinOriginality;
+  const hasActiveFilters = filterYear || filterDomain || filterSupervisor || filterTechnology || filterMinOriginality;
 
   const clearAllFilters = () => {
     setFilterYear("");
-    setFilterStatus("");
     setFilterDomain("");
     setFilterSupervisor("");
     setFilterTechnology("");
@@ -278,7 +275,7 @@ export default function Projects() {
             </div>
             
             {showFilters && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 animate-in fade-in duration-300">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 animate-in fade-in duration-300">
                 {/* Year Filter */}
                 <div className="space-y-2">
                   <label className="text-xs font-semibold text-foreground uppercase tracking-wide">Year</label>
@@ -294,25 +291,6 @@ export default function Projects() {
                     <option value="">All Years</option>
                     {uniqueYears.map(year => (
                       <option key={year} value={year.toString()}>{year}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Status Filter */}
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-foreground uppercase tracking-wide">Status</label>
-                  <select
-                    value={filterStatus}
-                    onChange={(e) => {
-                      setFilterStatus(e.target.value);
-                      setCurrentPage(1);
-                      setOldPage(1);
-                    }}
-                    className="w-full px-3.5 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all text-foreground font-medium"
-                  >
-                    <option value="">All Statuses</option>
-                    {uniqueStatuses.map(status => (
-                      <option key={status} value={status}>{status}</option>
                     ))}
                   </select>
                 </div>
@@ -389,9 +367,9 @@ export default function Projects() {
                         setOldPage(1);
                       }}
                       placeholder="0"
-                      className="w-full px-3.5 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all text-foreground placeholder:text-muted-foreground font-medium"
+                      className="w-full pl-3.5 pr-12 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all text-foreground placeholder:text-muted-foreground font-medium"
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-medium">%</span>
+                    <span className="absolute right-8 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-semibold pointer-events-none">%</span>
                   </div>
                 </div>
               </div>
@@ -447,6 +425,7 @@ export default function Projects() {
                   supervisor: project.supervisor,
                   students: project.students,
                   technologies: project.technologies,
+                  originality: project.originality,
                 }}
                 href={`/projects/${project.id}`}
                 secondaryActionLabel={!hasTeam && project.acceptsJoinRequests ? "Request to Join" : undefined}
@@ -481,6 +460,7 @@ export default function Projects() {
                   supervisor: project.supervisor,
                   students: project.students,
                   technologies: project.technologies,
+                  originality: project.originality,
                 }}
                 href={`/projects/${project.id}`}
                 secondaryActionLabel={!hasTeam && project.acceptsJoinRequests ? "Request to Join" : undefined}
