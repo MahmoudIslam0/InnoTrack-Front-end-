@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   Calendar,
@@ -18,6 +19,7 @@ import {
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ProjectCatalogDetailDto, formatStatus, normalizeOriginalityPercent, studentApi } from "@/lib/student-api";
 
 interface Project {
   id: string;
@@ -208,8 +210,38 @@ export default function ProjectDetails() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
+  const [apiProject, setApiProject] = useState<Project | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const project = allProjects.find((p) => p.id === id);
+  useEffect(() => {
+    let ignore = false;
+
+    studentApi
+      .getProject(id)
+      .then((project) => {
+        if (!ignore) setApiProject(mapProjectDetail(project));
+      })
+      .catch(() => {
+        if (!ignore) setApiProject(null);
+      })
+      .finally(() => {
+        if (!ignore) setIsLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [id]);
+
+  const project = apiProject || (!isLoading ? allProjects.find((p) => p.id === id) : null);
+
+  if (isLoading) {
+    return (
+      <div className="p-4 md:p-8 max-w-[1400px] mx-auto">
+        <div className="dashboard-card h-80 animate-pulse bg-muted/30" />
+      </div>
+    );
+  }
 
   if (!project) {
     return (
@@ -473,4 +505,36 @@ export default function ProjectDetails() {
       </div>
     </div>
   );
+}
+
+function mapProjectDetail(project: ProjectCatalogDetailDto): Project {
+  const parsedYear = Number.parseInt(project.academicYear, 10);
+
+  return {
+    id: String(project.id),
+    title: project.title,
+    year: Number.isFinite(parsedYear) ? parsedYear : new Date().getFullYear(),
+    category: project.domain,
+    supervisor: project.supervisor || "Not assigned",
+    status: formatStatus(project.status),
+    technologies: project.technologies || [],
+    students: (project.students || []).map((student) => ({
+      name: student.name,
+      role: student.role.toLowerCase().includes("leader") ? "Leader" : "Member",
+      department: student.department,
+    })),
+    description: project.description,
+    abstract: project.abstract,
+    problemStatement: project.problemStatement || undefined,
+    proposedSolution: project.proposedSolution || undefined,
+    objectives: project.objectives
+      ? project.objectives
+          .split(/\r?\n/)
+          .map((item) => item.replace(/^\d+[\).]\s*/, "").trim())
+          .filter(Boolean)
+      : [],
+    dateSubmitted: project.submittedAt || undefined,
+    dateApproved: project.approvedAt || undefined,
+    originalityScore: project.originalityScore ? normalizeOriginalityPercent(project.originalityScore) : undefined,
+  };
 }

@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { projects, teams, professorProfile } from "../../_data";
+import { formatPercent, normalizePercentValue } from "@/lib/student-api";
 
 function getStatusClasses(status: string) {
   switch (status) {
@@ -145,9 +146,9 @@ export default function ProfessorProjectDetails() {
                     </div>
                     <Badge
                       variant="outline"
-                      className={sp.similarity >= 40 ? "text-red-600 border-red-500/30 shrink-0" : "text-amber-600 border-amber-500/30 shrink-0"}
+                      className={normalizePercentValue(sp.similarity) >= 40 ? "text-red-600 border-red-500/30 shrink-0" : "text-amber-600 border-amber-500/30 shrink-0"}
                     >
-                      {sp.similarity}%
+                      {formatPercent(sp.similarity)}%
                     </Badge>
                   </div>
                 ))}

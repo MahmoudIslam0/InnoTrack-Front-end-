@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-// import { useAuth } from '../contexts/AuthContext';
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,15 +13,40 @@ import Image from "next/image";
 
 export default function Register() {
   const router = useRouter();
-  //   const { register } = useAuth();
+  const { register } = useAuth();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [studentId, setStudentId] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  
+  // Custom wired properties
+  const [departmentId, setDepartmentId] = useState("");
+  const [gpa, setGpa] = useState("3.0");
+  const [graduationYear, setGraduationYear] = useState(new Date().getFullYear().toString());
+  const [departments, setDepartments] = useState<{ id: number; name: string; code: string }[]>([]);
+  
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch departments list
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const response = await api.get("/api/Departments", { params: { pageSize: 100 } });
+        if (response && response.data) {
+          setDepartments(response.data);
+          if (response.data.length > 0) {
+            setDepartmentId(response.data[0].id.toString());
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load departments", err);
+      }
+    };
+    fetchDepartments();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,13 +67,38 @@ export default function Register() {
       return;
     }
 
+    const parsedGpa = parseFloat(gpa);
+    if (isNaN(parsedGpa) || parsedGpa < 0 || parsedGpa > 4) {
+      setError("GPA must be a number between 0.0 and 4.0");
+      return;
+    }
+
+    const parsedGradYear = parseInt(graduationYear);
+    if (isNaN(parsedGradYear) || parsedGradYear < 2000 || parsedGradYear > 2100) {
+      setError("Please enter a valid graduation year");
+      return;
+    }
+
+    if (!departmentId) {
+      setError("Please select a department");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      //   await register(fullName, email, password, studentId);
+      await register({
+        firstName,
+        lastName,
+        email,
+        password,
+        departmentId: parseInt(departmentId),
+        gpa: parsedGpa,
+        graduationYear: parsedGradYear,
+      });
       router.push("/");
-    } catch (err) {
-      setError("Registration failed. Please try again.");
+    } catch (err: any) {
+      setError(err.message || "Registration failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -55,7 +106,7 @@ export default function Register() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md my-8">
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
           {/* Logo and Title */}
           <div className="text-center mb-8">
@@ -116,7 +167,7 @@ export default function Register() {
               <Input
                 id="email"
                 type="email"
-                placeholder="student@university.edu"
+                placeholder="student@fci.bu.edu.eg"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -125,7 +176,7 @@ export default function Register() {
             </div>
 
             <div>
-              <Label htmlFor="studentId">Student ID</Label>
+              <Label htmlFor="studentId">Student ID (Internal Ref)</Label>
               <Input
                 id="studentId"
                 type="text"
@@ -135,6 +186,59 @@ export default function Register() {
                 required
                 className="mt-1"
               />
+            </div>
+
+            {/* Department Dynamic Dropdown */}
+            <div>
+              <Label htmlFor="department">Department</Label>
+              <select
+                id="department"
+                value={departmentId}
+                onChange={(e) => setDepartmentId(e.target.value)}
+                required
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500 mt-1 text-gray-700"
+              >
+                {departments.length === 0 ? (
+                  <option value="">Loading departments...</option>
+                ) : (
+                  departments.map((dept) => (
+                    <option key={dept.id} value={dept.id}>
+                      {dept.name} ({dept.code})
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+
+            {/* GPA and Graduation Year */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="gpa">Current GPA</Label>
+                <Input
+                  id="gpa"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="4"
+                  value={gpa}
+                  onChange={(e) => setGpa(e.target.value)}
+                  required
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="graduationYear">Graduation Year</Label>
+                <Input
+                  id="graduationYear"
+                  type="number"
+                  min="2000"
+                  max="2100"
+                  value={graduationYear}
+                  onChange={(e) => setGraduationYear(e.target.value)}
+                  required
+                  className="mt-1"
+                />
+              </div>
             </div>
 
             <div>

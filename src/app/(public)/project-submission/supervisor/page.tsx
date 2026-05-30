@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { SupervisorDto, studentApi } from "@/lib/student-api";
 
 interface SavedSubmissionState {
   formData?: {
@@ -23,49 +24,6 @@ interface SavedSubmissionState {
   originalityScore?: number;
 }
 
-const supervisors = [
-  {
-    id: "s1",
-    name: "Dr. Ahmed Hassan",
-    department: "Computer Science",
-   
-    slots: 2,
-   
-  },
-  {
-    id: "s2",
-    name: "Dr. Fatima Ali",
-    department: "Computer Science",
-  
-    slots: 3,
-   
-  },
-  {
-    id: "s3",
-    name: "Dr. Omar Khalil",
-    department: "Information Systems",
-  
-    slots: 1,
-    
-  },
-  {
-    id: "s4",
-    name: "Dr. Huda Nasser",
-    department: "Computer Science",
-
-    slots: 4,
-   
-  },
-  {
-    id: "s5",
-    name: "Dr. Tariq Ahmed",
-    department: "Software Engineering",
-
-    slots: 0,
-    
-  },
-];
-
 const departments = [
   "Computer Science",
   "Software Engineering",
@@ -76,7 +34,8 @@ const departments = [
 
 export default function SubmitToSupervisor() {
   const router = useRouter();
-  const [selectedSupervisorId, setSelectedSupervisorId] = useState("s1");
+  const [supervisors, setSupervisors] = useState<SupervisorDto[]>([]);
+  const [selectedSupervisorId, setSelectedSupervisorId] = useState<number | null>(null);
   const [submissionState, setSubmissionState] =
     useState<SavedSubmissionState | null>(null);
   const [proposalData, setProposalData] = useState({
@@ -102,28 +61,63 @@ export default function SubmitToSupervisor() {
     }
   }, []);
 
-  const selectedSupervisor = supervisors.find(
-    (supervisor) => supervisor.id === selectedSupervisorId,
-  );
+  useEffect(() => {
+    let ignore = false;
+
+    studentApi
+      .getSupervisors()
+      .then((items) => {
+        if (ignore) return;
+        setSupervisors(items);
+        const firstAvailable = items.find((supervisor) => supervisor.isAvailable) || items[0];
+        setSelectedSupervisorId(firstAvailable?.id ?? null);
+      })
+      .catch(() => {
+        if (!ignore) toast.error("Could not load supervisors.");
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const selectedSupervisor = supervisors.find((supervisor) => supervisor.id === selectedSupervisorId);
   const canSubmit =
     Boolean(proposalData.department) &&
     Boolean(proposalData.teamMembers.trim()) &&
     Boolean(proposalData.message.trim()) &&
-    Boolean(selectedSupervisor && selectedSupervisor.slots > 0);
+    Boolean(selectedSupervisor && selectedSupervisor.isAvailable);
 
-  const submitProposal = () => {
+  const submitProposal = async () => {
     if (!proposalData.department || !proposalData.teamMembers || !proposalData.message) {
       toast.error("Please complete the required proposal details");
       return;
     }
 
-    if (!selectedSupervisor || selectedSupervisor.slots === 0) {
+    if (!selectedSupervisor || !selectedSupervisor.isAvailable) {
       toast.error("Please select an available supervisor");
       return;
     }
 
-    toast.success(`Proposal submitted to ${selectedSupervisor.name}`);
-    router.push("/project-management");
+    const projectId = sessionStorage.getItem("projectSubmissionId");
+    if (!projectId) {
+      toast.error("Save the project draft before submitting.");
+      router.push("/project-submission");
+      return;
+    }
+
+    try {
+      await studentApi.submitProject(projectId, {
+        supervisorId: selectedSupervisor.id,
+        department: proposalData.department,
+        teamMembers: proposalData.teamMembers,
+        message: proposalData.message,
+      });
+      toast.success(`Proposal submitted to ${selectedSupervisor.fullName}`);
+      router.push("/project-management");
+    } catch (error: any) {
+      toast.error(error.message || "Could not submit proposal.");
+    }
   };
 
   return (
@@ -246,7 +240,7 @@ export default function SubmitToSupervisor() {
           <div className="max-h-[500px] space-y-4 overflow-y-auto px-6 py-4 pr-3 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-700 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-600">
             {supervisors.map((supervisor) => {
               const isSelected = supervisor.id === selectedSupervisorId;
-              const isFull = supervisor.slots === 0;
+              const isFull = !supervisor.isAvailable;
 
               return (
                 <button
@@ -266,10 +260,10 @@ export default function SubmitToSupervisor() {
                     </div>
                     <div>
                       <p className="text-[15px] font-semibold text-slate-900">
-                        {supervisor.name}
+                        {supervisor.fullName}
                       </p>
                       <p className="text-sm text-slate-500">
-                        {supervisor.department}
+                        {supervisor.departmentName}
                       </p>
                     </div>
                   </div>
@@ -286,7 +280,9 @@ export default function SubmitToSupervisor() {
                       }`}
                       variant="secondary"
                     >
-                      {isFull ? "Full" : `${supervisor.slots} slot${supervisor.slots !== 1 ? 's' : ''}`}
+                      {isFull
+                        ? "Full"
+                        : `${supervisor.maxTeamLoad - supervisor.currentTeamLoad} slot${supervisor.maxTeamLoad - supervisor.currentTeamLoad !== 1 ? "s" : ""}`}
                     </Badge>
                   </div>
                 </button>

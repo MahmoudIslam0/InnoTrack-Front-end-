@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-// import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,7 @@ import Image from "next/image";
 
 export default function Login() {
   const router = useRouter();
-  //   const { login } = useAuth();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -24,10 +24,10 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      //   await login(email, password);
+      await login(email, password);
       router.push("/");
-    } catch (err) {
-      setError("Invalid email or password");
+    } catch (err: any) {
+      setError(err.message || "Invalid email or password");
     } finally {
       setIsLoading(false);
     }

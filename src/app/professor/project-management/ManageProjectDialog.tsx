@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { OriginalityMeter, StatusBadge } from "../_components";
 import { Project, teams as initialTeams } from "../_data";
+import { formatPercent } from "@/lib/student-api";
 
 interface ManageProjectDialogProps {
   project: Project | null;
@@ -218,7 +219,7 @@ export function ManageProjectDialog({
                                   <p className="text-xs font-medium text-foreground">{sp.title}</p>
                                   <p className="text-xs text-muted-foreground mt-0.5">{sp.reason}</p>
                                 </div>
-                                <Badge variant="outline" className="shrink-0">{sp.similarity}%</Badge>
+                                <Badge variant="outline" className="shrink-0">{formatPercent(sp.similarity)}%</Badge>
                               </div>
                             ))}
                           </div>

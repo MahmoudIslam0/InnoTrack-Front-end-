@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, X, Calendar, Archive } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProjectCatalogCard, StatusTone } from "@/app/_components/DashboardUI";
@@ -8,6 +8,15 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import {
+  ProjectCatalogItemDto,
+  LookupItem,
+  ProjectCatalogFilters,
+  normalizeOriginalityPercent,
+  normalizeStatusTone,
+  readPagedData,
+  studentApi,
+} from "@/lib/student-api";
 
 interface Project {
   id: string;
@@ -19,71 +28,30 @@ interface Project {
   technologies: string[];
   students: string[];
   originality: number;
+  acceptsJoinRequests: boolean;
 }
 
-const allProjects: Project[] = [
-  {
-    id: "1",
-    title: "Smart Campus Navigation System",
-    year: 2026,
-    category: "IoT & Mobile",
-    supervisor: "Dr. Ahmed Hassan",
-    status: "In Progress",
-    technologies: ["React Native", "ARKit", "Firebase"],
-    students: ["John Smith", "Sarah Ahmed"],
-    originality: 85,
-  },
-  {
-    id: "2",
-    title: "Automated Exam Proctoring",
-    year: 2026,
-    category: "AI & Computer Vision",
-    supervisor: "Dr. Fatima Ali",
-    status: "In Progress",
-    technologies: ["Python", "OpenCV", "YOLOv8"],
-    students: ["Mohammed Ali", "Noor Hassan"],
-    originality: 78,
-  },
-  {
-    id: "3",
-    title: "Blockchain-Based Degree Verification",
-    year: 2025,
-    category: "Blockchain",
-    supervisor: "Dr. Omar Khalil",
-    status: "Completed",
-    technologies: ["Ethereum", "Solidity", "React"],
-    students: ["Layla Ibrahim", "Youssef Mahmoud"],
-    originality: 92,
-  },
-  {
-    id: "4",
-    title: "Mental Health Support Chatbot",
-    year: 2025,
-    category: "NLP & Healthcare",
-    supervisor: "Dr. Huda Nasser",
-    status: "Completed",
-    technologies: ["GPT-4", "Node.js", "MongoDB"],
-    students: ["Amira Saleh", "Karim Zaki"],
-    originality: 88,
-  },
-  {
-    id: "5",
-    title: "E-Commerce Recommendation Engine",
-    year: 2024,
-    category: "Machine Learning",
-    supervisor: "Dr. Tariq Ahmed",
-    status: "Completed",
-    technologies: ["Python", "TensorFlow", "Flask"],
-    students: ["Dina Farouk", "Hassan Omar"],
-    originality: 75,
-  },
-];
+const PROJECTS_PAGE_SIZE = 30;
 
 export default function Projects() {
   const [searchQuery, setSearchQuery] = useState("");
   const [requestDialogProject, setRequestDialogProject] = useState<Project | null>(null);
   const [requestMessage, setRequestMessage] = useState("");
-  const [showFilters, setShowFilters] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
+  const [allProjects, setAllProjects] = useState<Project[]>([]);
+  const [thisYearProjects, setThisYearProjects] = useState<Project[]>([]);
+  const [oldProjects, setOldProjects] = useState<Project[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [oldPage, setOldPage] = useState(1);
+  const [currentTotalPages, setCurrentTotalPages] = useState(1);
+  const [oldTotalPages, setOldTotalPages] = useState(1);
+  const [currentTotalRecords, setCurrentTotalRecords] = useState(0);
+  const [oldTotalRecords, setOldTotalRecords] = useState(0);
+  const [domains, setDomains] = useState<LookupItem[]>([]);
+  const [technologies, setTechnologies] = useState<LookupItem[]>([]);
+  const [supervisors, setSupervisors] = useState<{ id: number; fullName: string }[]>([]);
+  const [hasTeam, setHasTeam] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Filter states
   const [filterYear, setFilterYear] = useState<string>("");
@@ -92,50 +60,123 @@ export default function Projects() {
   const [filterSupervisor, setFilterSupervisor] = useState<string>("");
   const [filterTechnology, setFilterTechnology] = useState<string>("");
   const [filterMinOriginality, setFilterMinOriginality] = useState<string>("");
+  const [activeTab, setActiveTab] = useState(() =>
+    typeof window === "undefined"
+      ? "current"
+      : localStorage.getItem("projectsActiveTab") || "current",
+  );
 
-  const hasTeam = false;
+  useEffect(() => {
+    let ignore = false;
+    Promise.allSettled([
+      studentApi.getDomains(),
+      studentApi.getTechnologies(),
+      studentApi.getSupervisors(),
+      studentApi.getMyTeam(),
+    ]).then(([domainsResult, technologiesResult, supervisorsResult, teamResult]) => {
+      if (ignore) return;
 
-  const currentYear = 2026;
-  const thisYearProjects = allProjects.filter((p) => p.year === currentYear);
-  const oldProjects = allProjects.filter((p) => p.year < currentYear);
+      if (domainsResult.status === "fulfilled") setDomains(readPagedData(domainsResult.value));
+      if (technologiesResult.status === "fulfilled") setTechnologies(readPagedData(technologiesResult.value));
+      if (supervisorsResult.status === "fulfilled") setSupervisors(supervisorsResult.value);
+      if (teamResult.status === "fulfilled") setHasTeam(Boolean(teamResult.value));
+    });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const catalogFilters = useMemo<ProjectCatalogFilters>(() => {
+    const domain = domains.find((item) => item.name === filterDomain);
+    const technology = technologies.find((item) => item.name === filterTechnology);
+    const supervisor = supervisors.find((item) => item.fullName === filterSupervisor);
+    const year = Number(filterYear);
+    const minOriginalityScore = Number(filterMinOriginality);
+
+    return {
+      search: searchQuery.trim() || undefined,
+      year: Number.isFinite(year) && year > 0 ? year : undefined,
+      status: filterStatus || undefined,
+      domainId: domain?.id,
+      technologyId: technology?.id,
+      supervisorId: supervisor?.id,
+      minOriginalityScore: Number.isFinite(minOriginalityScore) && filterMinOriginality !== ""
+        ? minOriginalityScore
+        : undefined,
+    };
+  }, [
+    domains,
+    filterDomain,
+    filterMinOriginality,
+    filterStatus,
+    filterSupervisor,
+    filterTechnology,
+    filterYear,
+    searchQuery,
+    supervisors,
+    technologies,
+  ]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    Promise.allSettled([
+      studentApi.getProjects({ ...catalogFilters, isCurrentAcademicYear: true, pageNumber: currentPage }, PROJECTS_PAGE_SIZE),
+      studentApi.getProjects({ ...catalogFilters, isCurrentAcademicYear: false, pageNumber: oldPage }, PROJECTS_PAGE_SIZE),
+    ]).then(([currentProjectsResult, oldProjectsResult]) => {
+      if (ignore) return;
+
+      if (currentProjectsResult.status === "fulfilled") {
+        const mappedCurrent = currentProjectsResult.value.data.map(mapProject);
+        setThisYearProjects(mappedCurrent);
+        setCurrentTotalPages(Math.max(1, currentProjectsResult.value.totalPages || 1));
+        setCurrentTotalRecords(currentProjectsResult.value.totalRecords || mappedCurrent.length);
+      } else {
+        toast.error("Could not load this year's projects.");
+      }
+
+      if (oldProjectsResult.status === "fulfilled") {
+        const mappedOld = oldProjectsResult.value.data.map(mapProject);
+        setOldProjects(mappedOld);
+        setOldTotalPages(Math.max(1, oldProjectsResult.value.totalPages || 1));
+        setOldTotalRecords(oldProjectsResult.value.totalRecords || mappedOld.length);
+      } else {
+        toast.error("Could not load old projects.");
+      }
+
+      setAllProjects([
+        ...(currentProjectsResult.status === "fulfilled" ? currentProjectsResult.value.data.map(mapProject) : []),
+        ...(oldProjectsResult.status === "fulfilled" ? oldProjectsResult.value.data.map(mapProject) : []),
+      ]);
+      setIsLoading(false);
+    });
+
+    return () => {
+      ignore = true;
+    };
+  }, [catalogFilters, currentPage, oldPage]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    localStorage.setItem("projectsActiveTab", value);
+  };
 
   // Extract unique values for filter dropdowns
   const uniqueYears = Array.from(new Set(allProjects.map(p => p.year))).sort((a, b) => b - a);
-  const uniqueStatuses = Array.from(new Set(allProjects.map(p => p.status)));
-  const uniqueDomains = Array.from(new Set(allProjects.map(p => p.category))).sort();
-  const uniqueSupervisors = Array.from(new Set(allProjects.map(p => p.supervisor))).sort();
-  const uniqueTechnologies = Array.from(new Set(allProjects.flatMap(p => p.technologies))).sort();
-
-  const filterProjects = (projects: Project[]) => {
-    return projects.filter((p) => {
-      // Search query filter
-      const matchesSearch = !searchQuery || 
-        p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.supervisor.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.students.some((s) => s.toLowerCase().includes(searchQuery.toLowerCase()));
-
-      // Year filter
-      const matchesYear = !filterYear || p.year.toString() === filterYear;
-
-      // Status filter
-      const matchesStatus = !filterStatus || p.status === filterStatus;
-
-      // Domain filter
-      const matchesDomain = !filterDomain || p.category === filterDomain;
-
-      // Supervisor filter
-      const matchesSupervisor = !filterSupervisor || p.supervisor === filterSupervisor;
-
-      // Technology filter
-      const matchesTechnology = !filterTechnology || p.technologies.includes(filterTechnology);
-
-      // Min Originality filter
-      const matchesOriginality = !filterMinOriginality || p.originality >= parseInt(filterMinOriginality);
-
-      return matchesSearch && matchesYear && matchesStatus && matchesDomain && matchesSupervisor && matchesTechnology && matchesOriginality;
-    });
-  };
+  const uniqueStatuses = ["In_Progress", "Approved", "Completed"];
+  const uniqueDomains = useMemo(
+    () => domains.length ? domains.map((domain) => domain.name).sort() : Array.from(new Set(allProjects.map(p => p.category))).sort(),
+    [domains, allProjects],
+  );
+  const uniqueSupervisors = useMemo(
+    () => supervisors.length ? supervisors.map((supervisor) => supervisor.fullName).sort() : Array.from(new Set(allProjects.map(p => p.supervisor))).sort(),
+    [supervisors, allProjects],
+  );
+  const uniqueTechnologies = useMemo(
+    () => technologies.length ? technologies.map((technology) => technology.name).sort() : Array.from(new Set(allProjects.flatMap(p => p.technologies))).sort(),
+    [technologies, allProjects],
+  );
 
   const hasActiveFilters = filterYear || filterStatus || filterDomain || filterSupervisor || filterTechnology || filterMinOriginality;
 
@@ -146,21 +187,27 @@ export default function Projects() {
     setFilterSupervisor("");
     setFilterTechnology("");
     setFilterMinOriginality("");
+    setCurrentPage(1);
+    setOldPage(1);
   };
 
-  const getStatusTone = (status: string): StatusTone => {
-    if (status === "Completed") return "completed";
-    return "in-progress";
-  };
+  const getStatusTone = (status: string): StatusTone => normalizeStatusTone(status) as StatusTone;
 
-  const handleRequestSubmit = () => {
+  const handleRequestSubmit = async () => {
     if (!requestMessage.trim()) {
       toast.error("Please provide a brief message for your request.");
       return;
     }
-    toast.success(`Request sent to team ${requestDialogProject?.title}`);
-    setRequestDialogProject(null);
-    setRequestMessage("");
+    if (!requestDialogProject) return;
+
+    try {
+      await studentApi.requestToJoin(Number(requestDialogProject.id), requestMessage);
+      toast.success(`Request sent to ${requestDialogProject.title}`);
+      setRequestDialogProject(null);
+      setRequestMessage("");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Could not send join request."));
+    }
   };
 
   return (
@@ -178,7 +225,11 @@ export default function Projects() {
             type="text"
             placeholder="Search projects by title, category, supervisor, or students..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+              setOldPage(1);
+            }}
             className="w-full pl-10 pr-4 py-2.5 text-sm bg-card border border-border/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/30 transition-colors text-foreground placeholder:text-muted-foreground"
           />
         </div>
@@ -233,7 +284,11 @@ export default function Projects() {
                   <label className="text-xs font-semibold text-foreground uppercase tracking-wide">Year</label>
                   <select
                     value={filterYear}
-                    onChange={(e) => setFilterYear(e.target.value)}
+                    onChange={(e) => {
+                      setFilterYear(e.target.value);
+                      setCurrentPage(1);
+                      setOldPage(1);
+                    }}
                     className="w-full px-3.5 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all text-foreground font-medium"
                   >
                     <option value="">All Years</option>
@@ -248,7 +303,11 @@ export default function Projects() {
                   <label className="text-xs font-semibold text-foreground uppercase tracking-wide">Status</label>
                   <select
                     value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
+                    onChange={(e) => {
+                      setFilterStatus(e.target.value);
+                      setCurrentPage(1);
+                      setOldPage(1);
+                    }}
                     className="w-full px-3.5 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all text-foreground font-medium"
                   >
                     <option value="">All Statuses</option>
@@ -263,7 +322,11 @@ export default function Projects() {
                   <label className="text-xs font-semibold text-foreground uppercase tracking-wide">Domain</label>
                   <select
                     value={filterDomain}
-                    onChange={(e) => setFilterDomain(e.target.value)}
+                    onChange={(e) => {
+                      setFilterDomain(e.target.value);
+                      setCurrentPage(1);
+                      setOldPage(1);
+                    }}
                     className="w-full px-3.5 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all text-foreground font-medium"
                   >
                     <option value="">All Domains</option>
@@ -278,7 +341,11 @@ export default function Projects() {
                   <label className="text-xs font-semibold text-foreground uppercase tracking-wide">Supervisor</label>
                   <select
                     value={filterSupervisor}
-                    onChange={(e) => setFilterSupervisor(e.target.value)}
+                    onChange={(e) => {
+                      setFilterSupervisor(e.target.value);
+                      setCurrentPage(1);
+                      setOldPage(1);
+                    }}
                     className="w-full px-3.5 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all text-foreground font-medium"
                   >
                     <option value="">All Supervisors</option>
@@ -293,7 +360,11 @@ export default function Projects() {
                   <label className="text-xs font-semibold text-foreground uppercase tracking-wide">Technology</label>
                   <select
                     value={filterTechnology}
-                    onChange={(e) => setFilterTechnology(e.target.value)}
+                    onChange={(e) => {
+                      setFilterTechnology(e.target.value);
+                      setCurrentPage(1);
+                      setOldPage(1);
+                    }}
                     className="w-full px-3.5 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all text-foreground font-medium"
                   >
                     <option value="">All Technologies</option>
@@ -312,7 +383,11 @@ export default function Projects() {
                       min="0"
                       max="100"
                       value={filterMinOriginality}
-                      onChange={(e) => setFilterMinOriginality(e.target.value)}
+                      onChange={(e) => {
+                        setFilterMinOriginality(e.target.value);
+                        setCurrentPage(1);
+                        setOldPage(1);
+                      }}
                       placeholder="0"
                       className="w-full px-3.5 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all text-foreground placeholder:text-muted-foreground font-medium"
                     />
@@ -326,7 +401,15 @@ export default function Projects() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="current" className="w-full">
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[0, 1, 2].map((item) => (
+            <div key={item} className="dashboard-card h-64 animate-pulse bg-muted/30" />
+          ))}
+        </div>
+      ) : (
+      <>
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="mb-8 bg-card border border-border/50 rounded-xl p-1 h-auto gap-1 w-fit">
           <TabsTrigger 
             value="current" 
@@ -335,7 +418,7 @@ export default function Projects() {
             <Calendar className="w-4 h-4" />
             <span>This Year</span>
             <span className="ml-1 px-2 py-0.5 bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 rounded-md text-xs font-bold">
-              {filterProjects(thisYearProjects).length}
+              {currentTotalRecords}
             </span>
           </TabsTrigger>
           <TabsTrigger 
@@ -345,14 +428,14 @@ export default function Projects() {
             <Archive className="w-4 h-4" />
             <span>Old Projects</span>
             <span className="ml-1 px-2 py-0.5 bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 rounded-md text-xs font-bold">
-              {filterProjects(oldProjects).length}
+              {oldTotalRecords}
             </span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="current">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filterProjects(thisYearProjects).map((project) => (
+            {thisYearProjects.map((project) => (
               <ProjectCatalogCard
                 key={project.id}
                 project={{
@@ -366,21 +449,27 @@ export default function Projects() {
                   technologies: project.technologies,
                 }}
                 href={`/projects/${project.id}`}
-                secondaryActionLabel={!hasTeam && project.status === "In Progress" ? "Request to Join" : undefined}
-                onSecondaryAction={!hasTeam && project.status === "In Progress" ? () => setRequestDialogProject(project) : undefined}
+                secondaryActionLabel={!hasTeam && project.acceptsJoinRequests ? "Request to Join" : undefined}
+                onSecondaryAction={!hasTeam && project.acceptsJoinRequests ? () => setRequestDialogProject(project) : undefined}
               />
             ))}
           </div>
-          {filterProjects(thisYearProjects).length === 0 && (
+          {thisYearProjects.length === 0 && (
             <div className="text-center py-12">
               <p className="text-gray-500">No projects found</p>
             </div>
           )}
+          <PaginationControls
+            page={currentPage}
+            totalPages={currentTotalPages}
+            totalRecords={currentTotalRecords}
+            onPageChange={setCurrentPage}
+          />
         </TabsContent>
 
         <TabsContent value="old">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filterProjects(oldProjects).map((project) => (
+            {oldProjects.map((project) => (
               <ProjectCatalogCard
                 key={project.id}
                 project={{
@@ -394,16 +483,22 @@ export default function Projects() {
                   technologies: project.technologies,
                 }}
                 href={`/projects/${project.id}`}
-                secondaryActionLabel={!hasTeam && project.status === "In Progress" ? "Request to Join" : undefined}
-                onSecondaryAction={!hasTeam && project.status === "In Progress" ? () => setRequestDialogProject(project) : undefined}
+                secondaryActionLabel={!hasTeam && project.acceptsJoinRequests ? "Request to Join" : undefined}
+                onSecondaryAction={!hasTeam && project.acceptsJoinRequests ? () => setRequestDialogProject(project) : undefined}
               />
             ))}
           </div>
-          {filterProjects(oldProjects).length === 0 && (
+          {oldProjects.length === 0 && (
             <div className="text-center py-12">
               <p className="text-gray-500">No projects found</p>
             </div>
           )}
+          <PaginationControls
+            page={oldPage}
+            totalPages={oldTotalPages}
+            totalRecords={oldTotalRecords}
+            onPageChange={setOldPage}
+          />
         </TabsContent>
       </Tabs>
 
@@ -429,6 +524,73 @@ export default function Projects() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </>
+      )}
+    </div>
+  );
+}
+
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
+function mapProject(project: ProjectCatalogItemDto): Project {
+  return {
+    id: String(project.id),
+    title: project.title,
+    year: project.year,
+    category: project.domain,
+    supervisor: project.supervisor || "Not assigned",
+    status: project.status,
+    technologies: project.technologies || [],
+    students: project.students || [],
+    originality: normalizeOriginalityPercent(project.originalityScore),
+    acceptsJoinRequests: project.acceptsJoinRequests,
+  };
+}
+
+function PaginationControls({
+  page,
+  totalPages,
+  totalRecords,
+  onPageChange,
+}: {
+  page: number;
+  totalPages: number;
+  totalRecords: number;
+  onPageChange: (page: number) => void;
+}) {
+  if (totalRecords <= PROJECTS_PAGE_SIZE && totalPages <= 1) return null;
+
+  const start = totalRecords === 0 ? 0 : (page - 1) * PROJECTS_PAGE_SIZE + 1;
+  const end = Math.min(page * PROJECTS_PAGE_SIZE, totalRecords);
+
+  return (
+    <div className="mt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-border/50 bg-card px-4 py-3">
+      <p className="text-sm text-muted-foreground">
+        Showing {start}-{end} of {totalRecords} projects
+      </p>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={page <= 1}
+          onClick={() => onPageChange(Math.max(1, page - 1))}
+        >
+          Previous
+        </Button>
+        <span className="min-w-24 text-center text-sm font-medium text-foreground">
+          Page {page} of {totalPages}
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={page >= totalPages}
+          onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+        >
+          Next
+        </Button>
+      </div>
     </div>
   );
 }

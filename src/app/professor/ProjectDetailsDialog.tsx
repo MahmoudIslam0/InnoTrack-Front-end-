@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { OriginalityMeter, StatusBadge } from "./_components";
 import { Project, teams } from "./_data";
 import Link from "next/link";
+import { formatPercent } from "@/lib/student-api";
 
 type DecisionMode =
   | "approve-proposal"
@@ -295,7 +296,7 @@ export function ProjectDetailsDialog({
                         {similarProject.title}
                       </p>
                       <Badge variant="outline">
-                        {similarProject.similarity}%
+                        {formatPercent(similarProject.similarity)}%
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">

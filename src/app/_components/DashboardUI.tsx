@@ -122,31 +122,43 @@ export function SectionCard({
   );
 }
 
+import { Skeleton } from "@/components/ui/skeleton";
+
 export function StatCard({
   title,
   value,
   subtitle,
   icon: Icon,
   tone,
+  isLoading,
 }: {
   title: string;
   value: string;
   subtitle: string;
   icon: LucideIcon;
   tone: StatTone;
+  isLoading?: boolean;
 }) {
   return (
     <div className="dashboard-card">
       <div className="flex items-start justify-between mb-4">
         <div>
           <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>
-          <p className="text-2xl font-semibold text-foreground">{value}</p>
+          {isLoading ? (
+            <Skeleton className="h-8 w-24 mb-1" />
+          ) : (
+            <p className="text-2xl font-semibold text-foreground">{value}</p>
+          )}
         </div>
         <div className={`p-3 rounded-lg ${statToneMap[tone]}`}>
           <Icon className="w-5 h-5" />
         </div>
       </div>
-      <p className="text-xs text-muted-foreground">{subtitle}</p>
+      {isLoading ? (
+        <Skeleton className="h-4 w-48" />
+      ) : (
+        <p className="text-xs text-muted-foreground">{subtitle}</p>
+      )}
     </div>
   );
 }

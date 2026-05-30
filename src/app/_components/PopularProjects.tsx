@@ -1,70 +1,75 @@
+"use client";
+
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OriginalProjectCard, OriginalProjectItem } from "./DashboardUI";
-
-const thisYearProjects: OriginalProjectItem[] = [
-  {
-    id: "1",
-    title: "Smart Campus Navigation System",
-    domain: "IoT & Mobile",
-    description:
-      "An AI-powered indoor navigation app using AR technology to help students find classrooms and facilities.",
-    originalityScore: 95,
-    meta: "2026",
-    status: "in-progress",
-  },
-  {
-    id: "2",
-    title: "Automated Exam Proctoring",
-    domain: "AI & Computer Vision",
-    description:
-      "Machine learning system for detecting cheating behaviors during online examinations using facial recognition.",
-    originalityScore: 92,
-    meta: "2026",
-    status: "in-progress",
-  },
-  {
-    id: "3",
-    title: "AI-Powered Learning Assistant",
-    domain: "NLP & Education",
-    description:
-      "Personalized study assistant that summarizes lectures, generates quizzes, and recommends learning paths.",
-    originalityScore: 91,
-    meta: "2026",
-    status: "in-progress",
-  },
-  {
-    id: "4",
-    title: "Green Campus Energy Optimizer",
-    domain: "Sustainability",
-    description:
-      "IoT dashboard that predicts classroom energy demand and suggests efficient lighting and cooling schedules.",
-    originalityScore: 88,
-    meta: "2026",
-    status: "in-progress",
-  },
-];
-
-const allTimeProjects: OriginalProjectItem[] = [
-  thisYearProjects[0],
-  thisYearProjects[1],
-  thisYearProjects[2],
-  {
-    id: "5",
-    title: "Blockchain-Based Degree Verification",
-    domain: "Blockchain",
-    description:
-      "Decentralized platform for issuing and verifying academic credentials using smart contracts.",
-    originalityScore: 94,
-    meta: "2025",
-    status: "completed",
-  },
-];
+import { normalizeOriginalityPercent, normalizeStatusTone, studentApi } from "@/lib/student-api";
 
 export function PopularProjects() {
+  const [thisYearProjects, setThisYearProjects] = useState<OriginalProjectItem[]>([]);
+  const [allTimeProjects, setAllTimeProjects] = useState<OriginalProjectItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let ignore = false;
+
+    Promise.all([
+      studentApi.getMostOriginalProjects(true, 4),
+      studentApi.getMostOriginalProjects(false, 4),
+    ])
+      .then(([thisYear, allTime]) => {
+        if (ignore) return;
+        setThisYearProjects(thisYear.map(mapOriginalProject));
+        setAllTimeProjects(allTime.map(mapOriginalProject));
+      })
+      .catch(() => {
+        if (ignore) return;
+        setThisYearProjects([]);
+        setAllTimeProjects([]);
+      })
+      .finally(() => {
+        if (!ignore) setIsLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  if (isLoading) {
+    return (
+      <section>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-foreground">Most Original Projects</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[0, 1].map((item) => (
+            <div key={item} className="dashboard-card group">
+              <div className="flex items-start justify-between mb-3">
+                <div className="h-6 w-24 bg-muted/60 animate-pulse rounded-md" />
+                <div className="h-6 w-16 bg-muted/60 animate-pulse rounded-md" />
+              </div>
+              <div className="h-6 w-3/4 bg-muted/60 animate-pulse rounded-md mb-2 mt-1" />
+              <div className="space-y-2 mb-4 mt-3">
+                <div className="h-4 w-full bg-muted/60 animate-pulse rounded-md" />
+                <div className="h-4 w-4/5 bg-muted/60 animate-pulse rounded-md" />
+              </div>
+              <div className="flex items-center gap-3 mb-5 mt-1">
+                <div className="h-4 w-12 bg-muted/60 animate-pulse rounded-md" />
+                <div className="h-5 w-20 bg-muted/60 animate-pulse rounded-md" />
+              </div>
+              <div className="h-10 w-full bg-muted/60 animate-pulse rounded-md" />
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
   return <OriginalProjectsSection thisYearProjects={thisYearProjects} allTimeProjects={allTimeProjects} />;
 }
 
@@ -113,6 +118,9 @@ export function OriginalProjectsSection({
               />
             ))}
           </div>
+          {thisYearProjects.length === 0 && (
+            <p className="text-sm text-muted-foreground">No original projects found for this year.</p>
+          )}
         </TabsContent>
 
         <TabsContent value="all-time">
@@ -126,8 +134,31 @@ export function OriginalProjectsSection({
               />
             ))}
           </div>
+          {allTimeProjects.length === 0 && (
+            <p className="text-sm text-muted-foreground">No original projects found yet.</p>
+          )}
         </TabsContent>
       </Tabs>
     </section>
   );
+}
+
+function mapOriginalProject(project: {
+  id: number;
+  domain: string;
+  originalityScore: number;
+  title: string;
+  abstract: string;
+  year: number;
+  status: string;
+}): OriginalProjectItem {
+  return {
+    id: String(project.id),
+    title: project.title,
+    domain: project.domain,
+    description: project.abstract,
+    originalityScore: normalizeOriginalityPercent(project.originalityScore),
+    meta: String(project.year),
+    status: normalizeStatusTone(project.status) as OriginalProjectItem["status"],
+  };
 }

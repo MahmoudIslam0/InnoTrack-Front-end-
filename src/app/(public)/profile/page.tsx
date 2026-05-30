@@ -1,59 +1,134 @@
 "use client";
 
-import { useState } from "react";
-import { User, Mail, BookOpen, Award, LogOut, Phone, Pencil, Save, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { User, Mail, BookOpen, Award, LogOut, Phone, Pencil, Save, X, Hash } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
+
+interface ProfileData {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  departmentId: number;
+  departmentName: string;
+  gpa: number | null;
+  graduationYear: number;
+  hasTeam: boolean;
+  skills: string[];
+}
 
 export default function StudentProfile() {
   const router = useRouter();
+  const { logout, isAuthenticated } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-
-  const [profile, setProfile] = useState({
-    firstName: "John",
-    lastName: "Smith",
-    email: "john.smith@university.edu",
-    phone: "+1 (555) 123-4567",
-    studentId: "STU-2023-4567",
-    department: "Computer Science",
-    major: "Software Engineering",
-    currentYear: "4th Year",
-    enrollmentDate: "09/01/2023",
-    expectedGraduation: "06/30/2027",
-    gpa: "3.8",
-    skills: ["React", "Node.js", "Python", "Machine Learning"],
-  });
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
 
   const [editForm, setEditForm] = useState({
-    phone: profile.phone,
-    gpa: profile.gpa,
-    major: profile.major,
-    skills: profile.skills.join(", "),
+    gpa: "0.0",
+    skills: "",
   });
 
-  const handleSave = () => {
-    setProfile({
-      ...profile,
-      phone: editForm.phone,
-      gpa: editForm.gpa,
-      major: editForm.major,
-      skills: editForm.skills.split(",").map((s) => s.trim()).filter(Boolean),
-    });
-    setIsEditing(false);
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      const data = await api.get("/api/Students/me");
+      if (data) {
+        setProfile(data);
+        setEditForm({
+          gpa: data.gpa !== null ? data.gpa.toString() : "0.0",
+          skills: data.skills ? data.skills.join(", ") : "",
+        });
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to load profile details");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const handleSave = async () => {
+    if (!profile) return;
+
+    const parsedGpa = parseFloat(editForm.gpa);
+    if (isNaN(parsedGpa) || parsedGpa < 0 || parsedGpa > 4) {
+      toast.error("GPA must be a number between 0.0 and 4.0");
+      return;
+    }
+
+    const parsedSkills = editForm.skills
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    try {
+      await api.patch("/api/Students/me/profile", {
+        gpa: parsedGpa,
+        skills: parsedSkills,
+      });
+      toast.success("Profile updated successfully!");
+      setIsEditing(false);
+      fetchProfile(); // Reload
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save profile changes");
+    }
   };
 
   const handleCancel = () => {
-    setEditForm({
-      phone: profile.phone,
-      gpa: profile.gpa,
-      major: profile.major,
-      skills: profile.skills.join(", "),
-    });
+    if (profile) {
+      setEditForm({
+        gpa: profile.gpa !== null ? profile.gpa.toString() : "0.0",
+        skills: profile.skills ? profile.skills.join(", ") : "",
+      });
+    }
     setIsEditing(false);
   };
+
+  const handleLogoutClick = async () => {
+    try {
+      await logout();
+      toast.success("Logged out successfully");
+      router.push("/login");
+    } catch (err) {
+      router.push("/login");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center">
+        <div className="w-12 h-12 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin"></div>
+        <p className="text-muted-foreground mt-4 font-medium">Loading profile...</p>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <div className="text-center max-w-md bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+          <p className="text-gray-600 mb-6">
+            Please log in with a student account to access this profile.
+          </p>
+          <Button onClick={() => router.push("/login")} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
+            Go to Login
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -92,9 +167,11 @@ export default function StudentProfile() {
               <h2 className="text-2xl font-bold text-foreground">
                 {profile.firstName} {profile.lastName}
               </h2>
-              <p className="text-sm text-muted-foreground mt-1">{profile.studentId}</p>
+              <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1 font-mono">
+                <Hash className="w-3.5 h-3.5" /> ID: {profile.id}
+              </p>
               <Badge variant="secondary" className="mt-4 bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-500/20 px-3 py-1 text-xs font-medium">
-                {profile.department}
+                {profile.departmentName}
               </Badge>
 
               <div className="w-full mt-8 space-y-3">
@@ -103,15 +180,15 @@ export default function StudentProfile() {
                   <span className="truncate">{profile.email}</span>
                 </div>
                 <div className="flex items-center p-3.5 rounded-xl bg-slate-50 dark:bg-muted/30 border border-border/50 text-sm text-muted-foreground">
-                  <Phone className="w-4 h-4 mr-3 shrink-0" />
-                  <span className="truncate">{isEditing ? editForm.phone : profile.phone}</span>
+                  <BookOpen className="w-4 h-4 mr-3 shrink-0" />
+                  <span className="truncate">Graduation: {profile.graduationYear}</span>
                 </div>
               </div>
 
               <Button
                 variant="ghost"
                 className="w-full mt-8 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl h-11"
-                onClick={() => router.push("/login")}
+                onClick={handleLogoutClick}
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
@@ -129,35 +206,21 @@ export default function StudentProfile() {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                 <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-foreground">Full Name</Label>
+                  <Label className="text-sm font-semibold text-foreground">First Name</Label>
                   <div className="px-4 py-3 rounded-xl bg-slate-50 dark:bg-muted/30 text-sm text-muted-foreground min-h-[44px]">
-                    {profile.firstName} {profile.lastName}
+                    {profile.firstName}
                   </div>
                 </div>
                 <div className="space-y-2">
+                  <Label className="text-sm font-semibold text-foreground">Last Name</Label>
+                  <div className="px-4 py-3 rounded-xl bg-slate-50 dark:bg-muted/30 text-sm text-muted-foreground min-h-[44px]">
+                    {profile.lastName}
+                  </div>
+                </div>
+                <div className="space-y-2 col-span-1 md:col-span-2">
                   <Label className="text-sm font-semibold text-foreground">Email Address</Label>
                   <div className="px-4 py-3 rounded-xl bg-slate-50 dark:bg-muted/30 text-sm text-muted-foreground min-h-[44px]">
                     {profile.email}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-foreground">Phone Number</Label>
-                  {isEditing ? (
-                    <Input
-                      value={editForm.phone}
-                      onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                      className="px-4 py-3 h-[44px] rounded-xl border-indigo-200 focus-visible:ring-indigo-500 bg-white dark:bg-background"
-                    />
-                  ) : (
-                    <div className="px-4 py-3 rounded-xl bg-slate-50 dark:bg-muted/30 text-sm text-muted-foreground min-h-[44px]">
-                      {profile.phone}
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-foreground">Student ID</Label>
-                  <div className="px-4 py-3 rounded-xl bg-slate-50 dark:bg-muted/30 text-sm text-muted-foreground min-h-[44px]">
-                    {profile.studentId}
                   </div>
                 </div>
               </div>
@@ -173,7 +236,7 @@ export default function StudentProfile() {
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold text-foreground">Department</Label>
                   <div className="px-4 py-3 rounded-xl bg-slate-50 dark:bg-muted/30 text-sm text-muted-foreground min-h-[44px]">
-                    {profile.department}
+                    {profile.departmentName}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -190,40 +253,20 @@ export default function StudentProfile() {
                     />
                   ) : (
                     <div className="px-4 py-3 rounded-xl bg-slate-50 dark:bg-muted/30 text-sm text-muted-foreground min-h-[44px]">
-                      {profile.gpa}
+                      {profile.gpa !== null ? profile.gpa.toFixed(2) : "Not Set"}
                     </div>
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-foreground">Major</Label>
-                  {isEditing ? (
-                    <Input
-                      value={editForm.major}
-                      onChange={(e) => setEditForm({ ...editForm, major: e.target.value })}
-                      className="px-4 py-3 h-[44px] rounded-xl border-indigo-200 focus-visible:ring-indigo-500 bg-white dark:bg-background"
-                    />
-                  ) : (
-                    <div className="px-4 py-3 rounded-xl bg-slate-50 dark:bg-muted/30 text-sm text-muted-foreground min-h-[44px]">
-                      {profile.major}
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-foreground">Current Year</Label>
+                  <Label className="text-sm font-semibold text-foreground">Graduation Year</Label>
                   <div className="px-4 py-3 rounded-xl bg-slate-50 dark:bg-muted/30 text-sm text-muted-foreground min-h-[44px]">
-                    {profile.currentYear}
+                    {profile.graduationYear}
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-foreground">Enrollment Date</Label>
-                  <div className="px-4 py-3 rounded-xl bg-slate-50 dark:bg-muted/30 text-sm text-muted-foreground min-h-[44px]">
-                    {profile.enrollmentDate}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-foreground">Expected Graduation</Label>
-                  <div className="px-4 py-3 rounded-xl bg-slate-50 dark:bg-muted/30 text-sm text-muted-foreground min-h-[44px]">
-                    {profile.expectedGraduation}
+                  <Label className="text-sm font-semibold text-foreground">Has Assigned Team</Label>
+                  <div className="px-4 py-3 rounded-xl bg-slate-50 dark:bg-muted/30 text-sm text-muted-foreground min-h-[44px] capitalize">
+                    {profile.hasTeam ? "Yes" : "No"}
                   </div>
                 </div>
               </div>
@@ -247,14 +290,14 @@ export default function StudentProfile() {
                 </div>
               ) : (
                 <div className="flex flex-wrap gap-2.5 min-h-[44px] items-center">
-                  {profile.skills.length > 0 ? (
+                  {profile.skills && profile.skills.length > 0 ? (
                     profile.skills.map((skill, idx) => (
                       <Badge key={idx} variant="secondary" className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 py-2 px-4 rounded-lg font-medium text-sm border-0">
                         {skill}
                       </Badge>
                     ))
                   ) : (
-                    <span className="text-sm text-muted-foreground italic">No skills listed</span>
+                    <span className="text-sm text-muted-foreground italic">No skills listed yet. Click Edit to add some!</span>
                   )}
                 </div>
               )}

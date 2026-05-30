@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ProjectCatalogCard } from "@/app/_components/DashboardUI";
+import { ProjectCatalogCard, StatusTone } from "@/app/_components/DashboardUI";
 import {
   professorProfile,
   projects as initialProjects,
@@ -18,7 +18,7 @@ interface ProjectData {
   year: number;
   category: string;
   supervisor: string;
-  status: string;
+  status: StatusTone;
   technologies: string[];
   students: string[];
 }
@@ -49,7 +49,7 @@ export default function ProfessorProjects() {
       year: 2026,
       category: project.domain,
       supervisor: professorProfile.name,
-      status: project.status,
+      status: project.status as StatusTone,
       technologies: project.technologies,
       students: studentNames,
     };
