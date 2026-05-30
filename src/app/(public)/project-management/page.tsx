@@ -13,13 +13,8 @@ import {
   Award,
   ShieldCheck,
   Users,
-  UserPlus,
-  Timer,
-  Copy,
-  Check,
   ChevronDown,
   ChevronRight,
-  KeyRound,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -40,14 +35,12 @@ import Link from "next/link";
 import { toast } from "sonner";
 
 // Mock data — current user is team leader
-const isTeamLeader = true;
-
 interface ActiveProject {
   id: string;
   title: string;
   team: string;
   supervisor: string;
-  status: "approved" | "in-progress";
+  status: "approved" | "in-progress" | "cancelled";
   originalityScore: number;
   submittedAt: string;
   approvedAt: string;
@@ -61,6 +54,14 @@ interface Draft {
   date: string;
   originalityScore: number;
   lastEdited: string;
+}
+
+interface StoredTeam {
+  id: string;
+  name: string;
+  leaderId?: string;
+  members?: string[];
+  supervisorName?: string;
 }
 
 const activeProject: ActiveProject = {
@@ -96,38 +97,16 @@ const savedDrafts: Draft[] = [
   },
 ];
 
-interface AvailableStudent {
-  id: string;
-  name: string;
-  department: string;
-  gpa: number;
-  skills: string[];
-}
-
-const mockAvailableStudents: AvailableStudent[] = [
-  { id: "s1", name: "Alice Johnson", department: "Computer Science", gpa: 3.9, skills: ["React", "Node.js", "TypeScript"] },
-  { id: "s2", name: "Omar Khalid", department: "Software Engineering", gpa: 3.7, skills: ["Python", "Machine Learning", "Data Analysis"] },
-  { id: "s3", name: "Sara Ali", department: "Information Systems", gpa: 3.5, skills: ["Figma", "UI/UX", "Frontend"] },
-];
-
-interface JoinRequest {
-  id: string;
-  studentId: string;
-  studentName: string;
-  department: string;
-  message: string;
-  date: string;
-}
-
-const mockJoinRequests: JoinRequest[] = [
-  { id: "r1", studentId: "s4", studentName: "Kareem Hassan", department: "Computer Science", message: "I have experience with React Native and ARKit. I think I would be a great fit!", date: "2 hours ago" },
-];
-
 function getProjectStatusLabel(status: ActiveProject["status"]) {
+  if (status === "cancelled") return "Cancelled";
   return status === "in-progress" ? "In Progress" : "Approved";
 }
 
 function getProjectStatusClasses(status: ActiveProject["status"]) {
+  if (status === "cancelled") {
+    return "bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20";
+  }
+
   return status === "in-progress"
     ? "bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20"
     : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20";
@@ -137,111 +116,92 @@ export default function ProjectManagement() {
   const [drafts, setDrafts] = useState(savedDrafts);
   const [project, setProject] = useState(activeProject);
   
-  const [isJoinCodeDialogOpen, setIsJoinCodeDialogOpen] = useState(false);
-  const [joinCode, setJoinCode] = useState<string | null>(null);
-  const [countdown, setCountdown] = useState(0);
-  const [copied, setCopied] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
   const [isSavedDraftsOpen, setIsSavedDraftsOpen] = useState(true);
-  const [joinCodeInput, setJoinCodeInput] = useState("");
   const [isAbandonDialogOpen, setIsAbandonDialogOpen] = useState(false);
   const [abandonReason, setAbandonReason] = useState("");
   const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
   const [isRemoveMemberDialogOpen, setIsRemoveMemberDialogOpen] = useState(false);
   const router = useRouter();
 
-  const [availableStudents] = useState<AvailableStudent[]>(mockAvailableStudents);
-  const [joinRequests, setJoinRequests] = useState<JoinRequest[]>(mockJoinRequests);
-  const [selectedStudent, setSelectedStudent] = useState<AvailableStudent | JoinRequest | null>(null);
-  const [denyRequestId, setDenyRequestId] = useState<string | null>(null);
-  const [denyFeedback, setDenyFeedback] = useState("");
+  // Teams stored client-side (no backend endpoints per request)
+  const [teams, setTeams] = useState<StoredTeam[]>([]);
+  const [currentTeamId, setCurrentTeamId] = useState<string | null>(null);
+  const [isCreateTeamOpen, setIsCreateTeamOpen] = useState(false);
+  const [newTeamName, setNewTeamName] = useState("");
+  const [newTeamMembers, setNewTeamMembers] = useState(""); // comma-separated names
+  const activeTeam = teams.find((team) => team.id === currentTeamId) || teams[0] || null;
+  const projectTeamName = activeTeam?.name || project.team;
+  const projectMembers =
+    activeTeam
+      ? normalizeTeamMembers(activeTeam.members || [], activeTeam.leaderId || "me").map((memberName) => ({
+          name: displayMemberName(memberName),
+          role: memberName === activeTeam.leaderId ? ("Leader" as const) : ("Member" as const),
+        }))
+      : project.members;
+  const isTeamLeader = activeTeam ? activeTeam.leaderId === "me" : true;
 
+  // Load teams from localStorage on mount
   useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      
-      // Auto-join simulation at 50s
-      if (countdown === 50) {
-        setProject((prev) => ({
-          ...prev,
-          members: [
-            ...prev.members,
-            { name: "Jane Doe", role: "Member" }
-          ]
-        }));
-        toast.success("Jane Doe joined the project team!");
-        setIsJoinCodeDialogOpen(false);
-        setJoinCode(null);
-        setCountdown(0);
+    queueMicrotask(() => {
+      try {
+        const raw = localStorage.getItem("teams") || "[]";
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          const normalizedTeams = parsed.map((team) => normalizeStoredTeam(team));
+          setTeams(normalizedTeams);
+          localStorage.setItem("teams", JSON.stringify(normalizedTeams));
+          if (normalizedTeams.length > 0) setCurrentTeamId(normalizedTeams[0].id || normalizedTeams[0].name);
+        }
+      } catch (e) {
+        console.error("Failed to parse teams from localStorage", e);
       }
-      return () => clearTimeout(timer);
-    } else if (countdown === 0 && joinCode) {
-      setJoinCode(null);
-      toast.info("Join code expired.");
+    });
+  }, []);
+
+  const handleCreateTeam = () => {
+    const name = newTeamName.trim();
+    if (!name) {
+      toast.error("Please provide a team name.");
+      return;
     }
-  }, [countdown, joinCode]);
 
-  const handleGenerateCode = () => {
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    setJoinCode(code);
-    setCountdown(60);
-    setCopied(false);
-  };
+    const id = typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
-  const handleCopy = () => {
-    if (joinCode) {
-      navigator.clipboard.writeText(joinCode);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-      toast.success("Join code copied to clipboard");
+    const members = newTeamMembers
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    // Enforce one-team-per-student
+    const memberToTeam: Record<string, string> = {};
+    teams.forEach((t) => {
+      (t.members || []).forEach((m) => {
+        memberToTeam[m] = t.name;
+      });
+    });
+
+    const conflicts = members.filter((m) => !!memberToTeam[m]);
+    if (conflicts.length > 0) {
+      toast.error(`Cannot add ${conflicts.join(", ")} — already in another team.`);
+      return;
     }
-  };
 
-  const handleInvite = () => {
-    if (!inviteEmail) return;
-    toast.success(`Invitation sent to ${inviteEmail}`);
-    setInviteEmail("");
-    setIsJoinCodeDialogOpen(false);
+    const teamObj = { id, name, leaderId: "me", members: normalizeTeamMembers(members, "me") };
+    const updated = [...teams, teamObj];
+    setTeams(updated);
+    localStorage.setItem("teams", JSON.stringify(updated));
+    setIsCreateTeamOpen(false);
+    setNewTeamName("");
+    setNewTeamMembers("");
+    setCurrentTeamId(id);
+    toast.success(`Team "${name}" created.`);
   };
 
   const handleDeleteDraft = (draftId: string) => {
     setDrafts(drafts.filter((d) => d.id !== draftId));
     toast.success("Draft deleted successfully");
-  };
-
-  const handleApproveRequest = (requestId: string) => {
-    const req = joinRequests.find(r => r.id === requestId);
-    if (req) {
-      setProject(prev => ({ ...prev, members: [...prev.members, { name: req.studentName, role: "Member" }] }));
-      setJoinRequests(joinRequests.filter(r => r.id !== requestId));
-      toast.success(`${req.studentName} has been added to your team!`);
-    }
-  };
-
-  const handleJoinByCode = () => {
-    const cleaned = joinCodeInput.trim();
-    const isValid = /^\d{6}$/.test(cleaned);
-    if (!isValid) {
-      toast.error("Please enter a 6-digit numeric join code.");
-      return;
-    }
-
-    // Optional: compare with generated joinCode if needed
-    toast.success("Successfully joined the project!");
-    router.push("/team-chat");
-  };
-
-  const handleDenyRequest = () => {
-    if (denyRequestId) {
-      setJoinRequests(joinRequests.filter(r => r.id !== denyRequestId));
-      toast.success("Join request denied. Feedback sent to the student.");
-      setDenyRequestId(null);
-      setDenyFeedback("");
-    }
-  };
-
-  const handleInviteStudent = (studentName: string) => {
-    toast.success(`Invitation sent to ${studentName}`);
   };
 
   const handleRemoveMember = (memberName: string) => {
@@ -250,11 +210,29 @@ export default function ProjectManagement() {
   };
 
   const handleConfirmRemoveMember = () => {
-    if (memberToRemove && memberToRemove !== "John Smith") {
-      setProject(prev => ({
-        ...prev,
-        members: prev.members.filter(m => m.name !== memberToRemove)
-      }));
+    if (!memberToRemove) return;
+
+    const leaderName = activeTeam?.leaderId ? displayMemberName(activeTeam.leaderId) : "John Smith";
+    if (memberToRemove !== leaderName) {
+      if (activeTeam) {
+        const updatedTeams = teams.map((team) =>
+          team.id === activeTeam.id
+            ? {
+                ...team,
+                members: (team.members || []).filter(
+                  (member) => displayMemberName(member) !== memberToRemove,
+                ),
+              }
+            : team,
+        );
+        setTeams(updatedTeams);
+        localStorage.setItem("teams", JSON.stringify(updatedTeams));
+      } else {
+        setProject(prev => ({
+          ...prev,
+          members: prev.members.filter(m => m.name !== memberToRemove)
+        }));
+      }
       
       // Also remove from team chat
       const removedMembers = JSON.parse(localStorage.getItem("removedTeamMembers") || "[]");
@@ -264,7 +242,7 @@ export default function ProjectManagement() {
       toast.success(`${memberToRemove} has been removed from the team and team chat.`);
       setIsRemoveMemberDialogOpen(false);
       setMemberToRemove(null);
-    } else if (memberToRemove === "John Smith") {
+    } else if (memberToRemove === leaderName) {
       toast.error("Cannot remove the team leader.");
     }
   };
@@ -291,7 +269,7 @@ export default function ProjectManagement() {
     toast.success("Project abandoned. Your supervisor has been notified with your reason.");
     setIsAbandonDialogOpen(false);
     setAbandonReason("");
-    setProject(prev => ({ ...prev, status: "cancelled" as any }));
+    setProject(prev => ({ ...prev, status: "cancelled" }));
     setTimeout(() => router.push("/project-management"), 2000);
   };
 
@@ -329,27 +307,6 @@ export default function ProjectManagement() {
             <ShieldCheck className="w-4 h-4" />
             Submitted
           </TabsTrigger>
-          {isTeamLeader && (
-            <TabsTrigger 
-              value="join-requests" 
-              className="gap-2 relative rounded-lg border border-border/50 bg-card hover:bg-card/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/10 data-[state=active]:to-indigo-600/10 data-[state=active]:border-indigo-500/30 px-4 py-2.5 font-medium text-foreground data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 transition-all"
-            >
-              <Users className="w-4 h-4" />
-              Requests
-              {joinRequests.length > 0 && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ml-1">
-                  {joinRequests.length}
-                </span>
-              )}
-            </TabsTrigger>
-          )}
-          <TabsTrigger 
-            value="join-by-code" 
-            className="gap-2 rounded-lg border border-border/50 bg-card hover:bg-card/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/10 data-[state=active]:to-indigo-600/10 data-[state=active]:border-indigo-500/30 px-4 py-2.5 font-medium text-foreground data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 transition-all"
-          >
-            <KeyRound className="w-4 h-4" />
-            Join Code
-          </TabsTrigger>
         </TabsList>
 
                {/* ─── Tab 3: Submit New Idea ─── */}
@@ -366,16 +323,34 @@ export default function ProjectManagement() {
               feedback on originality. Our AI-powered system helps you avoid
               redundancy and ensures your project stands out.
             </p>
-            <Button
-              asChild
-              className="bg-indigo-600 hover:bg-indigo-700 text-white h-12 px-8 text-base"
-            >
-              <Link href="/project-submission">
+            <div>
+              <Button
+                className="bg-indigo-600 hover:bg-indigo-700 text-white h-12 px-8 text-base"
+                onClick={() => {
+                  if (!teams || teams.length === 0) {
+                    setIsCreateTeamOpen(true);
+                  } else {
+                    const tid = currentTeamId || teams[0].id;
+                    router.push(`/project-submission?teamId=${tid}`);
+                  }
+                }}
+              >
                 <Lightbulb className="w-5 h-5 mr-2" />
                 Start New Submission
                 <ArrowRight className="w-4 h-4 ml-2" />
-              </Link>
-            </Button>
+              </Button>
+
+              {(!teams || teams.length === 0) ? (
+                <p className="text-sm text-muted-foreground mt-3">
+                  You must create a team before submitting a project. 
+                  <button className="ml-1 underline text-sm" onClick={() => setIsCreateTeamOpen(true)}>Create a team</button>
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground mt-3">
+                  Submitting as <strong>{teams.find(t => t.id === currentTeamId)?.name || teams[0].name}</strong> — you can change teams later.
+                </p>
+              )}
+            </div>
           </div>
         </TabsContent>
 
@@ -404,7 +379,7 @@ export default function ProjectManagement() {
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        Team: {project.team} · Supervisor:{" "}
+                        Team: {projectTeamName} · Supervisor:{" "}
                         {project.supervisor}
                       </p>
                     </div>
@@ -449,7 +424,7 @@ export default function ProjectManagement() {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Users className="w-4 h-4" />
-                      <span>{project.members.length} members</span>
+                      <span>{projectMembers.length} members</span>
                     </div>
                   </div>
 
@@ -467,7 +442,7 @@ export default function ProjectManagement() {
 
                   {/* Team Members */}
                   <div className="flex flex-wrap items-center gap-3 mb-5">
-                    {project.members.map((member) => (
+                    {projectMembers.map((member) => (
                       <div
                         key={member.name}
                         className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg border border-border/50 group"
@@ -509,80 +484,6 @@ export default function ProjectManagement() {
                         )}
                       </div>
                     ))}
-                    
-                    {isTeamLeader && (
-                      <Dialog open={isJoinCodeDialogOpen} onOpenChange={setIsJoinCodeDialogOpen}>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="h-9 gap-1.5 rounded-lg border-dashed">
-                            <UserPlus className="w-3.5 h-3.5" />
-                            <span className="text-xs">Add Member</span>
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
-                          <DialogHeader>
-                            <DialogTitle>Add Team Member</DialogTitle>
-                            <DialogDescription>
-                              Invite a student to join your project team.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="flex flex-col gap-6 py-4">
-                            <div className="space-y-3">
-                              <h4 className="text-sm font-medium">Invite via Email</h4>
-                              <div className="flex gap-2">
-                                <Input 
-                                  placeholder="student@university.edu" 
-                                  value={inviteEmail}
-                                  onChange={(e) => setInviteEmail(e.target.value)}
-                                />
-                                <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={handleInvite}>
-                                  Send
-                                </Button>
-                              </div>
-                            </div>
-                            
-                            <div className="relative">
-                              <div className="absolute inset-0 flex items-center">
-                                <span className="w-full border-t border-border/50" />
-                              </div>
-                              <div className="relative flex justify-center text-xs uppercase">
-                                <span className="bg-background px-2 text-muted-foreground">
-                                  Or use join code
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between">
-                                <h4 className="text-sm font-medium">Generate Temporary Code</h4>
-                                {countdown > 0 && (
-                                  <span className="text-xs font-medium text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                                    <Timer className="w-3 h-3" />
-                                    {countdown}s remaining
-                                  </span>
-                                )}
-                              </div>
-                              
-                              {joinCode ? (
-                                <div className="flex items-center justify-between p-3 rounded-xl border border-indigo-500/30 bg-indigo-500/5">
-                                  <span className="text-2xl font-bold tracking-[0.2em] text-indigo-600 dark:text-indigo-400">{joinCode}</span>
-                                  <Button variant="ghost" size="icon" onClick={handleCopy}>
-                                    {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-                                  </Button>
-                                </div>
-                              ) : (
-                                <Button variant="outline" className="w-full" onClick={handleGenerateCode}>
-                                  Generate 6-Digit Code
-                                </Button>
-                              )}
-                              
-                              <p className="text-xs text-muted-foreground mt-2">
-                                Code expires in 60 seconds.
-                              </p>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    )}
                   </div>
 
                   {/* Actions */}
@@ -716,21 +617,32 @@ export default function ProjectManagement() {
                           </div>
                           
                           <div className="flex items-center gap-2 sm:shrink-0">
-                            <Button asChild variant="outline" size="sm" className="h-9">
-                              <Link href={`/project-submission?edit=${draft.id}`}>
-                                <Edit2 className="w-3.5 h-3.5 mr-1.5" />
-                                Resume
-                              </Link>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-9 w-9 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10"
-                              onClick={() => handleDeleteDraft(draft.id)}
-                              aria-label="Delete draft"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            {isTeamLeader ? (
+                              <>
+                                <Button asChild variant="outline" size="sm" className="h-9">
+                                  <Link href={`/project-submission?edit=${draft.id}`}>
+                                    <Edit2 className="w-3.5 h-3.5 mr-1.5" />
+                                    Resume
+                                  </Link>
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-9 w-9 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10"
+                                  onClick={() => handleDeleteDraft(draft.id)}
+                                  aria-label="Delete draft"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </>
+                            ) : (
+                              <Button asChild variant="outline" size="sm" className="h-9">
+                                <Link href={`/project-submission?draft=${draft.id}&mode=view`}>
+                                  <FileText className="w-3.5 h-3.5 mr-1.5" />
+                                  View Draft
+                                </Link>
+                              </Button>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -789,160 +701,33 @@ export default function ProjectManagement() {
             </div>
           </div>
         </TabsContent>
-
- 
-
-        {/* ─── Tab 4: Join Requests ─── */}
-        <TabsContent value="join-requests">
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-foreground mb-4">Pending Requests to Join Your Team</h2>
-            {joinRequests.length === 0 ? (
-              <div className="bg-card text-card-foreground rounded-xl border border-border/50 p-8 text-center">
-                <p className="text-muted-foreground">No pending join requests.</p>
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                {joinRequests.map(req => (
-                  <div key={req.id} className="bg-card text-card-foreground rounded-xl border border-border/50 shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-700 dark:text-indigo-400 font-bold text-lg">
-                          {req.studentName[0]}
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-foreground">{req.studentName}</h4>
-                          <p className="text-xs text-muted-foreground">{req.department} · Requested {req.date}</p>
-                        </div>
-                      </div>
-                      <div className="mt-3 p-3 bg-muted/30 rounded-lg text-sm text-foreground italic border border-border/50">
-                        &quot;{req.message}&quot;
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 md:shrink-0">
-                      <Button variant="outline" size="sm" onClick={() => setSelectedStudent(req)}>
-                        View Profile
-                      </Button>
-                      <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50 dark:border-red-900/30 dark:hover:bg-red-900/20" onClick={() => setDenyRequestId(req.id)}>
-                        Deny
-                      </Button>
-                      <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleApproveRequest(req.id)}>
-                        Approve
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </TabsContent>
-
-        {/* ─── Tab 5: Join by Code ─── */}
-        <TabsContent value="join-by-code">
-          <div className="bg-card text-card-foreground rounded-xl border border-border/50 shadow-sm p-8 md:p-10 text-center max-w-xl mx-auto mt-8">
-            <div className="w-16 h-16 bg-indigo-500/10 rounded-2xl mx-auto flex items-center justify-center mb-6">
-              <KeyRound className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
-            </div>
-            <h2 className="text-2xl font-semibold text-foreground mb-3">
-              Have a Join Code?
-            </h2>
-            <p className="text-muted-foreground mb-8">
-              Enter the join code provided by your team leader to instantly join the project team and access the team workspace.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 max-w-sm mx-auto">
-              <Input 
-                placeholder="Enter 6-digit code" 
-                value={joinCodeInput}
-                onChange={(e) => {
-                  // allow only digits and limit to 6 chars
-                  const digits = e.target.value.replace(/\D/g, "").slice(0, 6);
-                  setJoinCodeInput(digits);
-                }}
-                className="h-12 text-center tracking-widest"
-                inputMode="numeric"
-                pattern="[0-9]*"
-              />
-              <Button onClick={handleJoinByCode} className="h-12 px-6 bg-indigo-600 hover:bg-indigo-700 text-white">
-                Join Team
-              </Button>
-            </div>
-          </div>
-        </TabsContent>
       </Tabs>
 
-      {/* Profile Dialog */}
-      <Dialog open={!!selectedStudent} onOpenChange={(open) => !open && setSelectedStudent(null)}>
-        <DialogContent className="sm:max-w-lg">
+      {/* Create Team Dialog */}
+      <Dialog open={isCreateTeamOpen} onOpenChange={setIsCreateTeamOpen}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Student Profile</DialogTitle>
-          </DialogHeader>
-          {selectedStudent && (
-            <div className="py-4 space-y-6">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-2xl shadow-md">
-                  {('studentName' in selectedStudent ? selectedStudent.studentName : selectedStudent.name).split(" ").map(n => n[0]).join("")}
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-foreground">
-                    {'studentName' in selectedStudent ? selectedStudent.studentName : selectedStudent.name}
-                  </h3>
-                  <p className="text-muted-foreground">{selectedStudent.department}</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1 p-3 bg-muted/30 rounded-lg border border-border/50">
-                  <span className="text-xs text-muted-foreground block">GPA</span>
-                  <span className="font-semibold text-foreground">
-                    {'gpa' in selectedStudent ? selectedStudent.gpa : '3.8'}
-                  </span>
-                </div>
-                <div className="space-y-1 p-3 bg-muted/30 rounded-lg border border-border/50">
-                  <span className="text-xs text-muted-foreground block">Current Year</span>
-                  <span className="font-semibold text-foreground">4th Year</span>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-sm font-semibold text-foreground mb-2">Technical Skills</h4>
-                <div className="flex flex-wrap gap-2">
-                  {('skills' in selectedStudent ? selectedStudent.skills : ['React', 'Node.js', 'Python']).map(skill => (
-                    <Badge key={skill} variant="secondary" className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-400">
-                      {skill}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Deny Request Dialog */}
-      <Dialog open={!!denyRequestId} onOpenChange={(open) => !open && setDenyRequestId(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Deny Join Request</DialogTitle>
+            <DialogTitle>Create a Team</DialogTitle>
             <DialogDescription>
-              Please provide feedback to the student on why their request is being denied. This helps them improve for future opportunities.
+              Create a team to manage members and submit projects as a group.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Label htmlFor="feedback" className="mb-2 block">Feedback Message</Label>
-            <Textarea 
-              id="feedback"
-              placeholder="e.g. We are looking for someone with more experience in backend development..."
-              className="min-h-[100px]"
-              value={denyFeedback}
-              onChange={(e) => setDenyFeedback(e.target.value)}
-            />
+          <div className="py-4 space-y-4">
+            <div>
+              <Label htmlFor="team-name" className="mb-2 block">Team Name</Label>
+              <Input id="team-name" placeholder="e.g. Nova Path" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="team-members" className="mb-2 block">Team Members (comma-separated)</Label>
+              <Textarea id="team-members" placeholder="John Smith, Sarah Ahmed" value={newTeamMembers} onChange={(e) => setNewTeamMembers(e.target.value)} className="min-h-[80px]" />
+            </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setDenyRequestId(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDenyRequest}>Deny Request</Button>
+            <Button variant="outline" onClick={() => setIsCreateTeamOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreateTeam}>Create Team</Button>
           </div>
         </DialogContent>
       </Dialog>
-
       {/* Remove Member Dialog */}
       <Dialog open={isRemoveMemberDialogOpen} onOpenChange={setIsRemoveMemberDialogOpen}>
         <DialogContent className="sm:max-w-md">
@@ -967,4 +752,35 @@ export default function ProjectManagement() {
       </Dialog>
     </div>
   );
+}
+
+function displayMemberName(name: string) {
+  if (name === "me") return "John Smith";
+  return name;
+}
+
+function normalizeStoredTeam(value: unknown): StoredTeam {
+  const item =
+    value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  const leaderId = typeof item.leaderId === "string" ? item.leaderId : "me";
+  const members = Array.isArray(item.members)
+    ? item.members.filter((member): member is string => typeof member === "string")
+    : [];
+
+  return {
+    id: typeof item.id === "string" ? item.id : `${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+    name: typeof item.name === "string" ? item.name : "Untitled Team",
+    leaderId,
+    supervisorName:
+      typeof item.supervisorName === "string"
+        ? item.supervisorName
+        : typeof item.supervisor === "string"
+          ? item.supervisor
+          : undefined,
+    members: normalizeTeamMembers(members, leaderId),
+  };
+}
+
+function normalizeTeamMembers(members: string[], leaderId: string) {
+  return [...new Set([leaderId, ...members].filter(Boolean))];
 }

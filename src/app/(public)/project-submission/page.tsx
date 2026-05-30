@@ -29,6 +29,13 @@ interface Draft {
   originalityScore: number;
 }
 
+interface StoredTeam {
+  id: string;
+  name: string;
+  leaderId?: string;
+  members?: string[];
+}
+
 const mockDrafts: Draft[] = [
   {
     id: "1",
@@ -62,6 +69,7 @@ function ProjectSubmissionPage() {
   const editId = searchParams.get("edit");
   const editMode = searchParams.get("mode");
   const draftId = searchParams.get("draft");
+  const isViewOnly = editMode === "view";
   const isDetailsOnly = editMode === "details-only";
   const isEditing = Boolean(editId) || Boolean(draftId);
 
@@ -85,6 +93,37 @@ function ProjectSubmissionPage() {
     objectives: "",
   });
 
+  // Teams (client-side) and selected team
+  const [teams, setTeams] = useState<StoredTeam[]>([]);
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  const selectedTeam = teams.find((team) => team.id === selectedTeamId) || teams[0] || null;
+  const lockAllFields = isViewOnly;
+
+  const handleLoadDraft = (draft: Draft) => {
+    setFormData({
+      title: draft.title,
+      studentNames: "John Smith, Sarah Ahmed",
+      year: "2026",
+      category: "AI & Machine Learning",
+      technologies:
+        draft.id === "1"
+          ? "React Native, ARKit, Firebase, TensorFlow"
+          : "Python, GPT-4, React, Node.js",
+      abstract:
+        draft.id === "1"
+          ? "This project proposes an AI-powered indoor navigation application using Augmented Reality (AR) technology."
+          : "An intelligent learning assistant powered by advanced AI to help students with their studies.",
+      description: "Comprehensive project description...",
+      problemStatement: "Problem statement details...",
+      proposedSolution: "Proposed solution details...",
+      objectives: "Project objectives...",
+    });
+    setOriginalityScore(draft.originalityScore);
+    setHasRunSimilarityCheck(true);
+    setSelectedDraftId(draft.id);
+    toast.success(`Draft "${draft.title}" loaded`);
+  };
+
   // Restore state from sessionStorage on mount if no specific ID is provided
   useEffect(() => {
     if (!editId && !draftId) {
@@ -92,10 +131,12 @@ function ProjectSubmissionPage() {
       if (savedState) {
         try {
           const parsed = JSON.parse(savedState);
-          setFormData(parsed.formData);
-          setOriginalityScore(parsed.originalityScore);
-          setHasRunSimilarityCheck(parsed.hasRunSimilarityCheck);
-        } catch (e) {
+          queueMicrotask(() => {
+            setFormData(parsed.formData);
+            setOriginalityScore(parsed.originalityScore);
+            setHasRunSimilarityCheck(parsed.hasRunSimilarityCheck);
+          });
+        } catch {
           console.error("Failed to parse saved draft state");
         }
       }
@@ -118,34 +159,58 @@ function ProjectSubmissionPage() {
 
     if (editId && isDetailsOnly) {
       // Editing an approved project — load its data
-      setFormData({
-        title: "Smart Campus Navigation System",
-        studentNames: "Mohamed Ayman, Sarah Ahmed",
-        year: "2026",
-        category: "IoT & Mobile",
-        technologies: "React Native, ARKit, Firebase",
-        abstract:
-          "A mobile application that provides real-time indoor navigation for university campus buildings using augmented reality and Bluetooth beacons.",
-        description:
-          "The Smart Campus Navigation System is designed to address the challenges faced by students in navigating large university campuses. By integrating AR technology with indoor positioning systems, the application provides an intuitive and interactive wayfinding experience.",
-        problemStatement:
-          "Students and visitors often struggle to find specific rooms, offices, or facilities within large university buildings, leading to time wastage and frustration.",
-        proposedSolution:
-          "Develop a mobile AR application that overlays directional arrows and information on the camera view, guiding users to their destination using Bluetooth beacons for accurate indoor positioning.",
-        objectives:
-          "1. Implement accurate indoor positioning using BLE beacons\n2. Develop an intuitive AR interface\n3. Create a comprehensive database of campus locations\n4. Integrate with university timetable system\n5. Ensure accessibility features",
+      queueMicrotask(() => {
+        setFormData({
+          title: "Smart Campus Navigation System",
+          studentNames: "Mohamed Ayman, Sarah Ahmed",
+          year: "2026",
+          category: "IoT & Mobile",
+          technologies: "React Native, ARKit, Firebase",
+          abstract:
+            "A mobile application that provides real-time indoor navigation for university campus buildings using augmented reality and Bluetooth beacons.",
+          description:
+            "The Smart Campus Navigation System is designed to address the challenges faced by students in navigating large university campuses. By integrating AR technology with indoor positioning systems, the application provides an intuitive and interactive wayfinding experience.",
+          problemStatement:
+            "Students and visitors often struggle to find specific rooms, offices, or facilities within large university buildings, leading to time wastage and frustration.",
+          proposedSolution:
+            "Develop a mobile AR application that overlays directional arrows and information on the camera view, guiding users to their destination using Bluetooth beacons for accurate indoor positioning.",
+          objectives:
+            "1. Implement accurate indoor positioning using BLE beacons\n2. Develop an intuitive AR interface\n3. Create a comprehensive database of campus locations\n4. Integrate with university timetable system\n5. Ensure accessibility features",
+        });
+        setOriginalityScore(85);
+        setHasRunSimilarityCheck(true);
+        setInitialized(true);
       });
-      setOriginalityScore(85);
-      setHasRunSimilarityCheck(true);
-      setInitialized(true);
     } else if (draftId) {
       const draft = mockDrafts.find((d) => d.id === draftId);
       if (draft) {
-        handleLoadDraft(draft);
-        setInitialized(true);
+        queueMicrotask(() => {
+          handleLoadDraft(draft);
+          setInitialized(true);
+        });
       }
     }
   }, [editId, draftId, isDetailsOnly, initialized]);
+
+  // Load teams from localStorage and pre-fill teamId from query
+  useEffect(() => {
+    queueMicrotask(() => {
+      try {
+        const raw = localStorage.getItem("teams") || "[]";
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          setTeams(parsed);
+          if (!searchParams.get("teamId") && parsed.length > 0) {
+            setSelectedTeamId(parsed[0].id);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to parse teams from localStorage", e);
+      }
+      const tid = searchParams.get("teamId");
+      if (tid) setSelectedTeamId(tid);
+    });
+  }, [searchParams]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -186,6 +251,10 @@ function ProjectSubmissionPage() {
     }
     if (originalityScore < 60) {
       toast.error("Project originality must be above 60% to submit");
+      return;
+    }
+    if (!selectedTeam) {
+      toast.error("Please create a team before submitting the project.");
       return;
     }
     
@@ -248,31 +317,6 @@ function ProjectSubmissionPage() {
     toast.success("Project details extracted successfully");
   };
 
-  const handleLoadDraft = (draft: Draft) => {
-    setFormData({
-      title: draft.title,
-      studentNames: "John Smith, Sarah Ahmed",
-      year: "2026",
-      category: "AI & Machine Learning",
-      technologies:
-        draft.id === "1"
-          ? "React Native, ARKit, Firebase, TensorFlow"
-          : "Python, GPT-4, React, Node.js",
-      abstract:
-        draft.id === "1"
-          ? "This project proposes an AI-powered indoor navigation application using Augmented Reality (AR) technology."
-          : "An intelligent learning assistant powered by advanced AI to help students with their studies.",
-      description: "Comprehensive project description...",
-      problemStatement: "Problem statement details...",
-      proposedSolution: "Proposed solution details...",
-      objectives: "Project objectives...",
-    });
-    setOriginalityScore(draft.originalityScore);
-    setHasRunSimilarityCheck(true);
-    setSelectedDraftId(draft.id);
-    toast.success(`Draft "${draft.title}" loaded`);
-  };
-
   const handleDeleteDraft = (draftId: string) => {
     toast.success("Draft deleted successfully");
   };
@@ -315,11 +359,13 @@ function ProjectSubmissionPage() {
           ← Back to Project Management
         </Button>
         <h1 className="text-3xl font-semibold text-foreground tracking-tight mb-2">
-          {isDetailsOnly ? "Edit Project Details" : isEditing ? "Edit Draft" : "Project Submission"}
+          {isViewOnly ? "View Draft" : isDetailsOnly ? "Edit Project Details" : isEditing ? "Edit Draft" : "Project Submission"}
         </h1>
         <p className="text-muted-foreground">
           {isDetailsOnly
             ? "Update the editable details of your approved project"
+            : isViewOnly
+              ? "Review this team draft without changing it"
             : isEditing
               ? "Continue working on your saved draft"
               : "Submit your graduation project proposal"}
@@ -356,13 +402,31 @@ function ProjectSubmissionPage() {
 
             <div className="space-y-5">
               <div className="space-y-1.5">
+                <Label htmlFor="team">Team *</Label>
+                {teams.length === 0 ? (
+                  <div className="flex items-center gap-3">
+                    <p className="text-sm text-muted-foreground">No teams found. Create a team in Teams first.</p>
+                    <Button variant="link" onClick={() => router.push('/teams')}>Create Team</Button>
+                  </div>
+                ) : (
+                  <div
+                    id="team"
+                    className="flex min-h-12 w-full items-center rounded-md border border-border bg-muted/40 px-3 text-sm font-medium text-foreground"
+                  >
+                    {selectedTeam?.name}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">This submission is attached to your current team.</p>
+              </div>
+              <div className="space-y-1.5">
                 <Label htmlFor="title">Project Title *</Label>
                   <Input
                     id="title"
                     placeholder="e.g., Smart Campus Navigation System"
                     value={formData.title}
                     onChange={(e) => handleInputChange("title", e.target.value)}
-                    className="h-12 bg-background/50 focus:bg-background text-lg"
+                    className={lockAllFields ? "h-12 bg-muted text-muted-foreground text-lg" : "h-12 bg-background/50 focus:bg-background text-lg"}
+                    disabled={lockAllFields}
                   />
               </div>
 
@@ -375,8 +439,8 @@ function ProjectSubmissionPage() {
                   onChange={(e) =>
                     handleInputChange("studentNames", e.target.value)
                   }
-                  className={isDetailsOnly ? "bg-muted text-muted-foreground" : "bg-background/50 focus:bg-background"}
-                  disabled={isDetailsOnly}
+                  className={isDetailsOnly || lockAllFields ? "bg-muted text-muted-foreground" : "bg-background/50 focus:bg-background"}
+                  disabled={isDetailsOnly || lockAllFields}
                 />
               </div>
 
@@ -423,7 +487,8 @@ function ProjectSubmissionPage() {
                   onChange={(e) =>
                     handleInputChange("technologies", e.target.value)
                   }
-                  className="bg-background/50 focus:bg-background"
+                  className={lockAllFields ? "bg-muted text-muted-foreground" : "bg-background/50 focus:bg-background"}
+                  disabled={lockAllFields}
                 />
               </div>
             </div>
@@ -450,8 +515,8 @@ function ProjectSubmissionPage() {
                   onChange={(e) =>
                     handleInputChange("abstract", e.target.value)
                   }
-                  className={isDetailsOnly ? "min-h-[120px] bg-muted text-muted-foreground resize-y" : "min-h-[120px] bg-background/50 focus:bg-background resize-y"}
-                  disabled={isDetailsOnly}
+                  className={isDetailsOnly || lockAllFields ? "min-h-[120px] bg-muted text-muted-foreground resize-y" : "min-h-[120px] bg-background/50 focus:bg-background resize-y"}
+                  disabled={isDetailsOnly || lockAllFields}
                 />
               </div>
 
@@ -464,7 +529,8 @@ function ProjectSubmissionPage() {
                   onChange={(e) =>
                     handleInputChange("description", e.target.value)
                   }
-                  className="min-h-[160px] bg-background/50 focus:bg-background resize-y"
+                  className={lockAllFields ? "min-h-[160px] bg-muted text-muted-foreground resize-y" : "min-h-[160px] bg-background/50 focus:bg-background resize-y"}
+                  disabled={lockAllFields}
                 />
               </div>
 
@@ -477,8 +543,8 @@ function ProjectSubmissionPage() {
                   onChange={(e) =>
                     handleInputChange("problemStatement", e.target.value)
                   }
-                  className={isDetailsOnly ? "min-h-[120px] bg-muted text-muted-foreground resize-y" : "min-h-[120px] bg-background/50 focus:bg-background resize-y"}
-                  disabled={isDetailsOnly}
+                  className={isDetailsOnly || lockAllFields ? "min-h-[120px] bg-muted text-muted-foreground resize-y" : "min-h-[120px] bg-background/50 focus:bg-background resize-y"}
+                  disabled={isDetailsOnly || lockAllFields}
                 />
               </div>
 
@@ -491,8 +557,8 @@ function ProjectSubmissionPage() {
                   onChange={(e) =>
                     handleInputChange("proposedSolution", e.target.value)
                   }
-                  className={isDetailsOnly ? "min-h-[160px] bg-muted text-muted-foreground resize-y" : "min-h-[160px] bg-background/50 focus:bg-background resize-y"}
-                  disabled={isDetailsOnly}
+                  className={isDetailsOnly || lockAllFields ? "min-h-[160px] bg-muted text-muted-foreground resize-y" : "min-h-[160px] bg-background/50 focus:bg-background resize-y"}
+                  disabled={isDetailsOnly || lockAllFields}
                 />
               </div>
 
@@ -505,13 +571,15 @@ function ProjectSubmissionPage() {
                   onChange={(e) =>
                     handleInputChange("objectives", e.target.value)
                   }
-                  className="min-h-[120px] bg-background/50 focus:bg-background resize-y"
+                  className={lockAllFields ? "min-h-[120px] bg-muted text-muted-foreground resize-y" : "min-h-[120px] bg-background/50 focus:bg-background resize-y"}
+                  disabled={lockAllFields}
                 />
               </div>
             </div>
           </div>
 
           {/* Action Buttons */}
+          {!isViewOnly ? (
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
             {!isDetailsOnly && (
               <Button
@@ -544,6 +612,11 @@ function ProjectSubmissionPage() {
               {isDetailsOnly ? "Update Project Details" : "Submit to Supervisor"}
             </Button>
           </div>
+          ) : (
+            <div className="rounded-xl border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
+              Draft is view-only for team members. The team leader can resume editing.
+            </div>
+          )}
 
           {originalityScore > 0 && originalityScore < 60 && (
             <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-5 flex items-start gap-4 animate-in slide-in-from-bottom-4">
@@ -614,6 +687,7 @@ function ProjectSubmissionPage() {
               variant="outline"
               className="w-full h-11 rounded-xl"
               onClick={handleRunSimilarityCheck}
+              disabled={isViewOnly}
             >
               <TrendingUp className="w-4 h-4 mr-2" />
               Run Similarity Check

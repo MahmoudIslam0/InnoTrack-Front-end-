@@ -3,11 +3,9 @@
 import {
   LayoutDashboard,
   FolderKanban,
-  MessageSquare,
-  LogOut,
-  FileText,
   Bot,
   ClipboardList,
+  Users,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -22,16 +20,16 @@ const studentMenuItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
   { id: "projects", label: "Projects", icon: FolderKanban, path: "/projects" },
   { id: "project-management", label: "Project Management", icon: ClipboardList, path: "/project-management" },
+  { id: "teams", label: "Teams", icon: Users, path: "/teams" },
   { id: "innochat", label: "InnoChat", icon: Bot, path: "/innochat" },
-  { id: "team-chat", label: "Team Chat", icon: MessageSquare, path: "/team-chat" },
 ];
 
 const professorMenuItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/professor/dashboard" },
   { id: "projects", label: "Projects", icon: FolderKanban, path: "/professor/projects" },
   { id: "project-management", label: "Project Management", icon: ClipboardList, path: "/professor/project-management" },
+  { id: "teams", label: "Teams", icon: Users, path: "/professor/teams" },
   { id: "innochat", label: "InnoChat", icon: Bot, path: "/professor/innochat" },
-  { id: "team-chat", label: "Team Chat", icon: MessageSquare, path: "/professor/team-chats" },
 ];
 
 export function SidebarContent({ activeItem, variant = "student" }: SidebarProps) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, FolderKanban, ClipboardList, Bot, MessageSquare } from "lucide-react";
+import { LayoutDashboard, FolderKanban, ClipboardList, Bot, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -9,7 +9,7 @@ const navItems = [
   { icon: FolderKanban, label: "Projects", path: "/projects" },
   { icon: ClipboardList, label: "Manage", path: "/project-management" },
   { icon: Bot, label: "Chat AI", path: "/innochat" },
-  { icon: MessageSquare, label: "Team", path: "/team-chat" },
+  { icon: Users, label: "Team", path: "/teams" },
 ];
 
 export function MobileBottomNav() {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Download, FileText, ImageIcon, Paperclip, Send, UserPlus, Timer, Copy, Check, ChevronDown, ChevronRight } from "lucide-react";
+import { Download, FileText, ImageIcon, Paperclip, Send, ChevronDown, ChevronRight } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -9,14 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 
 export interface TeamChatMessage {
   id: string;
@@ -47,7 +39,6 @@ export function TeamChatWorkspace({
   initialMessages,
   currentUserName,
   currentUserRole,
-  isTeamLeader,
   className,
 }: {
   title: string;
@@ -63,16 +54,12 @@ export function TeamChatWorkspace({
   const [messages, setMessages] = useState(initialMessages);
   const [members, setMembers] = useState(initialMembers);
   
-  const [isJoinCodeDialogOpen, setIsJoinCodeDialogOpen] = useState(false);
-  const [joinCode, setJoinCode] = useState<string | null>(null);
-  const [countdown, setCountdown] = useState(0);
-  const [copied, setCopied] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
   const [isSharedFilesOpen, setIsSharedFilesOpen] = useState(true);
 
   // Check for removed members and filter them out
   useEffect(() => {
     if (typeof window !== "undefined") {
+      queueMicrotask(() => {
       // Check for abandoned project
       const abandonmentInfo = localStorage.getItem("projectAbandonment");
       if (abandonmentInfo) {
@@ -120,71 +107,9 @@ export function TeamChatWorkspace({
         localStorage.removeItem("removedTeamMembers");
         toast.info(`${removedMembers.length} member(s) removed from team chat`);
       }
+      });
     }
   }, []);
-
-  // Join code countdown and simulation logic
-  useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      
-      // Auto-join simulation at 50s (10 seconds after code generated)
-      if (countdown === 50) {
-        setMembers((prev) => [
-          ...prev,
-          {
-            id: `m${Date.now()}`,
-            name: "Jane Doe",
-            initials: "JD",
-            role: "Student",
-            online: true,
-          }
-        ]);
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `msg${Date.now()}`,
-            author: "System",
-            initials: "SYS",
-            role: "Professor", // Using professor badge color to look like system
-            content: "Jane Doe has joined the team via join code.",
-            timestamp: "Just now",
-          }
-        ]);
-        toast.success("Jane Doe joined the team!");
-        setIsJoinCodeDialogOpen(false); // Optionally close the dialog
-        setJoinCode(null);
-        setCountdown(0);
-      }
-      return () => clearTimeout(timer);
-    } else if (countdown === 0 && joinCode) {
-      setJoinCode(null);
-      toast.info("Join code expired.");
-    }
-  }, [countdown, joinCode]);
-
-  const handleGenerateCode = () => {
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    setJoinCode(code);
-    setCountdown(60);
-    setCopied(false);
-  };
-
-  const handleCopy = () => {
-    if (joinCode) {
-      navigator.clipboard.writeText(joinCode);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-      toast.success("Join code copied to clipboard");
-    }
-  };
-
-  const handleInvite = () => {
-    if (!inviteEmail) return;
-    toast.success(`Invitation sent to ${inviteEmail}`);
-    setInviteEmail("");
-    setIsJoinCodeDialogOpen(false);
-  };
 
   const sendMessage = () => {
     const content = draftMessage.trim();
@@ -351,79 +276,6 @@ export function TeamChatWorkspace({
                 {members.length}
               </Badge>
             </div>
-            
-            {isTeamLeader && (
-              <Dialog open={isJoinCodeDialogOpen} onOpenChange={setIsJoinCodeDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-500/10 dark:text-indigo-400">
-                    <UserPlus className="w-4 h-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Add Team Member</DialogTitle>
-                    <DialogDescription>
-                      Invite a student to join your project team.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="flex flex-col gap-6 py-4">
-                    <div className="space-y-3">
-                      <h4 className="text-sm font-medium">Invite via Email</h4>
-                      <div className="flex gap-2">
-                        <Input 
-                          placeholder="student@university.edu" 
-                          value={inviteEmail}
-                          onChange={(e) => setInviteEmail(e.target.value)}
-                        />
-                        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white" onClick={handleInvite}>
-                          Send
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t border-border/50" />
-                      </div>
-                      <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-background px-2 text-muted-foreground">
-                          Or use join code
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-medium">Generate Temporary Code</h4>
-                        {countdown > 0 && (
-                          <span className="text-xs font-medium text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                            <Timer className="w-3 h-3" />
-                            {countdown}s remaining
-                          </span>
-                        )}
-                      </div>
-                      
-                      {joinCode ? (
-                        <div className="flex items-center justify-between p-3 rounded-xl border border-indigo-500/30 bg-indigo-500/5">
-                          <span className="text-2xl font-bold tracking-[0.2em] text-indigo-600 dark:text-indigo-400">{joinCode}</span>
-                          <Button variant="ghost" size="icon" onClick={handleCopy}>
-                            {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-                          </Button>
-                        </div>
-                      ) : (
-                        <Button variant="outline" className="w-full" onClick={handleGenerateCode}>
-                          Generate 6-Digit Code
-                        </Button>
-                      )}
-                      
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Code expires in 60 seconds. Students can enter this code in the Project Management hub to join instantly.
-                      </p>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
           </div>
           <div className="space-y-5 overflow-y-auto min-h-0 flex-1 pr-2">
             {members.map((member) => (
