@@ -1,14 +1,21 @@
 "use client";
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, MoreVertical } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Member {
+  id?: number;
   name: string;
   role?: "Leader" | "Member";
 }
 
-export default function MemberCard({ member, isLeaderView, onRemove }: { member: Member; isLeaderView?: boolean; onRemove?: (name: string)=>void }) {
+export default function MemberCard({ member, isLeaderView, onRemove }: { member: Member; isLeaderView?: boolean; onRemove?: (name: string, id?: number)=>void }) {
   return (
     <div className="bg-card p-4 rounded-xl border border-border/50 flex items-center justify-between gap-3">
       <div className="flex items-center gap-3">
@@ -19,9 +26,22 @@ export default function MemberCard({ member, isLeaderView, onRemove }: { member:
         </div>
       </div>
       {isLeaderView && member.role !== "Leader" && (
-        <Button variant="destructive" size="sm" onClick={() => onRemove?.(member.name)}>
-          <Trash2 className="w-4 h-4 mr-2" /> Remove
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem 
+              className="text-red-600 focus:text-red-700 focus:bg-red-50 dark:focus:bg-red-950/50 cursor-pointer"
+              onClick={() => onRemove?.(member.name, member.id)}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Remove Member
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
     </div>
   );

@@ -344,4 +344,9 @@ export const studentApi = {
 
   renameTeam: (name: string) =>
     api.patch("/api/Teams/me/rename", { name }),
+
+  removeMember: (memberId: number) =>
+    api.delete(`/api/Teams/me/members/${memberId}`),
+
+  leaveTeam: () => api.delete("/api/Teams/me/leave"),
 };

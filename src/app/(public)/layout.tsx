@@ -10,7 +10,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <TopNav showNotifications />
       <MobileBottomNav />
-      <main className="md:ml-64 pt-16">{children}</main>
+      <main className="md:ml-64 pt-16 pb-20 md:pb-6">{children}</main>
     </div>
   );
 }

@@ -136,9 +136,9 @@ export function TeamChatWorkspace({
         className,
       )}
     >
-      <div className="bg-indigo-500/10 border-b border-border/50 px-5 py-4">
-        <h2 className="text-xl font-semibold text-foreground">{title}</h2>
-        <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
+      <div className="bg-card/30 backdrop-blur-md border-b border-border/50 px-6 py-5">
+        <h2 className="text-xl font-bold tracking-tight text-foreground">{title}</h2>
+        <p className="text-sm text-muted-foreground mt-1 font-medium">{subtitle}</p>
       </div>
 
       <div className="grid flex-1 min-h-0 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_288px]">
@@ -156,7 +156,7 @@ export function TeamChatWorkspace({
                 >
                   {!isOwnMessage && (
                     <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-violet-500/20 text-violet-700 dark:text-violet-400">
+                      <AvatarFallback className="bg-muted/80 text-foreground border border-border/50 font-medium">
                         {message.initials}
                       </AvatarFallback>
                     </Avatar>
@@ -173,13 +173,9 @@ export function TeamChatWorkspace({
                       </span>
                       <Badge
                         variant="secondary"
-                        className={
-                          message.role === "Professor"
-                            ? "bg-violet-500/20 text-violet-700 dark:text-violet-400"
-                            : "bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 dark:text-indigo-400"
-                        }
+                        className="bg-muted/60 text-muted-foreground border-none px-2 py-0.5 rounded-md text-[10px] uppercase font-bold tracking-wider"
                       >
-                        {message.role.toLowerCase()}
+                        {message.role}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
                         {message.timestamp}
@@ -187,8 +183,8 @@ export function TeamChatWorkspace({
                     </div>
 
                     {message.file ? (
-                      <div className="flex min-w-[280px] items-center gap-3 rounded-2xl border border-border/50 bg-card text-card-foreground px-4 py-4 shadow-sm">
-                        <div className="rounded-xl border border-border/50 bg-muted p-3 text-indigo-600">
+                      <div className="flex min-w-[280px] items-center gap-3 rounded-2xl border border-border/50 bg-muted/20 backdrop-blur-sm text-foreground px-4 py-4 shadow-sm">
+                        <div className="rounded-xl border border-border/50 bg-muted/50 p-3 text-muted-foreground">
                           {message.file.type === "image" ? (
                             <ImageIcon className="h-5 w-5" />
                           ) : (
@@ -196,17 +192,17 @@ export function TeamChatWorkspace({
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold text-foreground">
+                          <p className="truncate text-sm font-medium text-foreground">
                             {message.file.name}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-[11px] font-medium text-muted-foreground mt-0.5">
                             {message.file.size}
                           </p>
                         </div>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="text-indigo-600 hover:bg-indigo-50"
+                          className="text-muted-foreground hover:bg-muted/80 rounded-xl"
                           aria-label={`Download ${message.file.name}`}
                         >
                           <Download className="h-4 w-4" />
@@ -214,10 +210,10 @@ export function TeamChatWorkspace({
                       </div>
                     ) : (
                       <div
-                        className={`rounded-2xl px-5 py-4 text-sm leading-6 shadow-sm ${
+                        className={`rounded-2xl px-5 py-4 text-[15px] leading-relaxed shadow-sm ${
                           isOwnMessage
-                            ? "bg-indigo-600 text-white"
-                            : "border border-border/50 bg-muted text-foreground"
+                            ? "bg-indigo-500/10 border border-indigo-500/20 text-foreground rounded-tr-sm"
+                            : "border border-border/50 bg-muted/40 text-foreground rounded-tl-sm"
                         }`}
                       >
                         {message.content}
@@ -227,7 +223,7 @@ export function TeamChatWorkspace({
 
                   {isOwnMessage && (
                     <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 dark:text-indigo-400">
+                      <AvatarFallback className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-medium">
                         {message.initials}
                       </AvatarFallback>
                     </Avatar>
@@ -237,14 +233,14 @@ export function TeamChatWorkspace({
             })}
           </div>
 
-          <div className="flex items-center gap-3 border-t border-border/50 bg-muted/50 p-4">
+          <div className="flex items-center gap-3 border-t border-border/50 bg-card/30 p-5">
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
-              className="h-11 w-11 shrink-0 border-border/50 bg-card text-card-foreground"
+              className="h-11 w-11 shrink-0 text-muted-foreground hover:bg-muted/80 rounded-xl"
               aria-label="Attach file"
             >
-              <Paperclip className="h-4 w-4" />
+              <Paperclip className="h-5 w-5" />
             </Button>
             <Input
               value={draftMessage}
@@ -253,11 +249,11 @@ export function TeamChatWorkspace({
                 if (event.key === "Enter") sendMessage();
               }}
               placeholder="Type a message..."
-              className="h-11 border-0 bg-background text-foreground shadow-sm"
+              className="h-12 rounded-xl border border-border/50 bg-muted/30 px-5 text-[15px] text-foreground shadow-none focus-visible:ring-1 focus-visible:ring-indigo-500/50"
             />
             <Button
               size="icon"
-              className="h-11 w-11 shrink-0 bg-indigo-500 hover:bg-indigo-600"
+              className="h-11 w-11 shrink-0 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 shadow-none"
               onClick={sendMessage}
               aria-label="Send message"
             >
@@ -266,29 +262,29 @@ export function TeamChatWorkspace({
           </div>
         </div>
 
-        <aside className="bg-muted/50 p-5 flex flex-col min-h-0">
+        <aside className="bg-card/20 p-6 flex flex-col min-h-0 border-l border-border/50">
           <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold text-foreground">
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
                 Team Members
               </h3>
-              <Badge className="bg-indigo-500/20 text-indigo-700 dark:text-indigo-400">
+              <Badge className="bg-muted/60 text-muted-foreground border-none">
                 {members.length}
               </Badge>
             </div>
           </div>
-          <div className="space-y-5 overflow-y-auto min-h-0 flex-1 pr-2">
+          <div className="space-y-4 overflow-y-auto min-h-0 flex-1 pr-2">
             {members.map((member) => (
               <div key={member.id} className="flex items-center gap-3">
                 <div className="relative">
                   <Avatar className="h-10 w-10">
-                    <AvatarFallback className="bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 dark:text-indigo-400">
+                    <AvatarFallback className="bg-muted/80 text-foreground border border-border/50 font-medium">
                       {member.initials}
                     </AvatarFallback>
                   </Avatar>
                   <span
-                    className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-background ${
-                      member.online ? "bg-emerald-500" : "bg-slate-300"
+                    className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-[2.5px] border-background ${
+                      member.online ? "bg-emerald-500" : "bg-slate-500/50"
                     }`}
                   />
                 </div>
@@ -296,7 +292,7 @@ export function TeamChatWorkspace({
                   <p className="text-sm font-semibold text-foreground">
                     {member.name}
                   </p>
-                  <p className="text-xs text-muted-foreground">{member.role}</p>
+                  <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium mt-0.5">{member.role}</p>
                 </div>
               </div>
             ))}
@@ -308,7 +304,7 @@ export function TeamChatWorkspace({
               className="flex items-center gap-2 w-full text-left focus:outline-none group mb-4"
               onClick={() => setIsSharedFilesOpen(!isSharedFilesOpen)}
             >
-              <h3 className="text-sm font-semibold text-foreground flex-1">
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex-1">
                 Shared Files
               </h3>
               <div className="text-muted-foreground group-hover:text-foreground transition-colors">
@@ -321,8 +317,8 @@ export function TeamChatWorkspace({
                 {messages
                   .filter((m) => m.file)
                   .map((message) => (
-                    <div key={`file-${message.id}`} className="flex items-start gap-3 p-3 rounded-xl border border-border/50 bg-background/50 hover:bg-background transition-colors">
-                      <div className="rounded-lg border border-border/50 bg-muted p-2.5 text-indigo-600 shrink-0">
+                    <div key={`file-${message.id}`} className="flex items-start gap-3 p-3 rounded-xl border border-border/50 bg-muted/20 hover:bg-muted/40 transition-colors backdrop-blur-sm">
+                      <div className="rounded-lg border border-border/50 bg-muted/50 p-2.5 text-muted-foreground shrink-0">
                         {message.file?.type === "image" ? (
                           <ImageIcon className="h-4 w-4" />
                         ) : (
@@ -330,17 +326,17 @@ export function TeamChatWorkspace({
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-semibold text-foreground">
+                        <p className="truncate text-[13px] font-medium text-foreground">
                           {message.file?.name}
                         </p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                        <p className="text-[11px] text-muted-foreground mt-1 font-medium">
                           {message.file?.size} • {message.author}
                         </p>
                       </div>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-indigo-600 hover:bg-indigo-50 shrink-0"
+                        className="h-8 w-8 text-muted-foreground hover:bg-muted/80 shrink-0 rounded-lg"
                         aria-label={`Download ${message.file?.name}`}
                       >
                         <Download className="h-3.5 w-3.5" />
@@ -348,7 +344,7 @@ export function TeamChatWorkspace({
                     </div>
                   ))}
                 {messages.filter((m) => m.file).length === 0 && (
-                  <p className="text-xs text-muted-foreground text-center py-4">No files shared yet.</p>
+                  <p className="text-xs text-muted-foreground text-center py-4 font-medium">No files shared yet.</p>
                 )}
               </div>
             )}

@@ -185,7 +185,7 @@ export function TopNav({
                   )}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-90 p-0 border-border/50 bg-background/95 backdrop-blur-xl shadow-xl">
+              <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] sm:w-96 p-0 border-border/50 bg-background/95 backdrop-blur-xl shadow-xl">
                 <DropdownMenuLabel className="px-4 py-3 border-b border-border/50">
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-foreground">

@@ -5,6 +5,8 @@ import { Search, X, Calendar, Archive } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProjectCatalogCard, StatusTone } from "@/app/_components/DashboardUI";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SearchLoader, AnimatedList, AnimatedItem } from "@/components/ui/animated-loaders";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -31,7 +33,7 @@ interface Project {
   acceptsJoinRequests: boolean;
 }
 
-const PROJECTS_PAGE_SIZE = 30;
+const PROJECTS_PAGE_SIZE = 9;
 
 export default function Projects() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,7 +54,7 @@ export default function Projects() {
   const [supervisors, setSupervisors] = useState<{ id: number; fullName: string }[]>([]);
   const [hasTeam, setHasTeam] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Filter states
   const [filterYear, setFilterYear] = useState<string>("");
   const [filterDomain, setFilterDomain] = useState<string>("");
@@ -216,25 +218,25 @@ export default function Projects() {
 
       {/* Search Bar */}
       <div className="mb-6">
-        <div className="relative max-w-md">
+        <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search projects by title, category, supervisor, or students..."
+            placeholder="Search projects by title..."
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
               setCurrentPage(1);
               setOldPage(1);
             }}
-            className="w-full pl-10 pr-4 py-2.5 text-sm bg-card border border-border/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/30 transition-colors text-foreground placeholder:text-muted-foreground"
+            className="w-full pl-10 pr-4 py-2.5 text-sm bg-card/60 backdrop-blur-lg border border-white/20 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/30 transition-colors text-foreground placeholder:text-muted-foreground"
           />
         </div>
       </div>
 
       {/* Filters Section */}
       <div className="mb-8">
-        <div className="bg-gradient-to-r from-card to-card/50 border border-border/50 rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-gradient-to-r from-card/70 to-card/50 backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.05)] overflow-hidden">
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <div>
@@ -258,22 +260,20 @@ export default function Projects() {
                   </span>
                   <button
                     onClick={() => setShowFilters(!showFilters)}
-                    className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
-                      showFilters
-                        ? "bg-indigo-600 hover:bg-indigo-700"
-                        : "bg-muted hover:bg-muted/80"
-                    }`}
+                    className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${showFilters
+                      ? "bg-indigo-600 hover:bg-indigo-700"
+                      : "bg-muted hover:bg-muted/80"
+                      }`}
                   >
                     <span
-                      className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform ${
-                        showFilters ? "translate-x-7" : "translate-x-1"
-                      }`}
+                      className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform ${showFilters ? "translate-x-7" : "translate-x-1"
+                        }`}
                     />
                   </button>
                 </div>
               </div>
             </div>
-            
+
             {showFilters && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 animate-in fade-in duration-300">
                 {/* Year Filter */}
@@ -380,131 +380,135 @@ export default function Projects() {
 
       {/* Tabs */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[0, 1, 2].map((item) => (
-            <div key={item} className="dashboard-card h-64 animate-pulse bg-muted/30" />
-          ))}
-        </div>
+        <SearchLoader text="Discovering projects..." />
       ) : (
-      <>
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="mb-8 bg-card border border-border/50 rounded-xl p-1 h-auto gap-1 w-fit">
-          <TabsTrigger 
-            value="current" 
-            className="rounded-lg border border-transparent data-[state=active]:border-indigo-500/30 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/10 data-[state=active]:to-indigo-600/10 data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 px-4 py-2.5 font-semibold text-foreground hover:text-indigo-600 dark:hover:text-indigo-400 transition-all flex items-center gap-2"
-          >
-            <Calendar className="w-4 h-4" />
-            <span>This Year</span>
-            <span className="ml-1 px-2 py-0.5 bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 rounded-md text-xs font-bold">
-              {currentTotalRecords}
-            </span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="old"
-            className="rounded-lg border border-transparent data-[state=active]:border-indigo-500/30 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/10 data-[state=active]:to-indigo-600/10 data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 px-4 py-2.5 font-semibold text-foreground hover:text-indigo-600 dark:hover:text-indigo-400 transition-all flex items-center gap-2"
-          >
-            <Archive className="w-4 h-4" />
-            <span>Old Projects</span>
-            <span className="ml-1 px-2 py-0.5 bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 rounded-md text-xs font-bold">
-              {oldTotalRecords}
-            </span>
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="current">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {thisYearProjects.map((project) => (
-              <ProjectCatalogCard
-                key={project.id}
-                project={{
-                  id: project.id,
-                  title: project.title,
-                  category: project.category,
-                  status: getStatusTone(project.status),
-                  year: project.year,
-                  supervisor: project.supervisor,
-                  students: project.students,
-                  technologies: project.technologies,
-                  originality: project.originality,
-                }}
-                href={`/projects/${project.id}`}
-                secondaryActionLabel={!hasTeam && project.acceptsJoinRequests ? "Request to Join" : undefined}
-                onSecondaryAction={!hasTeam && project.acceptsJoinRequests ? () => setRequestDialogProject(project) : undefined}
-              />
-            ))}
-          </div>
-          {thisYearProjects.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500">No projects found</p>
+        <>
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+            <div className="flex justify-center mb-8">
+              <TabsList className="grid !h-auto items-stretch w-full max-w-[440px] grid-cols-2 rounded-xl border border-border bg-muted/40 !p-1">
+                <TabsTrigger
+                  value="current"
+                  className="flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground"
+                >
+                  <Calendar className="w-4 h-4" />
+                  <span>This Year</span>
+                  <span className="ml-1 px-2 py-0.5 bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 rounded-md text-xs font-bold">
+                    {currentTotalRecords}
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="old"
+                  className="flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground"
+                >
+                  <Archive className="w-4 h-4" />
+                  <span>Old Projects</span>
+                  <span className="ml-1 px-2 py-0.5 bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 rounded-md text-xs font-bold">
+                    {oldTotalRecords}
+                  </span>
+                </TabsTrigger>
+              </TabsList>
             </div>
-          )}
-          <PaginationControls
-            page={currentPage}
-            totalPages={currentTotalPages}
-            totalRecords={currentTotalRecords}
-            onPageChange={setCurrentPage}
-          />
-        </TabsContent>
 
-        <TabsContent value="old">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {oldProjects.map((project) => (
-              <ProjectCatalogCard
-                key={project.id}
-                project={{
-                  id: project.id,
-                  title: project.title,
-                  category: project.category,
-                  status: getStatusTone(project.status),
-                  year: project.year,
-                  supervisor: project.supervisor,
-                  students: project.students,
-                  technologies: project.technologies,
-                  originality: project.originality,
-                }}
-                href={`/projects/${project.id}`}
-                secondaryActionLabel={!hasTeam && project.acceptsJoinRequests ? "Request to Join" : undefined}
-                onSecondaryAction={!hasTeam && project.acceptsJoinRequests ? () => setRequestDialogProject(project) : undefined}
-              />
-            ))}
-          </div>
-          {oldProjects.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500">No projects found</p>
-            </div>
-          )}
-          <PaginationControls
-            page={oldPage}
-            totalPages={oldTotalPages}
-            totalRecords={oldTotalRecords}
-            onPageChange={setOldPage}
-          />
-        </TabsContent>
-      </Tabs>
+            <TabsContent value="current">
+              <AnimatedList className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {thisYearProjects.map((project) => (
+                  <AnimatedItem key={project.id}>
+                    <ProjectCatalogCard
+                      project={{
+                        id: project.id,
+                        title: project.title,
+                        category: project.category,
+                        status: getStatusTone(project.status),
+                        year: project.year,
+                        supervisor: project.supervisor,
+                        students: project.students,
+                        technologies: project.technologies,
+                        originality: project.originality,
+                      }}
+                      href={`/projects/${project.id}`}
+                      secondaryActionLabel={!hasTeam && project.acceptsJoinRequests ? "Request to Join" : undefined}
+                      onSecondaryAction={!hasTeam && project.acceptsJoinRequests ? () => setRequestDialogProject(project) : undefined}
+                    />
+                  </AnimatedItem>
+                ))}
+              </AnimatedList>
+              {thisYearProjects.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-gray-500">No projects found</p>
+                </div>
+              )}
+              <div className="mt-8">
+                <PaginationControls
+                  page={currentPage}
+                  totalPages={currentTotalPages}
+                  totalRecords={currentTotalRecords}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            </TabsContent>
 
-      <Dialog open={!!requestDialogProject} onOpenChange={(open) => !open && setRequestDialogProject(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Request to Join Team</DialogTitle>
-            <DialogDescription>
-              Write a message to the team leader of <strong>{requestDialogProject?.title}</strong> explaining why you are a good fit for this project.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Textarea
-              placeholder="e.g. I have experience in React Native and would love to contribute..."
-              value={requestMessage}
-              onChange={(e) => setRequestMessage(e.target.value)}
-              className="min-h-[120px]"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRequestDialogProject(null)}>Cancel</Button>
-            <Button onClick={handleRequestSubmit} className="bg-indigo-600 hover:bg-indigo-700 text-white">Send Request</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      </>
+            <TabsContent value="old">
+              <AnimatedList className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {oldProjects.map((project) => (
+                  <AnimatedItem key={project.id}>
+                    <ProjectCatalogCard
+                      project={{
+                        id: project.id,
+                        title: project.title,
+                        category: project.category,
+                        status: getStatusTone(project.status),
+                        year: project.year,
+                        supervisor: project.supervisor,
+                        students: project.students,
+                        technologies: project.technologies,
+                        originality: project.originality,
+                      }}
+                      href={`/projects/${project.id}`}
+                      secondaryActionLabel={!hasTeam && project.acceptsJoinRequests ? "Request to Join" : undefined}
+                      onSecondaryAction={!hasTeam && project.acceptsJoinRequests ? () => setRequestDialogProject(project) : undefined}
+                    />
+                  </AnimatedItem>
+                ))}
+              </AnimatedList>
+              {oldProjects.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-gray-500">No projects found</p>
+                </div>
+              )}
+              <div className="mt-8">
+                <PaginationControls
+                  page={oldPage}
+                  totalPages={oldTotalPages}
+                  totalRecords={oldTotalRecords}
+                  onPageChange={setOldPage}
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <Dialog open={!!requestDialogProject} onOpenChange={(open) => !open && setRequestDialogProject(null)}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Request to Join Team</DialogTitle>
+                <DialogDescription>
+                  Write a message to the team leader of <strong>{requestDialogProject?.title}</strong> explaining why you are a good fit for this project.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4">
+                <Textarea
+                  placeholder="e.g. I have experience in React Native and would love to contribute..."
+                  value={requestMessage}
+                  onChange={(e) => setRequestMessage(e.target.value)}
+                  className="min-h-[120px]"
+                />
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setRequestDialogProject(null)}>Cancel</Button>
+                <Button onClick={handleRequestSubmit} className="bg-indigo-600 hover:bg-indigo-700 text-white">Send Request</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </>
       )}
     </div>
   );
@@ -546,7 +550,7 @@ function PaginationControls({
   const end = Math.min(page * PROJECTS_PAGE_SIZE, totalRecords);
 
   return (
-    <div className="mt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-border/50 bg-card px-4 py-3">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-white/20 dark:border-white/10 bg-card/60 backdrop-blur-xl px-4 py-3 shadow-sm">
       <p className="text-sm text-muted-foreground">
         Showing {start}-{end} of {totalRecords} projects
       </p>

@@ -10,9 +10,12 @@ import {
   Copy,
   KeyRound,
   MessageSquare,
+  MoreVertical,
+  Pen,
   Plus,
   ShieldCheck,
   Timer,
+  Trash2,
   UserPlus,
   Users,
   X,
@@ -29,6 +32,12 @@ import PendingRequestsList from "@/components/Team/PendingRequestsList";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -56,7 +65,7 @@ type Team = {
   name: string;
   leaderId?: string;
   isLeader?: boolean;
-  members: string[];
+  members: { id: number; name: string }[];
   supervisorName?: string;
   projectTitle?: string;
   projectTechnologies?: string[];
@@ -163,9 +172,10 @@ export default function TeamsPage() {
   const supervisorName = team?.supervisorName || "";
   const chatSupervisorName = supervisorName || null;
   const isApproved = Boolean(team?.projectTitle || supervisorName);
-  const teamMembers: TeamMember[] = (team?.members || []).map((name) => ({
-    name,
-    role: name === (team?.leaderId || "") ? "Leader" : "Member",
+  const teamMembers = (team?.members || []).map((m) => ({
+    id: m.id,
+    name: m.name,
+    role: (m.name === (team?.leaderId || "") ? "Leader" : "Member") as "Leader" | "Member",
   }));
   const visibleTeamMembers = teamMembers.map((member) => ({
     ...member,
@@ -292,26 +302,34 @@ export default function TeamsPage() {
     }
   };
 
-  const removeMember = (name: string) => {
-    if (!team) return;
+  const removeMember = async (name: string, memberId?: number) => {
+    if (!team || !memberId) return;
     if (name === "me" || name === team.leaderId) {
       toast.error("The team leader cannot be removed.");
       return;
     }
     if (!confirm(`Remove ${name} from team?`)) return;
 
-    const updated = teams.map((existingTeam) =>
-      existingTeam.id === team.id
-        ? {
-          ...existingTeam,
-          members: existingTeam.members.filter((member) => member !== name),
-        }
-        : existingTeam,
-    );
+    try {
+      await studentApi.removeMember(memberId);
 
-    saveTeams(updated, team.id);
-    toast.success(`${name} removed`);
+      const updated = teams.map((existingTeam) =>
+        existingTeam.id === team.id
+          ? {
+            ...existingTeam,
+            members: existingTeam.members.filter((member) => member.id !== memberId),
+          }
+          : existingTeam,
+      );
+
+      saveTeams(updated, team.id);
+      toast.success(`${name} removed`);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Could not remove member."));
+    }
   };
+
+  const [isSendingInvite, setIsSendingInvite] = useState(false);
 
   const addMember = async () => {
     if (!team) return;
@@ -327,12 +345,16 @@ export default function TeamsPage() {
     }
 
     try {
+      setIsSendingInvite(true);
       await studentApi.inviteByEmail(contact);
       setMemberContact("");
       setIsAddMemberOpen(false);
       toast.success("Invitation email sent.");
     } catch (error: unknown) {
+      console.error("Invite error:", error);
       toast.error(getErrorMessage(error, "Could not send invitation."));
+    } finally {
+      setIsSendingInvite(false);
     }
   };
 
@@ -362,16 +384,6 @@ export default function TeamsPage() {
 
   return (
     <div className={`dashboard-page ${hasTeam && activeView === "chat" ? "space-y-4 md:pt-5 md:pb-4" : "space-y-6"}`}>
-      <Link href="/project-management">
-        <Button
-          variant="ghost"
-          className="gap-2 px-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to project management
-        </Button>
-      </Link>
-
       {isLoading ? (
         <div className="flex flex-col gap-6">
           <div className="flex justify-center mb-4">
@@ -404,7 +416,7 @@ export default function TeamsPage() {
         />
       ) : (
         <>
-          <div className="flex justify-center">
+          <div className="flex justify-center mb-8">
             <div className="grid w-full max-w-[440px] grid-cols-2 rounded-xl border border-border bg-muted/40 p-1">
               <button
                 type="button"
@@ -433,131 +445,122 @@ export default function TeamsPage() {
 
           {activeView === "overview" ? (
             <section className="dashboard-surface overflow-hidden">
-              <div className="border-b border-border bg-muted/30 px-5 py-5 md:px-6">
-                <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="flex min-w-0 gap-4">
-                    <Avatar className="h-14 w-14 shrink-0">
-                      <AvatarFallback className="bg-indigo-500/15 text-base font-bold text-indigo-700 dark:text-indigo-300">
-                        {initialsFor(teamName)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <div className="mb-2 flex flex-wrap items-center gap-2">
-                        {team?.projectTitle && (
-                          !isApproved ? (
-                            <Badge
-                              variant="secondary"
-                              className="bg-amber-500/10 text-amber-700 dark:text-amber-300"
-                            >
-                              Under Review
-                            </Badge>
-                          ) : (
-                            <Badge
-                              variant="secondary"
-                              className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                            >
-                              Approved
-                            </Badge>
-                          )
-                        )}
-                        <Badge
-                          variant="secondary"
-                          className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                        >
-                          {isLeader ? "Leader Access" : "Member"}
-                        </Badge>
-                      </div>
-                      {isEditingTeamName ? (
-                        <div className="mt-1 flex max-w-xl flex-col gap-2 sm:flex-row sm:items-center">
-                          <Input
-                            value={teamNameDraft}
-                            onChange={(event) => setTeamNameDraft(event.target.value)}
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter") saveTeamName();
-                              if (event.key === "Escape") {
-                                setTeamNameDraft(teamName);
-                                setIsEditingTeamName(false);
-                              }
+              <div className="p-5 md:p-6 border-b border-white/20 dark:border-white/10 dashboard-surface">
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex min-w-0 flex-col gap-1.5">
+                    {isEditingTeamName ? (
+                      <div className="flex max-w-xl flex-col gap-2 sm:flex-row sm:items-center">
+                        <Input
+                          value={teamNameDraft}
+                          onChange={(event) => setTeamNameDraft(event.target.value)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") saveTeamName();
+                            if (event.key === "Escape") {
+                              setTeamNameDraft(teamName);
+                              setIsEditingTeamName(false);
+                            }
+                          }}
+                          className="h-11 text-lg font-semibold md:text-xl"
+                          autoFocus
+                        />
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={saveTeamName}>
+                            Save
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setTeamNameDraft(teamName);
+                              setIsEditingTeamName(false);
                             }}
-                            className="h-11 text-lg font-semibold md:text-xl"
-                            autoFocus
-                          />
-                          <div className="flex gap-2">
-                            <Button size="sm" onClick={saveTeamName}>
-                              Save
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setTeamNameDraft(teamName);
-                                setIsEditingTeamName(false);
-                              }}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
+                          >
+                            Cancel
+                          </Button>
                         </div>
-                      ) : (
-                        <div className="mt-1 flex min-w-0 flex-wrap items-center gap-3">
-                          <h1 className="truncate text-2xl font-semibold tracking-normal text-foreground md:text-3xl">
-                            {teamName}
-                          </h1>
-                          {isLeader && (
-                            <div className="flex gap-2">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="h-8 rounded-lg"
-                                onClick={() => setIsEditingTeamName(true)}
-                              >
-                                Rename
+                      </div>
+                    ) : (
+                      <>
+                        <h1 className="truncate text-2xl font-bold tracking-tight text-foreground md:text-3xl flex items-center gap-2">
+                          {teamName}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                                <MoreVertical className="h-4 w-4" />
                               </Button>
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="sm"
-                                className="h-8 rounded-lg"
-                                onClick={async () => {
-                                  if (window.confirm("Are you sure you want to delete this team? This action cannot be undone.")) {
-                                    try {
-                                      await api.delete("/api/Teams/me");
-                                      window.location.reload();
-                                    } catch (err: any) {
-                                      alert(err.message || "Failed to delete team.");
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                              {isLeader ? (
+                                <>
+                                  <DropdownMenuItem className="cursor-pointer" onClick={() => setIsEditingTeamName(true)}>
+                                    <Pen className="w-4 h-4 mr-2" />
+                                    Rename
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    className="text-red-600 focus:text-red-700 focus:bg-red-50 dark:focus:bg-red-950/50 cursor-pointer"
+                                    onClick={async () => {
+                                      if (window.confirm("Are you sure you want to delete this team? This action cannot be undone.")) {
+                                        try {
+                                          await api.delete("/api/Teams/me");
+                                          window.location.reload();
+                                        } catch (err: any) {
+                                          alert(err.message || "Failed to delete team.");
+                                        }
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Delete Team
+                                  </DropdownMenuItem>
+                                </>
+                              ) : (
+                                <DropdownMenuItem 
+                                  className="text-red-600 focus:text-red-700 focus:bg-red-50 dark:focus:bg-red-950/50 cursor-pointer"
+                                  onClick={async () => {
+                                    if (window.confirm("Are you sure you want to leave this team?")) {
+                                      try {
+                                        await studentApi.leaveTeam();
+                                        window.location.reload();
+                                      } catch (err: any) {
+                                        toast.error(err.message || "Failed to leave team.");
+                                      }
                                     }
-                                  }
-                                }}
-                              >
-                                Delete
-                              </Button>
-                            </div>
+                                  }}
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Leave Team
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </h1>
+                        
+                        <div className="flex flex-wrap items-center gap-3 text-[13px] text-muted-foreground font-medium">
+                          <span className="bg-muted/60 px-2.5 py-0.5 rounded-md text-xs">
+                            {isLeader ? "Leader Access" : "Member"}
+                          </span>
+                          
+                          {team?.projectTitle && (
+                            <>
+                              <span>•</span>
+                              <span>{team.projectTitle}</span>
+                            </>
+                          )}
+
+                          {supervisorName && (
+                            <>
+                              <span>•</span>
+                              <span>Supervisor: {supervisorName}</span>
+                            </>
                           )}
                         </div>
-                      )}
-                      <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                        {supervisorName && (
-                          <span className="inline-flex items-center gap-2">
-                            <ShieldCheck className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                            {supervisorName}
-                          </span>
-                        )}
-                        <span className="inline-flex items-center gap-2">
-                          <Users className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                          {teamMembers.length} members
-                        </span>
-                        <span className="inline-flex items-center gap-2">
-                          <ClipboardList className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                          {requests.length} pending
-                        </span>
-                      </div>
-                    </div>
+                      </>
+                    )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 lg:min-w-[220px]">
-                    <MetricCard label="Members" value={teamMembers.length.toString()} icon={Users} />
-                    <MetricCard label="Requests" value={requests.length.toString()} icon={ClipboardList} />
+                  <div className="flex gap-4">
+                    <MetricCard label="MEMBERS" value={teamMembers.length.toString()} valueColorClass="text-blue-600 dark:text-blue-500" />
+                    <MetricCard label="REQUESTS" value={requests.length.toString()} />
                   </div>
                 </div>
               </div>
@@ -593,7 +596,9 @@ export default function TeamsPage() {
                             Team Roster
                           </h2>
                           <p className="text-sm text-muted-foreground">
-                            Add, remove, and review members from one place.
+                            {isLeader
+                              ? "Add, remove, and review members from one place."
+                              : "View the current members of your team."}
                           </p>
                         </div>
                         {isLeader && (
@@ -623,8 +628,9 @@ export default function TeamsPage() {
                                     <Button
                                       className="bg-indigo-600 text-white hover:bg-indigo-700"
                                       onClick={addMember}
+                                      disabled={isSendingInvite}
                                     >
-                                      Send
+                                      {isSendingInvite ? "Sending..." : "Send"}
                                     </Button>
                                   </div>
                                 </div>
@@ -744,21 +750,23 @@ function NoTeamState({
     <section className="mx-auto w-full max-w-3xl flex flex-col justify-center min-h-[60vh] py-8">
       <div className="dashboard-surface p-8 md:p-12">
         <Tabs defaultValue="join" className="w-full">
-          <TabsList className="mb-8 grid h-12 w-full grid-cols-2 rounded-xl bg-muted/50 p-1">
-            <TabsTrigger
-              value="join"
-              className="h-full rounded-lg text-sm font-medium data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all"
-            >
-              Join Team
-            </TabsTrigger>
+          <div className="flex justify-center mb-8">
+            <TabsList className="grid !h-auto items-stretch w-full max-w-[440px] grid-cols-2 rounded-xl border border-border bg-muted/40 !p-1">
+              <TabsTrigger
+                value="join"
+                className="flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground"
+              >
+                Join Team
+              </TabsTrigger>
 
-            <TabsTrigger
-              value="create"
-              className="h-full rounded-lg text-sm font-medium data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all"
-            >
-              Create Team
-            </TabsTrigger>
-          </TabsList>
+              <TabsTrigger
+                value="create"
+                className="flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground"
+              >
+                Create Team
+              </TabsTrigger>
+            </TabsList>
+          </div>
           <TabsContent value="join" className="mt-0 outline-none">
             <div className="mx-auto mb-6 flex h-25 w-25 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
               <KeyRound className="h-8 w-8" />
@@ -830,19 +838,16 @@ function NoTeamState({
 function MetricCard({
   label,
   value,
-  icon: Icon,
+  valueColorClass = "text-foreground"
 }: {
   label: string;
   value: string;
-  icon: ElementType;
+  valueColorClass?: string;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-background p-3">
-      <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-        <Icon className="h-4 w-4" />
-      </div>
-      <p className="text-lg font-semibold leading-none text-foreground">{value}</p>
-      <p className="mt-1 text-xs text-muted-foreground">{label}</p>
+    <div className="flex flex-col items-center justify-center rounded-xl border border-white/20 dark:border-white/10 dashboard-surface py-5 min-w-[110px] shadow-sm">
+      <p className={`text-[40px] leading-none font-bold ${valueColorClass}`}>{value}</p>
+      <p className="mt-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">{label}</p>
     </div>
   );
 }
@@ -879,7 +884,7 @@ function parseTeams(value: unknown): Team[] {
             : typeof item.supervisor === "string"
               ? item.supervisor
               : undefined,
-        members: normalizeTeamMembers(members, leaderId),
+        members: members.map(m => ({ id: 0, name: m })),
       };
     });
 }
@@ -898,7 +903,7 @@ function mapTeam(value: MyTeamDto): Team {
     name: value.name,
     leaderId: leader?.fullName || value.members[0]?.fullName || "",
     isLeader: value.isLeader,
-    members: value.members.map((member) => member.fullName),
+    members: value.members.map((member) => ({ id: member.id, name: member.fullName })),
     supervisorName: value.supervisorName ?? undefined,
     projectTitle: value.projectTitle ?? undefined,
     projectTechnologies: value.projectTechnologies ?? [],

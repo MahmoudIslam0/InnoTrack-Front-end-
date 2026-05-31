@@ -12,6 +12,7 @@ import {
   Edit2,
   Trash2,
   Info,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,6 +84,7 @@ function ProjectSubmissionPage() {
     proposedSolution: "",
     objectives: "",
   });
+  const [techInput, setTechInput] = useState("");
 
   // Teams (client-side) and selected team
   const [teams, setTeams] = useState<StoredTeam[]>([]);
@@ -99,7 +101,7 @@ function ProjectSubmissionPage() {
       .filter(Boolean),
     [formData.technologies],
   );
-  const currentTechnologyQuery = formData.technologies.split(",").pop()?.trim().toLowerCase() || "";
+  const currentTechnologyQuery = techInput.trim().toLowerCase();
   const technologySuggestions = useMemo(() => {
     if (!currentTechnologyQuery || lockAllFields) return [];
     const selected = new Set(technologyTokens.map((tech) => tech.toLowerCase()));
@@ -279,13 +281,17 @@ function ProjectSubmissionPage() {
   };
 
   const handleTechnologySuggestion = (name: string) => {
-    const parts = formData.technologies.split(",");
-    parts[parts.length - 1] = ` ${name}`;
-    const nextValue = parts
-      .map((part) => part.trim())
-      .filter(Boolean)
-      .join(", ");
-    handleInputChange("technologies", nextValue);
+    const parts = formData.technologies.split(",").map((p) => p.trim()).filter(Boolean);
+    if (!parts.includes(name)) {
+      parts.push(name);
+      handleInputChange("technologies", parts.join(", "));
+    }
+    setTechInput("");
+  };
+
+  const removeTechnology = (name: string) => {
+    const parts = formData.technologies.split(",").map((p) => p.trim()).filter(Boolean);
+    handleInputChange("technologies", parts.filter((p) => p !== name).join(", "));
   };
 
   const handleRunSimilarityCheck = async () => {
@@ -331,12 +337,9 @@ function ProjectSubmissionPage() {
 
       if (existing) {
         resolvedTechnologies.push(existing);
-        continue;
+      } else {
+        throw new Error(`Technology '${technologyName}' is not recognized. Please choose from the available suggestions.`);
       }
-
-      const created = await studentApi.createTechnology(technologyName);
-      knownTechnologies.push(created);
-      resolvedTechnologies.push(created);
     }
 
     setTechnologies(knownTechnologies);
@@ -608,7 +611,7 @@ function ProjectSubmissionPage() {
                     id="year"
                     value={formData.year}
                     disabled
-                    className="bg-muted text-muted-foreground"
+                    className="h-12 rounded-xl bg-muted text-muted-foreground"
                   />
                 </div>
 
@@ -626,7 +629,7 @@ function ProjectSubmissionPage() {
                   value={formData.category}
                   onChange={(event) => handleInputChange("category", event.target.value)}
                   disabled={lockAllFields}
-                  className="h-10 w-full rounded-md border border-border bg-background/50 px-3 text-sm text-foreground"
+                  className="h-12 w-full rounded-xl border border-border bg-background/50 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
                 >
                   <option value="">Select a domain</option>
                   {domains.map((domain) => (
@@ -638,22 +641,42 @@ function ProjectSubmissionPage() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="technologies">Technologies *</Label>
-                <Input
-                  id="technologies"
-                  list="technology-options"
-                  placeholder="e.g., React, Python, TensorFlow, Firebase"
-                  value={formData.technologies}
-                  onChange={(e) =>
-                    handleInputChange("technologies", e.target.value)
-                  }
-                  className={lockAllFields ? "bg-muted text-muted-foreground" : "bg-background/50 focus:bg-background"}
-                  disabled={lockAllFields}
-                />
-                <datalist id="technology-options">
-                  {technologies.map((technology) => (
-                    <option key={technology.id} value={technology.name} />
+                <div 
+                  className={`flex flex-wrap items-center gap-2 min-h-12 p-2 rounded-xl border border-border shadow-sm transition-all duration-200 ${lockAllFields ? "bg-muted text-muted-foreground" : "bg-background/50 focus-within:ring-1 focus-within:ring-indigo-500/50 focus-within:bg-background"}`}
+                >
+                  {technologyTokens.map((tech) => (
+                    <div key={tech} className="flex items-center gap-1 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-full text-sm font-medium border border-indigo-500/20">
+                      {tech}
+                      {!lockAllFields && (
+                        <button type="button" onClick={() => removeTechnology(tech)} className="hover:text-indigo-800 dark:hover:text-indigo-200 ml-1 rounded-full p-0.5 hover:bg-indigo-500/20 transition-colors">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   ))}
-                </datalist>
+                  {!lockAllFields && (
+                    <input
+                      id="technologies"
+                      type="text"
+                      autoComplete="off"
+                      placeholder={technologyTokens.length === 0 ? "e.g., React, Python, TensorFlow..." : ""}
+                      value={techInput}
+                      onChange={(e) => setTechInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === ",") {
+                          e.preventDefault();
+                          const match = technologies.find(t => t.name.toLowerCase() === techInput.trim().toLowerCase());
+                          if (match) {
+                            handleTechnologySuggestion(match.name);
+                          } else if (techInput.trim()) {
+                            toast.error("Please select a technology from the suggestions.");
+                          }
+                        }
+                      }}
+                      className="flex-1 min-w-[120px] bg-transparent outline-none text-sm placeholder:text-muted-foreground/70"
+                    />
+                  )}
+                </div>
                 {!lockAllFields && technologySuggestions.length > 0 && (
                   <div className="flex flex-wrap gap-2 pt-1">
                     {technologySuggestions.map((technology) => (
@@ -669,7 +692,7 @@ function ProjectSubmissionPage() {
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Use commas between technologies. New technologies are added automatically when you save or submit.
+                  Use commas between technologies. Please choose from the available suggestions.
                 </p>
               </div>
             </div>

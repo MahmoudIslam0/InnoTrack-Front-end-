@@ -42,20 +42,20 @@ export function SidebarContent({ activeItem, variant = "student" }: SidebarProps
       {/* Logo */}
       <div className="px-5 py-5 border-b border-border/50">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl transition-transform hover:scale-105">
+          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl flex items-center justify-center">
             <Image
               src="/logo-light.png"
               alt="InnoTrack Logo"
               width={40}
               height={40}
-              className="h-full w-full object-cover dark:hidden"
+              className="h-full w-full object-contain dark:hidden mix-blend-multiply"
             />
             <Image
-              src="/logo-dark.jpg"
+              src="/logo-dark.png"
               alt="InnoTrack Logo"
               width={40}
               height={40}
-              className="h-full w-full object-cover hidden dark:block"
+              className="h-full w-full object-contain hidden dark:block mix-blend-screen"
             />
           </div>
           <div>

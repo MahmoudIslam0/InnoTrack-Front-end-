@@ -22,14 +22,8 @@ function StatPill({ label, value, color }: { label: string; value: number; color
 
 function ProjectCard({ project, onManage, onViewDetails }: { project: Project; onManage: () => void; onViewDetails: () => void }) {
   const team = teams.find(t => t.projectId === project.id);
-  const scoreColor =
-    project.originalityScore >= 80 ? "text-emerald-600 dark:text-emerald-400"
-    : project.originalityScore >= 70 ? "text-amber-600 dark:text-amber-400"
-    : "text-red-600 dark:text-red-400";
-  const scoreBg =
-    project.originalityScore >= 80 ? "bg-emerald-500/10 border-emerald-500/20"
-    : project.originalityScore >= 70 ? "bg-amber-500/10 border-amber-500/20"
-    : "bg-red-500/10 border-red-500/20";
+  const scoreColor = "text-indigo-600 dark:text-indigo-400";
+  const scoreBg = "bg-indigo-500/10 border-indigo-500/20";
 
   return (
     <div className="bg-card text-card-foreground rounded-2xl border border-border/50 shadow-sm hover:shadow-md hover:border-indigo-500/30 transition-all duration-200 overflow-hidden group">

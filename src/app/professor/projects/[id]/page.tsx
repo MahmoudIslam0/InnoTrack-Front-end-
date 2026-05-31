@@ -50,10 +50,7 @@ export default function ProfessorProjectDetails() {
     );
   }
 
-  const scoreColor =
-    project.originalityScore >= 80 ? "text-emerald-600 dark:text-emerald-400"
-    : project.originalityScore >= 70 ? "text-amber-600 dark:text-amber-400"
-    : "text-red-500 dark:text-red-400";
+  const scoreColor = "text-indigo-600 dark:text-indigo-400";
 
   return (
     <div className="p-4 md:p-8 max-w-[1400px] mx-auto">

@@ -123,7 +123,9 @@ export function SectionCard({
   );
 }
 
+import { SearchLoader } from "@/components/ui/animated-loaders";
 import { Skeleton } from "@/components/ui/skeleton";
+import { motion } from "framer-motion";
 
 export function StatCard({
   title,
@@ -218,11 +220,7 @@ export function ProjectCatalogCard({
 }) {
   const scoreColor =
     project.originality !== undefined
-      ? project.originality >= 80
-        ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400"
-        : project.originality >= 70
-        ? "bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400"
-        : "bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400"
+      ? "bg-indigo-500/10 border-indigo-500/20 text-indigo-700 dark:text-indigo-400"
       : "";
 
   return (
@@ -289,7 +287,7 @@ export function ProjectCatalogCard({
             {actionLabel}
           </Button>
         )}
-        
+
         {secondaryActionLabel && onSecondaryAction && (
           <Button
             variant="secondary"
@@ -326,9 +324,9 @@ export function OriginalProjectCard({
         >
           {project.domain}
         </Badge>
-        <div className="flex items-center gap-1.5 bg-emerald-500/10 px-2.5 py-1 rounded-lg">
-          <Award className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-          <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+        <div className="flex items-center gap-1.5 border border-indigo-500/20 bg-indigo-500/10 px-2.5 py-1 rounded-lg">
+          <Award className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+          <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-400">
             {project.originalityScore}%
           </span>
         </div>
@@ -380,15 +378,16 @@ export function ProjectTable({
   return (
     <div className="space-y-4">
       {rows.map((row) => {
-        const scoreColor = 
-          row.originalityScore >= 80 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400"
-          : row.originalityScore >= 70 ? "bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400"
-          : "bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-400";
+        const scoreColor = "bg-indigo-500/10 border-indigo-500/20 text-indigo-700 dark:text-indigo-400";
 
         return (
-          <div
+          <motion.div
             key={row.id}
-            className="bg-card text-card-foreground rounded-2xl border border-border/50 shadow-sm hover:shadow-md hover:border-indigo-500/30 transition-all duration-200 p-6 group"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileHover={{ scale: 1.01, x: 2 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className="dashboard-surface hover:shadow-[0_16px_48px_0_rgba(0,0,0,0.1)] hover:border-indigo-500/30 transition-all duration-200 p-6 group"
           >
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-5">
               <div className="flex-1 min-w-0">
@@ -415,7 +414,7 @@ export function ProjectTable({
                 {actionLabel}
               </Button>
             )}
-          </div>
+          </motion.div>
         );
       })}
     </div>

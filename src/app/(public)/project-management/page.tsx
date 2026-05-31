@@ -100,7 +100,7 @@ export default function ProjectManagement() {
       ? "submit-idea"
       : localStorage.getItem("projectManagementActiveTab") || "submit-idea",
   );
-  
+
   const [isSavedDraftsOpen, setIsSavedDraftsOpen] = useState(true);
   const [isAbandonDialogOpen, setIsAbandonDialogOpen] = useState(false);
   const [abandonReason, setAbandonReason] = useState("");
@@ -118,9 +118,9 @@ export default function ProjectManagement() {
   const projectMembers =
     activeTeam
       ? normalizeTeamMembers(activeTeam.members || [], activeTeam.leaderId || "me").map((memberName) => ({
-          name: displayMemberName(memberName),
-          role: memberName === activeTeam.leaderId ? ("Leader" as const) : ("Member" as const),
-        }))
+        name: displayMemberName(memberName),
+        role: memberName === activeTeam.leaderId ? ("Leader" as const) : ("Member" as const),
+      }))
       : project?.members || [];
   const isTeamLeader = activeTeam ? Boolean(activeTeam.isLeader) : false;
   const hasBlockingProject = Boolean(project && project.status !== "cancelled");
@@ -256,11 +256,11 @@ export default function ProjectManagement() {
         const updatedTeams = teams.map((team) =>
           team.id === activeTeam.id
             ? {
-                ...team,
-                members: (team.members || []).filter(
-                  (member) => displayMemberName(member) !== memberToRemove,
-                ),
-              }
+              ...team,
+              members: (team.members || []).filter(
+                (member) => displayMemberName(member) !== memberToRemove,
+              ),
+            }
             : team,
         );
         setTeams(updatedTeams);
@@ -271,12 +271,12 @@ export default function ProjectManagement() {
           members: prev.members.filter(m => m.name !== memberToRemove)
         }) : prev);
       }
-      
+
       // Also remove from team chat
       const removedMembers = JSON.parse(localStorage.getItem("removedTeamMembers") || "[]");
       removedMembers.push(memberToRemove);
       localStorage.setItem("removedTeamMembers", JSON.stringify(removedMembers));
-      
+
       toast.success(`${memberToRemove} has been removed from the team and team chat.`);
       setIsRemoveMemberDialogOpen(false);
       setMemberToRemove(null);
@@ -341,34 +341,36 @@ export default function ProjectManagement() {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="mb-8 bg-transparent flex-wrap gap-2 h-auto p-0 justify-start">
-          <TabsTrigger 
-            value="submit-idea" 
-            className="gap-2 rounded-lg border border-border/50 bg-card hover:bg-card/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/10 data-[state=active]:to-indigo-600/10 data-[state=active]:border-indigo-500/30 px-4 py-2.5 font-medium text-foreground data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 transition-all"
-          >
-            <Lightbulb className="w-4 h-4" />
-            New Idea
-          </TabsTrigger>
-          <TabsTrigger 
-            value="my-projects" 
-            className="gap-2 rounded-lg border border-border/50 bg-card hover:bg-card/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/10 data-[state=active]:to-indigo-600/10 data-[state=active]:border-indigo-500/30 px-4 py-2.5 font-medium text-foreground data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 transition-all"
-          >
-            <FolderOpen className="w-4 h-4" />
-            My Projects
-          </TabsTrigger>
-          <TabsTrigger 
-            value="submitted-projects" 
-            className="gap-2 rounded-lg border border-border/50 bg-card hover:bg-card/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500/10 data-[state=active]:to-indigo-600/10 data-[state=active]:border-indigo-500/30 px-4 py-2.5 font-medium text-foreground data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 transition-all"
-          >
-            <ShieldCheck className="w-4 h-4" />
-            Submitted
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex justify-center mb-8">
+          <TabsList className="grid !h-auto items-stretch w-full max-w-[660px] grid-cols-1 sm:grid-cols-3 gap-1 rounded-xl border border-border bg-muted/40 !p-1">
+            <TabsTrigger
+              value="submit-idea"
+              className="flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground"
+            >
+              <Lightbulb className="w-4 h-4" />
+              New Idea
+            </TabsTrigger>
+            <TabsTrigger
+              value="my-projects"
+              className="flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground"
+            >
+              <FolderOpen className="w-4 h-4" />
+              My Projects
+            </TabsTrigger>
+            <TabsTrigger
+              value="submitted-projects"
+              className="flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              Submitted
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-               {/* ─── Tab 3: Submit New Idea ─── */}
+        {/* ─── Tab 3: Submit New Idea ─── */}
         <TabsContent value="submit-idea">
           <div className="bg-card text-card-foreground rounded-xl border border-border/50 shadow-sm p-8 md:p-10 text-center max-w-2xl mx-auto">
-            <div className="w-16 h-16 bg-indigo-500/10 rounded-2xl mx-auto flex items-center justify-center mb-6">
+            <div className="w-40 h-25 bg-indigo-500/10 rounded-2xl mx-auto flex items-center justify-center mb-6">
               <Lightbulb className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
             </div>
             <h2 className="text-2xl font-semibold text-foreground mb-3">
@@ -408,7 +410,7 @@ export default function ProjectManagement() {
                 </p>
               ) : (!teams || teams.length === 0) ? (
                 <p className="text-sm text-muted-foreground mt-3">
-                  You must be on a team before submitting a project. 
+                  You must be on a team before submitting a project.
                   <button className="ml-1 underline text-sm text-indigo-600 hover:text-indigo-700" onClick={() => router.push("/teams")}>Go to Teams page</button>
                 </p>
               ) : (
@@ -459,205 +461,205 @@ export default function ProjectManagement() {
                   </p>
                 </div>
               ) : (
-              <div className="bg-card text-card-foreground rounded-xl border border-border/50 shadow-sm overflow-hidden">
-                <div className="p-6">
-                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
-                    <div className="flex-1">
-                      <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <h3 className="text-xl font-semibold text-foreground">
-                          {project.title}
-                        </h3>
-                        <Badge
-                          variant="secondary"
-                          className={getProjectStatusClasses(project.status)}
-                        >
-                          {getProjectStatusLabel(project.status)}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Team: {projectTeamName} · Supervisor:{" "}
-                        {project.supervisor}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 bg-indigo-500/10 px-4 py-2 rounded-lg border border-indigo-500/20">
-                      <Award className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                      <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
-                        {project.originalityScore}%
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        Originality
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Project meta */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Clock className="w-4 h-4" />
-                      <span>
-                        Submitted:{" "}
-                        {new Date(
-                          project.submittedAt
-                        ).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
-                      <ShieldCheck className="w-4 h-4" />
-                      <span>
-                        Approved:{" "}
-                        {new Date(
-                          project.approvedAt
-                        ).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Users className="w-4 h-4" />
-                      <span>{projectMembers.length} members</span>
-                    </div>
-                  </div>
-
-                  {/* Technologies */}
-                  <div className="flex flex-wrap gap-2 mb-5">
-                    {project.technologies.map((tech) => (
-                      <span
-                        key={tech}
-                        className="px-2.5 py-1 bg-muted text-foreground text-xs rounded-md font-medium"
-                      >
-                        {tech}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Team Members */}
-                  <div className="flex flex-wrap items-center gap-3 mb-5">
-                    {projectMembers.map((member) => (
-                      <div
-                        key={member.name}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg border border-border/50 group"
-                      >
-                        <div className="w-6 h-6 rounded-full bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 flex items-center justify-center text-xs font-bold">
-                          {member.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </div>
-                        <span className="text-sm font-medium text-foreground">
-                          {member.name}
-                        </span>
-                        {member.role === "Leader" ? (
+                <div className="bg-card text-card-foreground rounded-xl border border-border/50 shadow-sm overflow-hidden">
+                  <div className="p-6">
+                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
+                      <div className="flex-1">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <h3 className="text-xl font-semibold text-foreground">
+                            {project.title}
+                          </h3>
                           <Badge
-                            variant="outline"
-                            className="text-[10px] px-1.5 py-0 bg-indigo-500/10 border-indigo-500/20 text-indigo-700 dark:text-indigo-400"
+                            variant="secondary"
+                            className={getProjectStatusClasses(project.status)}
                           >
-                            Leader
+                            {getProjectStatusLabel(project.status)}
                           </Badge>
-                        ) : (
-                          <div className="flex items-center gap-1">
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Team: {projectTeamName} · Supervisor:{" "}
+                          {project.supervisor}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 bg-indigo-500/10 px-4 py-2 rounded-lg border border-indigo-500/20">
+                        <Award className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                        <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                          {project.originalityScore}%
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          Originality
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Project meta */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Clock className="w-4 h-4" />
+                        <span>
+                          Submitted:{" "}
+                          {new Date(
+                            project.submittedAt
+                          ).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
+                        <ShieldCheck className="w-4 h-4" />
+                        <span>
+                          Approved:{" "}
+                          {new Date(
+                            project.approvedAt
+                          ).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Users className="w-4 h-4" />
+                        <span>{projectMembers.length} members</span>
+                      </div>
+                    </div>
+
+                    {/* Technologies */}
+                    <div className="flex flex-wrap gap-2 mb-5">
+                      {project.technologies.map((tech) => (
+                        <span
+                          key={tech}
+                          className="px-2.5 py-1 bg-muted text-foreground text-xs rounded-md font-medium"
+                        >
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Team Members */}
+                    <div className="flex flex-wrap items-center gap-3 mb-5">
+                      {projectMembers.map((member) => (
+                        <div
+                          key={member.name}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg border border-border/50 group"
+                        >
+                          <div className="w-6 h-6 rounded-full bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 flex items-center justify-center text-xs font-bold">
+                            {member.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")}
+                          </div>
+                          <span className="text-sm font-medium text-foreground">
+                            {member.name}
+                          </span>
+                          {member.role === "Leader" ? (
                             <Badge
                               variant="outline"
-                              className="text-[10px] px-1.5 py-0 text-muted-foreground"
+                              className="text-[10px] px-1.5 py-0 bg-indigo-500/10 border-indigo-500/20 text-indigo-700 dark:text-indigo-400"
                             >
-                              Member
+                              Leader
                             </Badge>
-                            {isTeamLeader && (
-                              <button
-                                onClick={() => handleRemoveMember(member.name)}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity ml-1"
-                                title="Remove member"
+                          ) : (
+                            <div className="flex items-center gap-1">
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] px-1.5 py-0 text-muted-foreground"
                               >
-                                <Trash2 className="w-3.5 h-3.5 text-red-500 hover:text-red-600" />
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Actions */}
-                  {isTeamLeader && (
-                    <div className="flex flex-wrap gap-3 pt-4 border-t border-border/50">
-                      <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                        <Link
-                          href={`/project-submission?edit=${project.id}&mode=details-only`}
-                        >
-                          <Edit2 className="w-4 h-4 mr-2" />
-                          Edit Project Details
-                        </Link>
-                      </Button>
-                      <Button variant="outline" asChild>
-                        <Link href={`/projects/${project.id}`}>
-                          <FileText className="w-4 h-4 mr-2" />
-                          View Full Project
-                        </Link>
-                      </Button>
-                      <Dialog open={isAbandonDialogOpen} onOpenChange={setIsAbandonDialogOpen}>
-                        <DialogTrigger asChild>
-                          <Button variant="destructive" className="ml-auto">
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Abandon Project
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
-                          <DialogHeader>
-                            <DialogTitle className="text-red-600">Abandon Project</DialogTitle>
-                            <DialogDescription>
-                              Are you sure you want to abandon this project? This action cannot be undone and all progress will be marked as abandoned.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-4 py-4">
-                            <div>
-                              <Label htmlFor="abandon-reason" className="text-foreground font-medium mb-2">
-                                Reason for abandoning (required)
-                              </Label>
-                              <Textarea
-                                id="abandon-reason"
-                                placeholder="Please explain why you're abandoning this project..."
-                                value={abandonReason}
-                                onChange={(e) => setAbandonReason(e.target.value)}
-                                className="mt-2 min-h-[100px]"
-                              />
+                                Member
+                              </Badge>
+                              {isTeamLeader && (
+                                <button
+                                  onClick={() => handleRemoveMember(member.name)}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                                  title="Remove member"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 text-red-500 hover:text-red-600" />
+                                </button>
+                              )}
                             </div>
-                          </div>
-                          <div className="flex gap-3 justify-end">
-                            <Button variant="outline" onClick={() => setIsAbandonDialogOpen(false)}>
-                              Cancel
-                            </Button>
-                            <Button 
-                              variant="destructive" 
-                              onClick={handleAbandonProject}
-                              disabled={!abandonReason.trim()}
-                            >
-                              Yes, Abandon Project
-                            </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  )}
-                  {!isTeamLeader && (
-                    <div className="pt-4 border-t border-border/50">
-                      <p className="text-sm text-muted-foreground italic">
-                        Only the team leader can edit project details.
-                      </p>
-                    </div>
-                  )}
+
+                    {/* Actions */}
+                    {isTeamLeader && (
+                      <div className="flex flex-wrap gap-3 pt-4 border-t border-border/50">
+                        <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                          <Link
+                            href={`/project-submission?edit=${project.id}&mode=details-only`}
+                          >
+                            <Edit2 className="w-4 h-4 mr-2" />
+                            Edit Project Details
+                          </Link>
+                        </Button>
+                        <Button variant="outline" asChild>
+                          <Link href={`/projects/${project.id}`}>
+                            <FileText className="w-4 h-4 mr-2" />
+                            View Full Project
+                          </Link>
+                        </Button>
+                        <Dialog open={isAbandonDialogOpen} onOpenChange={setIsAbandonDialogOpen}>
+                          <DialogTrigger asChild>
+                            <Button variant="destructive" className="ml-auto">
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Abandon Project
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                              <DialogTitle className="text-red-600">Abandon Project</DialogTitle>
+                              <DialogDescription>
+                                Are you sure you want to abandon this project? This action cannot be undone and all progress will be marked as abandoned.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                              <div>
+                                <Label htmlFor="abandon-reason" className="text-foreground font-medium mb-2">
+                                  Reason for abandoning (required)
+                                </Label>
+                                <Textarea
+                                  id="abandon-reason"
+                                  placeholder="Please explain why you're abandoning this project..."
+                                  value={abandonReason}
+                                  onChange={(e) => setAbandonReason(e.target.value)}
+                                  className="mt-2 min-h-[100px]"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex gap-3 justify-end">
+                              <Button variant="outline" onClick={() => setIsAbandonDialogOpen(false)}>
+                                Cancel
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                onClick={handleAbandonProject}
+                                disabled={!abandonReason.trim()}
+                              >
+                                Yes, Abandon Project
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    )}
+                    {!isTeamLeader && (
+                      <div className="pt-4 border-t border-border/50">
+                        <p className="text-sm text-muted-foreground italic">
+                          Only the team leader can edit project details.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
               )}
             </section>
 
             {/* Saved Drafts */}
             <section>
-              <button 
+              <button
                 className="flex items-center gap-2 w-full text-left focus:outline-none group mb-4"
                 onClick={() => setIsSavedDraftsOpen(!isSavedDraftsOpen)}
               >
@@ -712,7 +714,7 @@ export default function ProjectManagement() {
                               )}
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center gap-2 sm:shrink-0">
                             {draft.canEdit ? (
                               <>
@@ -765,55 +767,55 @@ export default function ProjectManagement() {
                 </p>
               </div>
             ) : (
-            <div className="bg-card text-card-foreground rounded-xl border border-border/50 shadow-sm p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                <div className="flex-1">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <h3 className="text-lg font-semibold text-foreground">{project.title}</h3>
-                    <Badge variant="secondary" className={getProjectStatusClasses(project.status)}>
-                      {getProjectStatusLabel(project.status)}
-                    </Badge>
+              <div className="bg-card text-card-foreground rounded-xl border border-border/50 shadow-sm p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <h3 className="text-lg font-semibold text-foreground">{project.title}</h3>
+                      <Badge variant="secondary" className={getProjectStatusClasses(project.status)}>
+                        {getProjectStatusLabel(project.status)}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Submitted to {project.supervisor} on{" "}
+                      {new Date(project.submittedAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </p>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Submitted to {project.supervisor} on{" "}
-                    {new Date(project.submittedAt).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 dark:text-red-400 border-red-500/30 hover:bg-red-500/10"
+                      onClick={handleRecallSubmission}
+                    >
+                      Unsend Submission
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/projects/${project.id}`}>View Project</Link>
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-red-600 dark:text-red-400 border-red-500/30 hover:bg-red-500/10"
-                    onClick={handleRecallSubmission}
-                  >
-                    Unsend Submission
-                  </Button>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/projects/${project.id}`}>View Project</Link>
-                  </Button>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
-                <div>
-                  <p className="text-xs text-muted-foreground">Originality Score</p>
-                  <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{project.originalityScore}%</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Team</p>
-                  <p className="text-sm font-medium text-foreground">{projectTeamName}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Status</p>
-                  <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400">
-                    {getProjectStatusLabel(project.status)}
-                  </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Originality Score</p>
+                    <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{project.originalityScore}%</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Team</p>
+                    <p className="text-sm font-medium text-foreground">{projectTeamName}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Status</p>
+                    <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400">
+                      {getProjectStatusLabel(project.status)}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
             )}
           </div>
         </TabsContent>
@@ -857,8 +859,8 @@ export default function ProjectManagement() {
             <Button variant="outline" onClick={() => setIsRemoveMemberDialogOpen(false)}>
               Cancel
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={handleConfirmRemoveMember}
             >
               Remove Member

@@ -56,7 +56,8 @@
   --card-foreground: oklch(0.145 0.02 260);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0.02 260);
-  --primary: oklch(0.45 0.15 280); /* Indigo-ish */
+  --primary: oklch(0.45 0.15 280);
+  /* Indigo-ish */
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0.01 260);
   --secondary-foreground: oklch(0.205 0.02 260);
@@ -91,7 +92,8 @@
   --card-foreground: oklch(0.985 0.01 260);
   --popover: oklch(0.16 0.03 260);
   --popover-foreground: oklch(0.985 0.01 260);
-  --primary: oklch(0.65 0.15 280); /* Light Indigo */
+  --primary: oklch(0.65 0.15 280);
+  /* Light Indigo */
   --primary-foreground: oklch(0.145 0.02 260);
   --secondary: oklch(0.22 0.04 260);
   --secondary-foreground: oklch(0.985 0.01 260);
@@ -122,12 +124,14 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     text-rendering: optimizeLegibility;
     letter-spacing: 0;
   }
+
   html {
     @apply font-sans;
   }
@@ -145,7 +149,7 @@
   .dashboard-card {
     @apply bg-card text-card-foreground rounded-2xl p-6 border border-border shadow-sm hover:shadow-md transition-all duration-300;
   }
-  
+
   .glass {
     @apply bg-background/60 backdrop-blur-xl border border-border/50;
   }
@@ -155,6 +159,7 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
@@ -174,6 +179,7 @@
       opacity: 0;
       transform: translateY(6px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -186,7 +192,8 @@
       @apply px-3 pt-4;
     }
 
-    button, [role="button"] {
+    button,
+    [role="button"] {
       min-height: 40px;
     }
   }
@@ -206,10 +213,10 @@
       opacity: 0;
       transform: translateY(8px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
     }
   }
 }
-
