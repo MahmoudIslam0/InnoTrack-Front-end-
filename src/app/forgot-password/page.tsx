@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertCircle, CheckCircle2, ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 
 export default function ForgotPassword() {
+  const router = useRouter();
   const { forgotPassword } = useAuth();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
@@ -25,6 +27,10 @@ export default function ForgotPassword() {
     try {
       await forgotPassword(email);
       setSuccess(true);
+      // Wait a moment so they can read the success message, then redirect
+      setTimeout(() => {
+        router.push(`/reset-password?email=${encodeURIComponent(email)}`);
+      }, 3000);
     } catch (err: any) {
       setError(err.message || "Failed to send reset email. Please try again.");
     } finally {
@@ -73,7 +79,7 @@ export default function ForgotPassword() {
             <div className="mb-6 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 flex items-start gap-3 animate-in fade-in zoom-in-95">
               <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
               <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium leading-relaxed">
-                If an account exists for {email}, you will receive a password reset link shortly.
+                If an account exists for {email}, you will receive a password reset code shortly. Redirecting you to enter it...
               </p>
             </div>
           )}
@@ -110,6 +116,7 @@ export default function ForgotPassword() {
               </Button>
             </form>
           )}
+
 
           {/* Back to Login Link */}
           <div className="mt-8 text-center">

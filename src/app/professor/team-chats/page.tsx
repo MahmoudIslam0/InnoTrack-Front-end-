@@ -38,6 +38,7 @@ export default function TeamChats() {
   const messages: TeamChatMessage[] = [
     ...(selectedChat?.messages.map((message) => ({
       id: message.id,
+      authorId: 1,
       author: message.author,
       initials: initialsFor(message.author),
       role: message.role,
@@ -46,6 +47,7 @@ export default function TeamChats() {
     })) ?? []),
     ...(selectedChat?.files.map((file) => ({
       id: file.id,
+      authorId: 2,
       author:
         selectedTeam?.members[0]?.name ?? `${selectedTeam?.name ?? "Team"} Member`,
       initials: initialsFor(selectedTeam?.members[0]?.name ?? "Team Member"),
@@ -70,8 +72,8 @@ export default function TeamChats() {
           key={selectedChatId}
           title="Team Chat"
           subtitle={`${selectedProject?.title ?? "Assigned Project"} - ${selectedTeam?.name ?? "Team"}`}
-          initialMembers={members}
-          initialMessages={messages}
+          members={members}
+          messages={messages}
           currentUserName={professorProfile.name}
           currentUserRole="Professor"
           className="h-full"

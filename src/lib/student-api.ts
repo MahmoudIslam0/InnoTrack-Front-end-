@@ -134,6 +134,33 @@ export type SimilarityCheckResponse = {
   }[];
 };
 
+export type ChatMemberDto = {
+  id: number;
+  fullName: string;
+  role: string;
+  initials: string;
+};
+
+export type ChatMessageDetailDto = {
+  id: number;
+  authorId: number;
+  authorName: string;
+  content: string;
+  sentAt: string;
+  isEdited?: boolean;
+  isDeletedForAll?: boolean;
+  isPinned?: boolean;
+  parentMessageId?: number | null;
+  reactions?: { userId: number; emoji: string }[];
+};
+
+export type TeamChatDto = {
+  chatId: number;
+  projectTitle?: string;
+  members: ChatMemberDto[];
+  messages: ChatMessageDetailDto[];
+};
+
 export type SaveDraftPayload = {
   title: string;
   studentNames: string;
@@ -349,4 +376,15 @@ export const studentApi = {
     api.delete(`/api/Teams/me/members/${memberId}`),
 
   leaveTeam: () => api.delete("/api/Teams/me/leave"),
+
+  getTeamChat: () => api.get("/api/teams/me/chat") as Promise<TeamChatDto>,
+
+  sendChatMessage: (content: string) =>
+    api.post("/api/teams/me/chat/messages", { content }) as Promise<{
+      id: number;
+      chatRoomId: number;
+      senderId: number;
+      content: string;
+      sentAt: string;
+    }>,
 };

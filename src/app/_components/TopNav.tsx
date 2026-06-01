@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Bell, User, Menu, LogOut } from "lucide-react";
+import { Search, Bell, User, Menu, LogOut, PanelLeftClose, PanelLeft } from "lucide-react";
 import { Avatar, AvatarFallback } from "../../components/ui/avatar";
 import {
   DropdownMenu,
@@ -17,6 +17,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
+import { useSidebar } from "@/contexts/SidebarContext";
 
 function timeAgo(dateString: string) {
   const date = new Date(dateString);
@@ -46,9 +47,9 @@ interface TopNavProps {
 
 export function TopNav({
   title = "Student Dashboard",
-  profileName = "Mohamed Ayman",
-  profileSubtitle = "Student",
-  initials = "MA",
+  profileName = "Mahmoud Islam",
+  profileSubtitle = "Software Engineering Student",
+  initials = "MI",
   showSearch = false,
   showNotifications = false,
   profileHref = "/profile",
@@ -56,6 +57,7 @@ export function TopNav({
 }: TopNavProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { isSidebarCollapsed, toggleSidebar } = useSidebar();
   const [notifications, setNotifications] = useState<any[]>([]);
 
   useEffect(() => {
@@ -133,7 +135,7 @@ export function TopNav({
   };
 
   return (
-    <header className="fixed top-0 left-0 md:left-64 right-0 h-16 bg-background/60 backdrop-blur-2xl border-b border-border/50 z-10 shadow-[0_4px_30px_rgba(0,0,0,0.02)] transition-all duration-300">
+    <header className={`fixed top-0 left-0 ${isSidebarCollapsed ? 'md:left-20' : 'md:left-64'} right-0 h-16 bg-background/60 backdrop-blur-2xl border-b border-border/50 z-40 shadow-[0_4px_30px_rgba(0,0,0,0.02)] transition-all duration-300`}>
       <div className="h-full px-4 md:px-8 flex items-center justify-between">
         {/* Mobile Menu Button & Page Title */}
         <div className="flex items-center gap-4">
@@ -147,6 +149,13 @@ export function TopNav({
               <SidebarContent variant={variant} />
             </SheetContent>
           </Sheet>
+          
+          <button 
+            onClick={toggleSidebar}
+            className="hidden md:flex p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground rounded-xl transition-colors"
+          >
+            {isSidebarCollapsed ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+          </button>
           
           <div>
             <h2 className="text-lg font-semibold text-foreground tracking-tight">

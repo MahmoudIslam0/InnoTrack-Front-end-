@@ -25,6 +25,8 @@ interface AuthContextType {
   }) => Promise<any>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<any>;
+  verifyResetCode: (payload: { email: string; token: string }) => Promise<any>;
+  resetPassword: (payload: { email: string; token: string; newPassword: string }) => Promise<any>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -157,6 +159,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const verifyResetCode = async (payload: { email: string; token: string }) => {
+    setIsLoading(true);
+    try {
+      const response = await api.post("/api/Auth/verify-reset-code", payload);
+      return response;
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resetPassword = async (payload: { email: string; token: string; newPassword: string }) => {
+    setIsLoading(true);
+    try {
+      const response = await api.post("/api/Auth/reset-password", payload);
+      return response;
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const isAuthenticated = !!token;
 
   return (
@@ -170,6 +196,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         register,
         logout,
         forgotPassword,
+        verifyResetCode,
+        resetPassword,
       }}
     >
       {children}

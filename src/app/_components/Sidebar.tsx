@@ -10,6 +10,7 @@ import {
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { useSidebar } from "@/contexts/SidebarContext";
 
 interface SidebarProps {
   activeItem?: string;
@@ -34,6 +35,7 @@ const professorMenuItems = [
 
 export function SidebarContent({ activeItem, variant = "student" }: SidebarProps) {
   const pathname = usePathname();
+  const { isSidebarCollapsed } = useSidebar();
   const menuItems = variant === "professor" ? professorMenuItems : studentMenuItems;
   const subtitle = variant === "professor" ? "Professor Workspace" : "Student Workspace";
 
@@ -41,7 +43,7 @@ export function SidebarContent({ activeItem, variant = "student" }: SidebarProps
     <div className="flex h-full flex-col">
       {/* Logo */}
       <div className="px-5 py-5 border-b border-border/50">
-        <div className="flex items-center gap-3">
+        <div className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-3'}`}>
           <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl flex items-center justify-center">
             <Image
               src="/logo-light.png"
@@ -58,7 +60,7 @@ export function SidebarContent({ activeItem, variant = "student" }: SidebarProps
               className="h-full w-full object-contain hidden dark:block mix-blend-screen"
             />
           </div>
-          <div>
+          <div className={`overflow-hidden transition-all duration-300 whitespace-nowrap ${isSidebarCollapsed ? 'max-w-0 opacity-0' : 'max-w-[200px] opacity-100'}`}>
             <h1 className="text-lg font-bold text-foreground leading-none tracking-tight">
               InnoTrack
             </h1>
@@ -81,8 +83,10 @@ export function SidebarContent({ activeItem, variant = "student" }: SidebarProps
               <li key={item.id}>
                 <Link
                   href={item.path}
+                  title={isSidebarCollapsed ? item.label : undefined}
                   className={`
-                    w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group
+                    w-full flex items-center py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group
+                    ${isSidebarCollapsed ? 'px-0 justify-center' : 'px-3.5 gap-3'}
                     ${
                       isActive
                         ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shadow-[inset_0_0_0_1px_rgba(79,70,229,0.1)]"
@@ -90,8 +94,10 @@ export function SidebarContent({ activeItem, variant = "student" }: SidebarProps
                     }
                   `}
                 >
-                  <Icon className={`w-5 h-5 transition-colors ${isActive ? "text-indigo-600 dark:text-indigo-400" : "group-hover:text-accent-foreground"}`} />
-                  <span>{item.label}</span>
+                  <Icon className={`w-5 h-5 transition-colors shrink-0 ${isActive ? "text-indigo-600 dark:text-indigo-400" : "group-hover:text-accent-foreground"}`} />
+                  <span className={`overflow-hidden transition-all duration-300 whitespace-nowrap ${isSidebarCollapsed ? 'max-w-0 opacity-0' : 'max-w-[200px] opacity-100'}`}>
+                    {item.label}
+                  </span>
                 </Link>
               </li>
             );
@@ -105,10 +111,14 @@ export function SidebarContent({ activeItem, variant = "student" }: SidebarProps
   );
 }
 
-export function Sidebar({ activeItem, variant = "student" }: SidebarProps) {
+export function Sidebar({ variant = "student" }: SidebarProps) {
+  const { isSidebarCollapsed } = useSidebar();
+  
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-background/70 backdrop-blur-2xl border-r border-border/50 hidden md:flex flex-col z-20 shadow-[8px_0_30px_rgba(0,0,0,0.03)] dark:shadow-none transition-all duration-300">
-      <SidebarContent activeItem={activeItem} variant={variant} />
+    <aside 
+      className={`fixed left-0 top-0 h-screen ${isSidebarCollapsed ? 'w-20' : 'w-64'} bg-background/70 backdrop-blur-2xl border-r border-border/50 hidden md:flex flex-col z-20 shadow-[8px_0_30px_rgba(0,0,0,0.03)] dark:shadow-none transition-all duration-300`}
+    >
+      <SidebarContent variant={variant} />
     </aside>
   );
 }

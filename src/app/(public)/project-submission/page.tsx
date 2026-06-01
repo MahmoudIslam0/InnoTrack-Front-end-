@@ -412,6 +412,8 @@ function ProjectSubmissionPage() {
     try {
       const saved = await saveDraft();
       sessionStorage.setItem("projectSubmissionId", String(saved.id));
+      // Store the current page URL so the supervisor page can navigate back to it
+      sessionStorage.setItem("supervisorReturnUrl", window.location.pathname + window.location.search);
       router.push("/project-submission/supervisor");
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, "Could not prepare submission."));

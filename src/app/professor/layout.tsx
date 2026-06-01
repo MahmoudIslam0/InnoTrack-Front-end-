@@ -1,5 +1,6 @@
 import { Sidebar } from "@/app/_components/Sidebar";
 import { TopNav } from "@/app/_components/TopNav";
+import { DashboardLayoutWrapper, MainContentArea } from "@/app/_components/DashboardLayoutWrapper";
 
 export default function ProfessorLayout({
   children,
@@ -7,7 +8,7 @@ export default function ProfessorLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen w-full bg-background text-foreground">
+    <DashboardLayoutWrapper>
       <Sidebar variant="professor" />
       <TopNav
         title="Professor Dashboard"
@@ -18,7 +19,7 @@ export default function ProfessorLayout({
         showNotifications
       />
 
-      <main className="md:ml-64 pt-16">{children}</main>
-    </div>
+      <MainContentArea>{children}</MainContentArea>
+    </DashboardLayoutWrapper>
   );
 }

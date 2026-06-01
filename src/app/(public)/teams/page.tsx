@@ -27,6 +27,7 @@ import {
   TeamChatMessage,
   TeamChatWorkspace,
 } from "@/app/_components/TeamChatWorkspace";
+import { useTeamChat } from "@/hooks/useTeamChat";
 import MembersGrid from "@/components/Team/MembersGrid";
 import PendingRequestsList from "@/components/Team/PendingRequestsList";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -96,6 +97,28 @@ export default function TeamsPage() {
   const [inviteCountdown, setInviteCountdown] = useState(0);
   const [copied, setCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentUserName, setCurrentUserName] = useState("Me");
+
+  const { 
+    messages: realChatMessages, 
+    members: realChatMembers, 
+    sendMessage: realSendMessage,
+    editMessage: realEditMessage,
+    deleteMessage: realDeleteMessage,
+    togglePin: realTogglePin,
+    reactToMessage: realReactToMessage,
+    replyToMessage: realReplyToMessage
+  } = useTeamChat(team ? Number(team.id) : null);
+
+  useEffect(() => {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        const u = JSON.parse(userStr);
+        if (u.name) setCurrentUserName(u.name);
+      } catch (e) {}
+    }
+  }, []);
 
   useEffect(() => {
     let ignore = false;
@@ -181,40 +204,6 @@ export default function TeamsPage() {
     ...member,
     name: member.name,
   }));
-  const currentChatUserName = teamMembers[0]?.name || "Me";
-  const chatStudentNames = uniqueNames(
-    teamMembers.map((member) => member.name),
-  );
-  const chatMembers: TeamChatMember[] = [
-    ...chatStudentNames.map((name, index) => ({
-      id: `student-${index}-${name}`,
-      name,
-      initials: initialsFor(name),
-      role: "Student" as const,
-      online: true,
-    })),
-    ...(chatSupervisorName
-      ? [
-        {
-          id: "supervisor",
-          name: chatSupervisorName,
-          initials: initialsFor(chatSupervisorName),
-          role: "Professor" as const,
-          online: true,
-        },
-      ]
-      : []),
-  ];
-  const chatMessages = buildProjectChatMessages(
-    {
-      title: team?.projectTitle || "",
-      teamName: team?.name || "",
-      students: chatStudentNames,
-      technologies: team?.projectTechnologies || [],
-    },
-    chatSupervisorName,
-    currentChatUserName,
-  );
 
   const createTeam = async () => {
     const name = newTeamName.trim();
@@ -504,7 +493,7 @@ export default function TeamsPage() {
                                           await api.delete("/api/Teams/me");
                                           window.location.reload();
                                         } catch (err: any) {
-                                          alert(err.message || "Failed to delete team.");
+                                          toast.error(err.message || "Failed to delete team.");
                                         }
                                       }
                                     }}
@@ -717,11 +706,16 @@ export default function TeamsPage() {
             <TeamChatWorkspace
               title="Team Chat"
               subtitle={`${team?.projectTitle || "No project yet"} - ${team?.name || ""}`}
-              initialMembers={chatMembers}
-              initialMessages={chatMessages}
-              currentUserName={currentChatUserName}
+              members={realChatMembers as any}
+              messages={realChatMessages as any}
+              currentUserName={currentUserName}
               currentUserRole="Student"
-              isTeamLeader={false}
+              onSendMessage={realSendMessage}
+              onEditMessage={realEditMessage}
+              onDeleteMessage={realDeleteMessage}
+              onTogglePin={realTogglePin}
+              onReactToMessage={realReactToMessage}
+              onReplyToMessage={realReplyToMessage}
               className="h-[calc(100vh-260px)] min-h-0"
             />
           )}
@@ -925,78 +919,6 @@ function uniqueNames(names: string[]) {
 
 function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
-}
-
-function buildProjectChatMessages(
-  project: { title: string; teamName: string; students: string[]; technologies: string[] },
-  supervisorName: string | null | undefined,
-  currentUserName: string,
-): TeamChatMessage[] {
-  const teammate = (project.students || []).find((student) => student !== currentUserName) || (project.students || [])[1] || "Teammate";
-  const supervisor = supervisorName || "Supervisor";
-
-  return [
-    {
-      id: "m1",
-      author: supervisor,
-      initials: initialsFor(supervisor),
-      role: "Professor",
-      content:
-        `Good morning ${project.teamName || "Team"}. I reviewed the ${project.title || "project"} proposal. The core idea is strong; please tighten the indoor route fallback and clarify how ${(project.technologies && project.technologies[1]) || "technology"} handles low-light areas.`,
-      timestamp: "09:30 AM",
-    },
-    {
-      id: "m2",
-      author: supervisor,
-      initials: initialsFor(supervisor),
-      role: "Professor",
-      timestamp: "09:31 AM",
-      file: {
-        name: "Navigation_Feedback_Round1.pdf",
-        size: "245 KB",
-        type: "pdf",
-      },
-    },
-    {
-      id: "m3",
-      author: currentUserName,
-      initials: initialsFor(currentUserName),
-      role: "Student",
-      content:
-        "Thanks doctor. We will update the proposal today and add the route fallback section before sending the next draft.",
-      timestamp: "10:15 AM",
-    },
-    {
-      id: "m4",
-      author: teammate,
-      initials: initialsFor(teammate),
-      role: "Student",
-      content:
-        `I updated the ${(project.technologies && project.technologies[1]) || "technology"} wayfinding flow and linked it with the ${(project.technologies && project.technologies[2]) || "technology"} location checkpoints.`,
-      timestamp: "11:20 AM",
-    },
-    {
-      id: "m5",
-      author: teammate,
-      initials: initialsFor(teammate),
-      role: "Student",
-      timestamp: "11:21 AM",
-      file: {
-        name: "Campus_AR_Wireflow.png",
-        size: "1.2 MB",
-        type: "image",
-      },
-    },
-    {
-      id: "m6",
-      author: supervisor,
-      initials: initialsFor(supervisor),
-      role: "Professor",
-      content:
-        "Great. Once the updated flow is ready, share the Firebase schema and I will review the data model before your next milestone.",
-      timestamp: "12:05 PM",
-    },
-  ];
 }
 
 function parseRequests(value: unknown): JoinRequest[] {

@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, ChevronDown, Send, UserRound, Award } from "lucide-react";
+import { ArrowLeft, ChevronDown, Send, UserRound, CheckCircle2, Users, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SupervisorDto, studentApi } from "@/lib/student-api";
@@ -36,81 +35,69 @@ export default function SubmitToSupervisor() {
   const router = useRouter();
   const [supervisors, setSupervisors] = useState<SupervisorDto[]>([]);
   const [selectedSupervisorId, setSelectedSupervisorId] = useState<number | null>(null);
-  const [submissionState, setSubmissionState] =
-    useState<SavedSubmissionState | null>(null);
+  const [submissionState, setSubmissionState] = useState<SavedSubmissionState | null>(null);
   const [proposalData, setProposalData] = useState({
     department: "",
-    teamSize: "",
-    teamMembers: "",
     message: "",
   });
+  const [returnUrl, setReturnUrl] = useState("/project-submission");
 
   useEffect(() => {
     const savedState = sessionStorage.getItem("projectSubmissionDraft");
     if (!savedState) return;
-
     try {
       const parsed = JSON.parse(savedState) as SavedSubmissionState;
       setSubmissionState(parsed);
-      setProposalData((current) => ({
-        ...current,
-        teamMembers: parsed.formData?.studentNames ?? "",
-      }));
     } catch {
       setSubmissionState(null);
     }
+    // Restore the return URL so Back takes the user to the exact page they came from
+    const storedReturnUrl = sessionStorage.getItem("supervisorReturnUrl");
+    if (storedReturnUrl) setReturnUrl(storedReturnUrl);
   }, []);
 
   useEffect(() => {
     let ignore = false;
-
     studentApi
       .getSupervisors()
       .then((items) => {
         if (ignore) return;
         setSupervisors(items);
-        const firstAvailable = items.find((supervisor) => supervisor.isAvailable) || items[0];
+        const firstAvailable = items.find((s) => s.isAvailable) || items[0];
         setSelectedSupervisorId(firstAvailable?.id ?? null);
       })
       .catch(() => {
         if (!ignore) toast.error("Could not load supervisors.");
       });
-
-    return () => {
-      ignore = true;
-    };
+    return () => { ignore = true; };
   }, []);
 
-  const selectedSupervisor = supervisors.find((supervisor) => supervisor.id === selectedSupervisorId);
+  const selectedSupervisor = supervisors.find((s) => s.id === selectedSupervisorId);
   const canSubmit =
     Boolean(proposalData.department) &&
-    Boolean(proposalData.teamMembers.trim()) &&
     Boolean(proposalData.message.trim()) &&
-    Boolean(selectedSupervisor && selectedSupervisor.isAvailable);
+    Boolean(selectedSupervisor?.isAvailable);
 
   const submitProposal = async () => {
-    if (!proposalData.department || !proposalData.teamMembers || !proposalData.message) {
+    if (!proposalData.department || !proposalData.message) {
       toast.error("Please complete the required proposal details");
       return;
     }
-
-    if (!selectedSupervisor || !selectedSupervisor.isAvailable) {
+    if (!selectedSupervisor?.isAvailable) {
       toast.error("Please select an available supervisor");
       return;
     }
-
     const projectId = sessionStorage.getItem("projectSubmissionId");
     if (!projectId) {
       toast.error("Save the project draft before submitting.");
       router.push("/project-submission");
       return;
     }
-
     try {
       await studentApi.submitProject(projectId, {
         supervisorId: selectedSupervisor.id,
         department: proposalData.department,
-        teamMembers: proposalData.teamMembers,
+        teamMembers: submissionState?.formData?.studentNames ?? "",
         message: proposalData.message,
       });
       toast.success(`Proposal submitted to ${selectedSupervisor.fullName}`);
@@ -121,186 +108,202 @@ export default function SubmitToSupervisor() {
   };
 
   return (
-    <div className="dashboard-page">
+    <div className="dashboard-page space-y-0">
+      {/* ─── Back Button ─── */}
       <Button
         variant="ghost"
-        className="mb-6 -ml-3 text-slate-600 hover:bg-slate-100 hover:text-slate-950"
-        onClick={() => router.push("/project-submission")}
+        className="mb-6 -ml-2 gap-2 text-muted-foreground hover:bg-transparent hover:text-foreground"
+        onClick={() => router.push(returnUrl)}
       >
-        <ArrowLeft className="mr-2 h-4 w-4" />
+        <ArrowLeft className="h-4 w-4" />
         Back to Submission
       </Button>
 
-      <div className="mb-6">
-        <h1 className="mb-2 text-2xl font-semibold text-slate-950">
+      {/* ─── Page Header ─── */}
+      <div className="mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">
           Submit to Supervisor
         </h1>
-        <p className="text-slate-600">
+        <p className="text-muted-foreground mt-1 text-sm">
           Choose a supervisor and submit your project proposal
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_390px]">
-        <div className="space-y-6">
-          <section className="dashboard-surface p-6">
-            <h2 className="mb-5 text-lg font-semibold text-slate-950">
-              Proposal Details
-            </h2>
+      {/* ─── Project context banner ─── */}
+      {submissionState?.formData?.title && (
+        <div className="mb-6 flex items-start gap-3 rounded-2xl border border-indigo-200 bg-indigo-50/60 dark:bg-indigo-950/20 dark:border-indigo-900/50 p-4">
+          <AlertCircle className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />
+          <div className="text-sm">
+            <span className="font-semibold text-foreground">Submitting: </span>
+            <span className="text-muted-foreground">{submissionState.formData.title}</span>
+          </div>
+        </div>
+      )}
 
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="department">Department *</Label>
-                <div className="relative">
-                  <select
-                    id="department"
-                    value={proposalData.department}
-                    onChange={(event) =>
-                      setProposalData((current) => ({
-                        ...current,
-                        department: event.target.value,
-                      }))
-                    }
-                    className="h-10 w-full appearance-none rounded-lg border border-transparent bg-slate-100 px-3 pr-10 text-sm text-slate-700 outline-none transition-colors focus:border-indigo-200 focus:ring-2 focus:ring-indigo-500/20"
-                  >
-                    <option value="">Select your department</option>
-                    {departments.map((department) => (
-                      <option key={department} value={department}>
-                        {department}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                </div>
-              </div>
+      {/* ─── Main Grid ─── */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px] items-start">
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label htmlFor="teamSize">Team Size</Label>
-                  <Input
-                    id="teamSize"
-                    placeholder="e.g., 3"
-                    value={proposalData.teamSize}
-                    onChange={(event) =>
-                      setProposalData((current) => ({
-                        ...current,
-                        teamSize: event.target.value,
-                      }))
-                    }
-                    className="bg-slate-100"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="teamMembers">Team Members *</Label>
-                  <Input
-                    id="teamMembers"
-                    placeholder="e.g., John, Sarah, Ali"
-                    value={proposalData.teamMembers}
-                    onChange={(event) =>
-                      setProposalData((current) => ({
-                        ...current,
-                        teamMembers: event.target.value,
-                      }))
-                    }
-                    className="bg-slate-100"
-                  />
-                </div>
-              </div>
+        {/* ── Left: Proposal Details ── */}
+        <div className="bg-card rounded-2xl border border-border/60 shadow-sm overflow-hidden">
+          <div className="px-6 py-5 border-b border-border/50">
+            <h2 className="text-base font-bold text-foreground">Proposal Details</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Fill in the details for your supervisor proposal</p>
+          </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="proposalMessage">Proposal Message *</Label>
-                <Textarea
-                  id="proposalMessage"
-                  placeholder="Write a message to the professor explaining why you'd like them to supervise your project. Include your project goals, timeline, and any specific expertise you're seeking..."
-                  value={proposalData.message}
-                  onChange={(event) =>
-                    setProposalData((current) => ({
-                      ...current,
-                      message: event.target.value,
-                    }))
+          <div className="p-6 space-y-5">
+            {/* Department */}
+            <div className="space-y-1.5">
+              <Label htmlFor="department" className="text-sm font-semibold text-foreground">
+                Department <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <select
+                  id="department"
+                  value={proposalData.department}
+                  onChange={(e) =>
+                    setProposalData((cur) => ({ ...cur, department: e.target.value }))
                   }
-                  className="min-h-[200px] resize-y bg-slate-100"
-                />
-                <p className="text-xs text-slate-500">
-                  Be specific about what you hope to achieve and why this professor is a good fit
-                </p>
+                  className="h-11 w-full appearance-none rounded-xl border border-border bg-muted/40 px-4 pr-10 text-sm text-foreground outline-none transition-all focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 focus:bg-background"
+                >
+                  <option value="">Select your department</option>
+                  {departments.map((dept) => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               </div>
             </div>
-          </section>
 
-         
+            {/* Proposal Message */}
+            <div className="space-y-1.5">
+              <Label htmlFor="proposalMessage" className="text-sm font-semibold text-foreground">
+                Proposal Message <span className="text-red-500">*</span>
+              </Label>
+              <Textarea
+                id="proposalMessage"
+                placeholder="Write a message to the professor explaining why you'd like them to supervise your project. Include your project goals, timeline, and any specific expertise you're seeking..."
+                value={proposalData.message}
+                onChange={(e) =>
+                  setProposalData((cur) => ({ ...cur, message: e.target.value }))
+                }
+                className="min-h-[220px] resize-y rounded-xl border-border bg-muted/40 text-sm focus-visible:ring-indigo-500/30 focus-visible:border-indigo-400 focus-visible:bg-background transition-all"
+              />
+              <p className="text-xs text-muted-foreground">
+                Be specific about what you hope to achieve and why this professor is a good fit.
+              </p>
+            </div>
+
+            {/* Submit button (mobile only — also shown in aside on desktop) */}
+            <div className="lg:hidden pt-2">
+              <Button
+                className="h-11 w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={submitProposal}
+                disabled={!canSubmit}
+              >
+                <Send className="h-4 w-4" />
+                Submit Proposal
+              </Button>
+            </div>
+          </div>
         </div>
 
-        <aside className="dashboard-surface overflow-hidden">
-          <div className="border-b border-slate-100 px-6 py-5">
-            <h2 className="text-lg font-semibold text-slate-950">
-              Select Supervisor
-            </h2>
+        {/* ── Right: Supervisor Selection ── */}
+        <div className="bg-card rounded-2xl border border-border/60 shadow-sm overflow-hidden flex flex-col">
+          <div className="px-6 py-5 border-b border-border/50">
+            <h2 className="text-base font-bold text-foreground">Select Supervisor</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {supervisors.filter(s => s.isAvailable).length} of {supervisors.length} supervisors available
+            </p>
           </div>
 
-          <div className="max-h-[500px] space-y-4 overflow-y-auto px-6 py-4 pr-3 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-700 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-600">
-            {supervisors.map((supervisor) => {
-              const isSelected = supervisor.id === selectedSupervisorId;
-              const isFull = !supervisor.isAvailable;
+          {/* Supervisor list */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 max-h-[420px] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+            {supervisors.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Users className="w-10 h-10 text-muted-foreground/40 mb-3" />
+                <p className="text-sm text-muted-foreground">Loading supervisors...</p>
+              </div>
+            ) : (
+              supervisors.map((supervisor) => {
+                const isSelected = supervisor.id === selectedSupervisorId;
+                const isFull = !supervisor.isAvailable;
+                const slotsLeft = supervisor.maxTeamLoad - supervisor.currentTeamLoad;
 
-              return (
-                <button
-                  key={supervisor.id}
-                  type="button"
-                  disabled={isFull}
-                  onClick={() => setSelectedSupervisorId(supervisor.id)}
-                  className={`w-full rounded-xl border p-5 text-left transition-all ${
-                    isSelected
-                      ? "border-indigo-400 bg-white ring-1 ring-indigo-400 shadow-sm"
-                      : "border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50"
-                  } ${isFull ? "cursor-not-allowed opacity-55" : ""}`}
-                >
-                  <div className="mb-4 flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-indigo-500">
-                      <UserRound className="h-5 w-5" />
+                return (
+                  <button
+                    key={supervisor.id}
+                    type="button"
+                    disabled={isFull}
+                    onClick={() => setSelectedSupervisorId(supervisor.id)}
+                    className={`w-full rounded-xl border p-4 text-left transition-all duration-200 ${
+                      isSelected
+                        ? "border-indigo-400 bg-indigo-50/60 dark:bg-indigo-950/20 ring-1 ring-indigo-400"
+                        : "border-border bg-muted/20 hover:border-indigo-200 hover:bg-muted/40"
+                    } ${isFull ? "cursor-not-allowed opacity-50" : ""}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {/* Avatar */}
+                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                        isSelected ? "bg-indigo-500/20 text-indigo-600 dark:text-indigo-400" : "bg-muted text-muted-foreground"
+                      }`}>
+                        <UserRound className="h-5 w-5" />
+                      </div>
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">
+                          {supervisor.fullName}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {supervisor.departmentName}
+                        </p>
+                      </div>
+                      {/* Selection indicator */}
+                      {isSelected && (
+                        <CheckCircle2 className="w-4 h-4 text-indigo-500 shrink-0" />
+                      )}
                     </div>
-                    <div>
-                      <p className="text-[15px] font-semibold text-slate-900">
-                        {supervisor.fullName}
-                      </p>
-                      <p className="text-sm text-slate-500">
-                        {supervisor.departmentName}
-                      </p>
+
+                    {/* Availability badge */}
+                    <div className="mt-3 flex items-center justify-between">
+                      <Badge
+                        variant="secondary"
+                        className={`text-xs font-medium rounded-full px-2.5 py-0.5 border-0 ${
+                          isFull
+                            ? "bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400"
+                            : slotsLeft <= 2
+                            ? "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
+                            : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+                        }`}
+                      >
+                        {isFull ? "Full" : `${slotsLeft} slot${slotsLeft !== 1 ? "s" : ""} left`}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {supervisor.currentTeamLoad}/{supervisor.maxTeamLoad} teams
+                      </span>
                     </div>
-                  </div>
-
-                  
-
-                  <div className="flex items-center justify-between border-t border-slate-100 pt-4">
-                   
-                    <Badge
-                      className={`font-medium ${
-                        isFull
-                          ? "bg-slate-100 text-slate-500 hover:bg-slate-200"
-                          : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                      }`}
-                      variant="secondary"
-                    >
-                      {isFull
-                        ? "Full"
-                        : `${supervisor.maxTeamLoad - supervisor.currentTeamLoad} slot${supervisor.maxTeamLoad - supervisor.currentTeamLoad !== 1 ? "s" : ""}`}
-                    </Badge>
-                  </div>
-                </button>
-              );
-            })}
+                  </button>
+                );
+              })
+            )}
           </div>
 
-          <div className="border-t border-slate-100 p-6">
+          {/* Submit button (desktop) */}
+          <div className="hidden lg:block p-4 border-t border-border/50">
+            {selectedSupervisor && (
+              <p className="text-xs text-center text-muted-foreground mb-3">
+                Submitting to <span className="font-medium text-foreground">{selectedSupervisor.fullName}</span>
+              </p>
+            )}
             <Button
-              className="h-11 w-full bg-indigo-500 text-white hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-45"
+              className="h-11 w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={submitProposal}
               disabled={!canSubmit}
             >
-              <Send className="mr-2 h-4 w-4" />
+              <Send className="h-4 w-4" />
               Submit Proposal
             </Button>
           </div>
-        </aside>
+        </div>
       </div>
     </div>
   );

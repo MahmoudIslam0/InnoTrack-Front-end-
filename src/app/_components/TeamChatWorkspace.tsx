@@ -1,7 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Download, FileText, ImageIcon, Paperclip, Send, ChevronDown, ChevronRight } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { 
+  Download, FileText, ImageIcon, Paperclip, Send, ChevronDown, 
+  ChevronRight, Check, Clock, AlertCircle, MoreHorizontal, 
+  Pin, Edit2, Trash2, Copy, Reply, Smile, X
+} from "lucide-react";
+import EmojiPicker, { Theme } from 'emoji-picker-react';
+import { motion, AnimatePresence } from "framer-motion";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -9,104 +15,100 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export interface TeamChatMessage {
   id: string;
+  backendId?: number;
+  authorId: number;
   author: string;
   initials: string;
-  role: "Professor" | "Student";
+  role: "Professor" | "Student" | string;
   content?: string;
   timestamp: string;
+  status?: "sending" | "sent" | "error";
   file?: {
     name: string;
     size: string;
     type: "pdf" | "image" | "document";
   };
+  isEdited?: boolean;
+  isDeletedForAll?: boolean;
+  isPinned?: boolean;
+  parentMessageId?: number | null;
+  reactions?: { userId: number; emoji: string }[];
 }
 
 export interface TeamChatMember {
   id: string;
   name: string;
   initials: string;
-  role: "Professor" | "Student";
+  role: "Professor" | "Student" | string;
   online?: boolean;
 }
 
 export function TeamChatWorkspace({
   title,
   subtitle,
-  initialMembers,
-  initialMessages,
+  members = [],
+  messages = [],
   currentUserName,
   currentUserRole,
+  onSendMessage,
+  onEditMessage,
+  onDeleteMessage,
+  onTogglePin,
+  onReactToMessage,
+  onReplyToMessage,
   className,
 }: {
   title: string;
   subtitle: string;
-  initialMembers: TeamChatMember[];
-  initialMessages: TeamChatMessage[];
+  members: TeamChatMember[];
+  messages: TeamChatMessage[];
   currentUserName: string;
-  currentUserRole: "Professor" | "Student";
-  isTeamLeader?: boolean;
+  currentUserRole: "Professor" | "Student" | string;
+  onSendMessage?: (content: string) => void;
+  onEditMessage?: (messageId: number, newContent: string) => void;
+  onDeleteMessage?: (messageId: number, deleteForAll: boolean) => void;
+  onTogglePin?: (messageId: number) => void;
+  onReactToMessage?: (messageId: number, emoji: string) => void;
+  onReplyToMessage?: (parentMessageId: number, content: string) => void;
   className?: string;
 }) {
   const [draftMessage, setDraftMessage] = useState("");
-  const [messages, setMessages] = useState(initialMessages);
-  const [members, setMembers] = useState(initialMembers);
-  
   const [isSharedFilesOpen, setIsSharedFilesOpen] = useState(true);
+  const [replyingTo, setReplyingTo] = useState<TeamChatMessage | null>(null);
+  const [editingMessage, setEditingMessage] = useState<TeamChatMessage | null>(null);
+  const [showEmojiPickerFor, setShowEmojiPickerFor] = useState<number | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Check for removed members and filter them out
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages.length]);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       queueMicrotask(() => {
-      // Check for abandoned project
-      const abandonmentInfo = localStorage.getItem("projectAbandonment");
-      if (abandonmentInfo) {
-        try {
-          const info = JSON.parse(abandonmentInfo);
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: `abandonment-${Date.now()}`,
-              author: "System",
-              initials: "SYS",
-              role: "Professor",
-              content: `⚠️ **PROJECT ABANDONED** - Team Leader ${info.teamLeader} has abandoned the project "${info.projectTitle}".\n\n**Reason:** ${info.reason}`,
-              timestamp: info.timestamp,
-            }
-          ]);
-          toast.error("Project has been abandoned by the team!");
-          localStorage.removeItem("projectAbandonment");
-        } catch (e) {
-          console.error("Failed to parse abandonment info:", e);
+        const abandonmentInfo = localStorage.getItem("projectAbandonment");
+        if (abandonmentInfo) {
+          try {
+            toast.error("Project has been abandoned by the team!");
+            localStorage.removeItem("projectAbandonment");
+          } catch (e) {
+            console.error(e);
+          }
         }
-      }
-
-      // Check for removed members
-      const removedMembers = JSON.parse(localStorage.getItem("removedTeamMembers") || "[]");
-      if (removedMembers.length > 0) {
-        setMembers((prev) => 
-          prev.filter(member => !removedMembers.includes(member.name))
-        );
-        // Add system message for each removed member
-        removedMembers.forEach((removedName: string) => {
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: `sys-${Date.now()}-${removedName}`,
-              author: "System",
-              initials: "SYS",
-              role: "Professor",
-              content: `${removedName} has been removed from the team by the team leader.`,
-              timestamp: "Just now",
-            }
-          ]);
-        });
-        // Clear the removed members list
-        localStorage.removeItem("removedTeamMembers");
-        toast.info(`${removedMembers.length} member(s) removed from team chat`);
-      }
+        const removedMembers = JSON.parse(localStorage.getItem("removedTeamMembers") || "[]");
+        if (removedMembers.length > 0) {
+          localStorage.removeItem("removedTeamMembers");
+          toast.info(`${removedMembers.length} member(s) removed from team chat`);
+        }
       });
     }
   }, []);
@@ -115,251 +117,520 @@ export function TeamChatWorkspace({
     const content = draftMessage.trim();
     if (!content) return;
 
-    setMessages((currentMessages) => [
-      ...currentMessages,
-      {
-        id: `new-${Date.now()}`,
-        author: currentUserName,
-        initials: initialsFor(currentUserName),
-        role: currentUserRole,
-        content,
-        timestamp: "Just now",
-      },
-    ]);
+    if (editingMessage) {
+      if (onEditMessage && editingMessage.backendId) {
+        onEditMessage(editingMessage.backendId, content);
+      }
+      setEditingMessage(null);
+    } else if (replyingTo) {
+      if (onReplyToMessage && replyingTo.backendId) {
+        onReplyToMessage(replyingTo.backendId, content);
+      }
+      setReplyingTo(null);
+    } else {
+      if (onSendMessage) {
+        onSendMessage(content);
+      }
+    }
     setDraftMessage("");
   };
 
+  const handleCopy = (content: string) => {
+    navigator.clipboard.writeText(content);
+    toast.success("Message copied!");
+  };
+
+  const pinnedMessages = messages.filter(m => m.isPinned);
+
   return (
-    <section
-      className={cn(
-        "dashboard-surface flex h-[calc(100vh-154px)] min-h-[700px] flex-col overflow-hidden",
-        className,
-      )}
-    >
-      <div className="bg-card/30 backdrop-blur-md border-b border-border/50 px-6 py-5">
-        <h2 className="text-xl font-bold tracking-tight text-foreground">{title}</h2>
-        <p className="text-sm text-muted-foreground mt-1 font-medium">{subtitle}</p>
+    <section className={cn("dashboard-surface flex h-[calc(100vh-154px)] min-h-[700px] flex-col overflow-hidden bg-background/50", className)}>
+      <div className="bg-card/40 backdrop-blur-xl border-b border-border/50 px-6 py-5 flex items-center justify-between z-10 shadow-sm">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-foreground">{title}</h2>
+          <p className="text-sm text-muted-foreground mt-1 font-medium">{subtitle}</p>
+        </div>
       </div>
 
       <div className="grid flex-1 min-h-0 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_288px]">
-        <div className="flex min-h-0 flex-col border-r border-border/50">
-          <div className="flex-1 min-h-0 space-y-5 overflow-y-auto p-5">
-            {messages.map((message) => {
-              const isOwnMessage = message.author === currentUserName;
-
-              return (
-                <div
-                  key={message.id}
-                  className={`flex items-start gap-3 ${
-                    isOwnMessage ? "justify-end" : ""
-                  }`}
+        <div className="flex min-h-0 flex-col border-r border-border/50 relative bg-gradient-to-b from-transparent to-muted/10">
+          
+          <AnimatePresence>
+            {pinnedMessages.length > 0 && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div 
+                  className="bg-indigo-500/10 backdrop-blur-md border-b border-indigo-500/20 px-4 py-3 text-sm flex items-center gap-3 shadow-sm cursor-pointer hover:bg-indigo-500/20 transition-colors"
+                  onClick={() => {
+                    const targetId = `message-${pinnedMessages[pinnedMessages.length - 1].backendId}`;
+                    const el = document.getElementById(targetId);
+                    if (el) {
+                      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      el.style.backgroundColor = 'rgba(99, 102, 241, 0.15)';
+                      el.style.borderRadius = '1rem';
+                      el.style.transition = 'background-color 0.5s ease';
+                      setTimeout(() => {
+                        el.style.backgroundColor = 'transparent';
+                      }, 2000);
+                    }
+                  }}
                 >
-                  {!isOwnMessage && (
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-muted/80 text-foreground border border-border/50 font-medium">
-                        {message.initials}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
+                  <div className="p-1.5 bg-indigo-500/20 rounded-full text-indigo-500">
+                    <Pin className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="flex-1 truncate">
+                    <span className="font-semibold text-indigo-600 dark:text-indigo-400 mr-2">Pinned</span>
+                    <span className="text-foreground/90">{pinnedMessages[pinnedMessages.length - 1].content}</span>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-                  <div
-                    className={`flex max-w-[78%] flex-col ${
-                      isOwnMessage ? "items-end" : "items-start"
-                    }`}
+          <div className="flex-1 min-h-0 space-y-6 overflow-y-auto p-5 scroll-smooth" onClick={() => setShowEmojiPickerFor(null)}>
+            <AnimatePresence initial={false}>
+              {messages.map((message) => {
+                const isOwnMessage = message.author === currentUserName;
+                const parentMsg = message.parentMessageId ? messages.find(m => m.backendId === message.parentMessageId) : null;
+                const quickEmojis = ["👍", "❤️", "😂", "😮", "😢"];
+
+                return (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                    layout="position"
+                    key={message.id} 
+                    id={`message-${message.backendId}`}
+                    className={`flex items-end gap-3 group p-1.5 ${isOwnMessage ? "justify-end" : ""}`}
                   >
-                    <div className="mb-2 flex flex-wrap items-center gap-2">
-                      <span className="text-xs font-semibold text-foreground">
-                        {message.author}
-                      </span>
-                      <Badge
-                        variant="secondary"
-                        className="bg-muted/60 text-muted-foreground border-none px-2 py-0.5 rounded-md text-[10px] uppercase font-bold tracking-wider"
-                      >
-                        {message.role}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {message.timestamp}
-                      </span>
-                    </div>
+                    {!isOwnMessage && (
+                      <Avatar className="h-9 w-9 shrink-0 shadow-sm border border-border/50 mb-1">
+                        <AvatarFallback className="bg-muted/80 text-foreground font-semibold text-xs">
+                          {message.initials}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
 
-                    {message.file ? (
-                      <div className="flex min-w-[280px] items-center gap-3 rounded-2xl border border-border/50 bg-muted/20 backdrop-blur-sm text-foreground px-4 py-4 shadow-sm">
-                        <div className="rounded-xl border border-border/50 bg-muted/50 p-3 text-muted-foreground">
-                          {message.file.type === "image" ? (
-                            <ImageIcon className="h-5 w-5" />
+                    <div className={`flex max-w-[85%] lg:max-w-[75%] flex-col ${isOwnMessage ? "items-end" : "items-start"}`}>
+                      {message.isPinned && (
+                        <div className={`flex items-center gap-1 mb-1 px-2 text-[11px] font-semibold ${isOwnMessage ? 'text-indigo-500' : 'text-muted-foreground'}`}>
+                          <Pin className="w-3 h-3" fill="currentColor" /> Pinned
+                        </div>
+                      )}
+                      
+                      <div className={`relative group/message flex items-center gap-2 w-full ${isOwnMessage ? "justify-end" : "justify-start"}`}>
+                        
+                        {/* Actions for Own Message (Left side of bubble) */}
+                        {isOwnMessage && message.backendId && (
+                          <div className="opacity-0 group-hover/message:opacity-100 transition-opacity flex items-center gap-1 shrink-0 relative z-20">
+                             <div className="flex items-center px-1 bg-card/80 backdrop-blur-md border border-border/50 rounded-full shadow-sm">
+                               {quickEmojis.slice(0, 3).map(e => (
+                                 <motion.button 
+                                   whileHover={{ scale: 1.2, y: -2 }} 
+                                   key={e} 
+                                   className="h-7 w-7 text-sm flex items-center justify-center hover:bg-muted/50 rounded-full transition-colors" 
+                                   onClick={() => onReactToMessage?.(message.backendId!, e)}
+                                 >
+                                   {e}
+                                 </motion.button>
+                               ))}
+                               <div className="w-[1px] h-3 bg-border/50 mx-0.5"></div>
+                               <button className="h-7 w-7 flex items-center justify-center text-muted-foreground hover:bg-muted/50 rounded-full transition-colors" onClick={(e) => { e.stopPropagation(); setShowEmojiPickerFor(message.backendId!); }}>
+                                 <Smile className="w-3.5 h-3.5" />
+                               </button>
+                             </div>
+                             
+                             <AnimatePresence>
+                               {showEmojiPickerFor === message.backendId && (
+                                 <motion.div 
+                                   initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                                   animate={{ opacity: 1, scale: 1, y: 0 }}
+                                   exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                                   className="absolute top-10 right-0 z-50 shadow-2xl rounded-2xl border border-border/50 overflow-hidden" 
+                                   onClick={e => e.stopPropagation()}
+                                 >
+                                   <EmojiPicker theme={Theme.AUTO} onEmojiClick={(e) => { onReactToMessage?.(message.backendId!, e.emoji); setShowEmojiPickerFor(null); }} />
+                                 </motion.div>
+                               )}
+                             </AnimatePresence>
+                          </div>
+                        )}
+
+                        <div className="flex flex-col relative z-10 max-w-full">                          {message.file ? (
+                            <div className={`relative flex flex-col min-w-[280px] p-2 border shadow-sm backdrop-blur-md transition-all rounded-2xl
+                              ${isOwnMessage ? "bg-gradient-to-br from-indigo-500 to-indigo-600 border-indigo-400/20 text-white rounded-br-sm" : "bg-card border-border/50 text-foreground rounded-bl-sm"}
+                            `}>
+                                {parentMsg && (
+                                  <div 
+                                    onClick={() => {
+                                      const el = document.getElementById(`message-${parentMsg.backendId}`);
+                                      if (el) {
+                                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        el.classList.add('ring-2', 'ring-indigo-500/50', 'bg-muted/30', 'rounded-xl', 'transition-all', 'duration-500');
+                                        setTimeout(() => el.classList.remove('ring-2', 'ring-indigo-500/50', 'bg-muted/30'), 1500);
+                                      }
+                                    }}
+                                    className={`cursor-pointer text-xs px-3 py-2 rounded-r-xl rounded-l-[3px] mb-2 border-l-4 transition-all opacity-90 hover:opacity-100 ${isOwnMessage ? 'bg-black/15 border-indigo-200' : 'bg-black/5 dark:bg-white/5 border-emerald-500'}`}
+                                  >
+                                    <div className={`font-bold mb-0.5 ${isOwnMessage ? 'text-indigo-200' : 'text-emerald-600 dark:text-emerald-400'}`}>{parentMsg.author}</div>
+                                    <div className="truncate opacity-80">{parentMsg.isDeletedForAll ? "This message was deleted" : parentMsg.content}</div>
+                                  </div>
+                                )}
+                                <div className="flex items-center gap-3 px-2 pb-2">
+                                  <div className={`rounded-xl border p-3 ${isOwnMessage ? "border-indigo-400/30 bg-white/10 text-white" : "border-border/50 bg-muted/50 text-muted-foreground"}`}>
+                                  {message.file.type === "image" ? <ImageIcon className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-sm font-medium">{message.file.name}</p>
+                                  <p className={`text-[11px] font-medium mt-0.5 ${isOwnMessage ? 'text-indigo-100' : 'text-muted-foreground'}`}>{message.file.size}</p>
+                                </div>
+                                <Button variant="ghost" size="icon" className={`rounded-xl ${isOwnMessage ? "text-white hover:bg-white/20" : "text-muted-foreground hover:bg-muted/80"}`}>
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                                </div>
+                                {message.backendId && (
+                                  <div className="absolute top-2 right-2">
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <button className={`p-1 rounded-full transition-colors opacity-0 group-hover/message:opacity-100 focus:opacity-100 ${isOwnMessage ? 'hover:bg-black/20 text-white' : 'hover:bg-muted text-muted-foreground'}`}>
+                                          <ChevronDown className="w-4 h-4" />
+                                        </button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align={isOwnMessage ? "end" : "start"} className="w-52 p-2 rounded-2xl shadow-2xl border-border/40 bg-card/95 backdrop-blur-xl ring-1 ring-black/5">
+                                        <DropdownMenuItem className="py-2.5 px-3 cursor-pointer rounded-xl font-medium transition-colors hover:bg-muted focus:bg-muted" onClick={() => onTogglePin?.(message.backendId!)}>
+                                          <Pin className="w-4 h-4 mr-3 opacity-70" /> {message.isPinned ? "Unpin Message" : "Pin Message"}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem className="py-2.5 px-3 cursor-pointer rounded-xl font-medium transition-colors hover:bg-muted focus:bg-muted" onClick={() => { setReplyingTo(message); inputRef.current?.focus(); }}>
+                                          <Reply className="w-4 h-4 mr-3 opacity-70" /> Reply to Message
+                                        </DropdownMenuItem>
+                                        {isOwnMessage && <DropdownMenuSeparator className="bg-border/40 my-1.5" />}
+                                        {isOwnMessage && (
+                                          <DropdownMenuItem className="py-2.5 px-3 cursor-pointer rounded-xl font-medium text-red-500 focus:text-red-600 hover:bg-red-500/10 focus:bg-red-500/10 transition-colors" onClick={() => onDeleteMessage?.(message.backendId!, false)}>
+                                            <Trash2 className="w-4 h-4 mr-3 opacity-80" /> Delete for me
+                                          </DropdownMenuItem>
+                                        )}
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </div>
+                                )}
+                            </div>
                           ) : (
-                            <FileText className="h-5 w-5" />
+                            <div className={`relative p-2 px-3 text-[15px] leading-relaxed shadow-sm transition-all max-w-full rounded-2xl
+                              ${message.isDeletedForAll ? "italic text-muted-foreground bg-muted/30 border border-border/30" : 
+                              isOwnMessage ? "bg-gradient-to-br from-indigo-500 to-indigo-600 text-white border border-indigo-400/20 shadow-indigo-500/10 rounded-br-sm" : "bg-card border border-border/50 text-foreground rounded-bl-sm"}
+                            `}>
+                              
+                              {parentMsg && (
+                                <div 
+                                  onClick={() => {
+                                    const el = document.getElementById(`message-${parentMsg.backendId}`);
+                                    if (el) {
+                                      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                      el.classList.add('ring-2', 'ring-indigo-500/50', 'bg-muted/30', 'rounded-xl', 'transition-all', 'duration-500');
+                                      setTimeout(() => el.classList.remove('ring-2', 'ring-indigo-500/50', 'bg-muted/30'), 1500);
+                                    }
+                                  }}
+                                  className={`cursor-pointer text-xs px-3 py-2 rounded-r-xl rounded-l-[3px] mb-1.5 border-l-4 transition-all opacity-90 hover:opacity-100 ${isOwnMessage ? 'bg-black/15 border-indigo-200' : 'bg-black/5 dark:bg-white/5 border-emerald-500'}`}
+                                >
+                                  <div className={`font-bold mb-0.5 ${isOwnMessage ? 'text-indigo-200' : 'text-emerald-600 dark:text-emerald-400'}`}>{parentMsg.author}</div>
+                                  <div className="truncate opacity-80">{parentMsg.isDeletedForAll ? "This message was deleted" : parentMsg.content}</div>
+                                </div>
+                              )}
+
+
+                              {!isOwnMessage && !message.isDeletedForAll && (
+                                <div className="flex items-center gap-2 mb-1 pr-2">
+                                  <span className="text-[13px] font-semibold text-emerald-600 dark:text-emerald-400">{message.author}</span>
+                                  {message.role && (
+                                    <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 border-none px-1 py-0 rounded-[4px] text-[9px] uppercase font-bold tracking-wider">
+                                      {message.role === 'Professor' ? 'Prof' : message.role}
+                                    </Badge>
+                                  )}
+                                </div>
+                              )}
+
+                              <div className="flex flex-wrap items-end gap-x-2 gap-y-1">
+                                <div className="break-words">
+                                  {message.isDeletedForAll ? "This message was deleted" : message.content}
+                                </div>
+                                
+                                <div className={`flex items-center gap-1 shrink-0 ml-auto text-[10px] pb-0.5 ${isOwnMessage ? 'text-indigo-100' : 'text-muted-foreground/70'}`}>
+                                  {message.isEdited && !message.isDeletedForAll && <span className="mr-1 italic opacity-80">edited</span>}
+                                  <span>{message.timestamp}</span>
+                                  {isOwnMessage && message.status === "sending" && <Clock className="w-3 h-3 opacity-70" />}
+                                  {isOwnMessage && message.status === "sent" && <Check className="w-3.5 h-3.5 text-blue-200" />}
+                                  {isOwnMessage && message.status === "error" && <AlertCircle className="w-3.5 h-3.5 text-red-300" />}
+                                  
+                                  {/* ChevronDown inside the bubble */}
+                                  {message.backendId && (
+                                    <div className="ml-0.5 w-4 h-4 flex items-center justify-center">
+                                      <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                          <button className={`p-0.5 rounded-full transition-colors opacity-0 group-hover/message:opacity-100 focus:opacity-100 ${isOwnMessage ? 'hover:bg-black/20 text-white' : 'hover:bg-muted text-muted-foreground'}`}>
+                                            <ChevronDown className="w-3.5 h-3.5" />
+                                          </button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align={isOwnMessage ? "end" : "start"} className="w-52 p-2 rounded-2xl shadow-2xl border-border/40 bg-card/95 backdrop-blur-xl ring-1 ring-black/5">
+                                          {!message.isDeletedForAll && (
+                                            <>
+                                              {isOwnMessage && (
+                                                <DropdownMenuItem className="py-2.5 px-3 cursor-pointer rounded-xl font-medium transition-colors hover:bg-muted focus:bg-muted" onClick={() => { setEditingMessage(message); setDraftMessage(message.content || ""); inputRef.current?.focus(); }}>
+                                                  <Edit2 className="w-4 h-4 mr-3 opacity-70" /> Edit Message
+                                                </DropdownMenuItem>
+                                              )}
+                                              <DropdownMenuItem className="py-2.5 px-3 cursor-pointer rounded-xl font-medium transition-colors hover:bg-muted focus:bg-muted" onClick={() => handleCopy(message.content || "")}>
+                                                <Copy className="w-4 h-4 mr-3 opacity-70" /> Copy Text
+                                              </DropdownMenuItem>
+                                              <DropdownMenuItem className="py-2.5 px-3 cursor-pointer rounded-xl font-medium transition-colors hover:bg-muted focus:bg-muted" onClick={() => onTogglePin?.(message.backendId!)}>
+                                                <Pin className="w-4 h-4 mr-3 opacity-70" /> {message.isPinned ? "Unpin Message" : "Pin Message"}
+                                              </DropdownMenuItem>
+                                              <DropdownMenuItem className="py-2.5 px-3 cursor-pointer rounded-xl font-medium transition-colors hover:bg-muted focus:bg-muted" onClick={() => { setReplyingTo(message); inputRef.current?.focus(); }}>
+                                                <Reply className="w-4 h-4 mr-3 opacity-70" /> Reply to Message
+                                              </DropdownMenuItem>
+                                              <DropdownMenuSeparator className="bg-border/40 my-1.5" />
+                                            </>
+                                          )}
+                                          <DropdownMenuItem className="py-2.5 px-3 cursor-pointer rounded-xl font-medium text-red-500 focus:text-red-600 hover:bg-red-500/10 focus:bg-red-500/10 transition-colors" onClick={() => onDeleteMessage?.(message.backendId!, false)}>
+                                            <Trash2 className="w-4 h-4 mr-3 opacity-80" /> Delete for me
+                                          </DropdownMenuItem>
+                                          {isOwnMessage && (
+                                            <DropdownMenuItem className="py-2.5 px-3 cursor-pointer rounded-xl font-medium text-red-500 focus:text-red-600 hover:bg-red-500/10 focus:bg-red-500/10 transition-colors" onClick={() => onDeleteMessage?.(message.backendId!, true)}>
+                                              <Trash2 className="w-4 h-4 mr-3 opacity-80" /> Delete for everyone
+                                            </DropdownMenuItem>
+                                          )}
+                                        </DropdownMenuContent>
+                                      </DropdownMenu>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Reactions */}
+                          {message.reactions && message.reactions.length > 0 && (
+                            <div className={`flex flex-wrap gap-1.5 mt-2 ${isOwnMessage ? "justify-end" : "justify-start"}`}>
+                              {Array.from(new Set(message.reactions.map(r => r.emoji))).map(emoji => {
+                                const count = message.reactions!.filter(r => r.emoji === emoji).length;
+                                return (
+                                  <motion.button 
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    key={emoji} 
+                                    onClick={() => onReactToMessage?.(message.backendId!, emoji)} 
+                                    className="text-[13px] bg-card/80 backdrop-blur-md shadow-sm hover:shadow border border-border/50 rounded-full px-2.5 py-1 flex items-center gap-1.5 transition-all"
+                                  >
+                                    <span>{emoji}</span>
+                                    <span className="font-semibold text-foreground/80 text-[11px]">{count}</span>
+                                  </motion.button>
+                                );
+                              })}
+                            </div>
                           )}
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-foreground">
-                            {message.file.name}
-                          </p>
-                          <p className="text-[11px] font-medium text-muted-foreground mt-0.5">
-                            {message.file.size}
-                          </p>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-muted-foreground hover:bg-muted/80 rounded-xl"
-                          aria-label={`Download ${message.file.name}`}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div
-                        className={`rounded-2xl px-5 py-4 text-[15px] leading-relaxed shadow-sm ${
-                          isOwnMessage
-                            ? "bg-indigo-500/10 border border-indigo-500/20 text-foreground rounded-tr-sm"
-                            : "border border-border/50 bg-muted/40 text-foreground rounded-tl-sm"
-                        }`}
-                      >
-                        {message.content}
-                      </div>
-                    )}
-                  </div>
 
-                  {isOwnMessage && (
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-medium">
-                        {message.initials}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                </div>
-              );
-            })}
+                        {/* Actions for Others (Right side of bubble) */}
+                        {!isOwnMessage && message.backendId && (
+                           <div className="opacity-0 group-hover/message:opacity-100 transition-opacity flex items-center gap-1 shrink-0 relative z-20">
+                             <div className="flex items-center px-1 bg-card/80 backdrop-blur-md border border-border/50 rounded-full shadow-sm">
+                               {quickEmojis.slice(0, 3).map(e => (
+                                 <motion.button 
+                                   whileHover={{ scale: 1.2, y: -2 }} 
+                                   key={e} 
+                                   className="h-7 w-7 text-sm flex items-center justify-center hover:bg-muted/50 rounded-full transition-colors" 
+                                   onClick={() => onReactToMessage?.(message.backendId!, e)}
+                                 >
+                                   {e}
+                                 </motion.button>
+                               ))}
+                               <div className="w-[1px] h-3 bg-border/50 mx-0.5"></div>
+                               <button className="h-7 w-7 flex items-center justify-center text-muted-foreground hover:bg-muted/50 rounded-full transition-colors" onClick={(e) => { e.stopPropagation(); setShowEmojiPickerFor(message.backendId!); }}>
+                                 <Smile className="w-3.5 h-3.5" />
+                               </button>
+                             </div>
+                             
+                             <AnimatePresence>
+                               {showEmojiPickerFor === message.backendId && (
+                                 <motion.div 
+                                   initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                                   animate={{ opacity: 1, scale: 1, y: 0 }}
+                                   exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                                   className="absolute top-10 left-0 z-50 shadow-2xl rounded-2xl border border-border/50 overflow-hidden" 
+                                   onClick={e => e.stopPropagation()}
+                                 >
+                                   <EmojiPicker theme={Theme.AUTO} onEmojiClick={(e) => { onReactToMessage?.(message.backendId!, e.emoji); setShowEmojiPickerFor(null); }} />
+                                 </motion.div>
+                               )}
+                             </AnimatePresence>
+                          </div>
+                        )}
+
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+            <div ref={messagesEndRef} />
           </div>
 
-          <div className="flex items-center gap-3 border-t border-border/50 bg-card/30 p-5">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-11 w-11 shrink-0 text-muted-foreground hover:bg-muted/80 rounded-xl"
-              aria-label="Attach file"
-            >
-              <Paperclip className="h-5 w-5" />
-            </Button>
-            <Input
-              value={draftMessage}
-              onChange={(event) => setDraftMessage(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") sendMessage();
-              }}
-              placeholder="Type a message..."
-              className="h-12 rounded-xl border border-border/50 bg-muted/30 px-5 text-[15px] text-foreground shadow-none focus-visible:ring-1 focus-visible:ring-indigo-500/50"
-            />
-            <Button
-              size="icon"
-              className="h-11 w-11 shrink-0 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 shadow-none"
-              onClick={sendMessage}
-              aria-label="Send message"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+          <div className="border-t border-border/50 bg-card/40 backdrop-blur-xl p-4 shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.1)] z-10 relative">
+            <AnimatePresence>
+              {replyingTo && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: "auto" }}
+                  exit={{ opacity: 0, y: 10, height: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="flex items-center justify-between bg-muted/50 border border-border/50 rounded-xl p-3 mb-3 backdrop-blur-sm shadow-sm">
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground truncate">
+                      <div className="bg-indigo-500/20 p-1.5 rounded-full">
+                        <Reply className="w-4 h-4 text-indigo-500" />
+                      </div>
+                      <div className="truncate">
+                        <span className="font-semibold text-foreground mr-2">{replyingTo.author}</span>
+                        <span className="truncate">{replyingTo.content}</span>
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full shrink-0 hover:bg-muted" onClick={() => setReplyingTo(null)}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
+            <AnimatePresence>
+              {editingMessage && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: "auto" }}
+                  exit={{ opacity: 0, y: 10, height: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="flex items-center justify-between bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-3 backdrop-blur-sm shadow-sm">
+                    <div className="flex items-center gap-3 text-sm text-amber-600 dark:text-amber-400 truncate">
+                      <div className="bg-amber-500/20 p-1.5 rounded-full">
+                        <Edit2 className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                      </div>
+                      <span className="font-medium">Editing message...</span>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full shrink-0 hover:bg-amber-500/20" onClick={() => { setEditingMessage(null); setDraftMessage(""); }}>
+                      <X className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="flex items-center gap-3 relative">
+              <Button variant="ghost" size="icon" className="h-12 w-12 shrink-0 text-muted-foreground hover:bg-muted/80 rounded-2xl hover:shadow-sm transition-all">
+                <Paperclip className="h-5 w-5" />
+              </Button>
+              <Input
+                ref={inputRef}
+                value={draftMessage}
+                onChange={(event) => setDraftMessage(event.target.value)}
+                onKeyDown={(event) => { if (event.key === "Enter") sendMessage(); }}
+                placeholder={editingMessage ? "Edit your message..." : "Type a message..."}
+                className="h-14 rounded-2xl border border-border/60 bg-background/50 px-5 text-[15px] text-foreground shadow-sm focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:border-indigo-500/50 backdrop-blur-sm transition-all"
+              />
+              <Button
+                size="icon"
+                className="h-14 w-14 shrink-0 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 transition-all group"
+                onClick={sendMessage}
+              >
+                <Send className="h-5 w-5 ml-0.5 group-hover:scale-110 transition-transform" />
+              </Button>
+            </div>
           </div>
         </div>
 
-        <aside className="bg-card/20 p-6 flex flex-col min-h-0 border-l border-border/50">
-          <div className="mb-6 flex items-center justify-between">
+        <aside className="bg-card/20 p-6 flex flex-col min-h-0 border-l border-border/50 hidden lg:flex relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-muted/5 pointer-events-none" />
+          <div className="mb-6 flex items-center justify-between relative z-10">
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
-                Team Members
-              </h3>
-              <Badge className="bg-muted/60 text-muted-foreground border-none">
-                {members.length}
-              </Badge>
+              <h3 className="text-[13px] font-bold text-foreground uppercase tracking-widest">Team Members</h3>
+              <Badge className="bg-muted/60 text-muted-foreground border-none shadow-sm">{members.length}</Badge>
             </div>
           </div>
-          <div className="space-y-4 overflow-y-auto min-h-0 flex-1 pr-2">
-            {members.map((member) => (
-              <div key={member.id} className="flex items-center gap-3">
-                <div className="relative">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback className="bg-muted/80 text-foreground border border-border/50 font-medium">
-                      {member.initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span
-                    className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-[2.5px] border-background ${
-                      member.online ? "bg-emerald-500" : "bg-slate-500/50"
-                    }`}
-                  />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">
-                    {member.name}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium mt-0.5">{member.role}</p>
-                </div>
-              </div>
-            ))}
+          <div className="space-y-4 overflow-y-auto min-h-0 flex-1 pr-2 relative z-10 scroll-smooth">
+            <AnimatePresence>
+              {members.map((member) => (
+                <motion.div 
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  key={member.id} 
+                  className="flex items-center gap-3 p-2 rounded-xl hover:bg-muted/40 transition-colors cursor-default"
+                >
+                  <div className="relative">
+                    <Avatar className="h-10 w-10 shadow-sm border border-border/50">
+                      <AvatarFallback className="bg-muted/80 text-foreground font-semibold">{member.initials}</AvatarFallback>
+                    </Avatar>
+                    <span className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-[2.5px] border-background ${member.online ? "bg-emerald-500" : "bg-slate-400"}`} />
+                  </div>
+                  <div>
+                    <p className="text-[14px] font-semibold text-foreground/90">{member.name}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mt-0.5">{member.role}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
 
-          {/* Shared Files Section */}
-          <div className="mt-8 mb-4">
-            <button 
-              className="flex items-center gap-2 w-full text-left focus:outline-none group mb-4"
-              onClick={() => setIsSharedFilesOpen(!isSharedFilesOpen)}
-            >
-              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex-1">
-                Shared Files
-              </h3>
-              <div className="text-muted-foreground group-hover:text-foreground transition-colors">
-                {isSharedFilesOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          <div className="mt-8 mb-4 relative z-10">
+            <button className="flex items-center gap-2 w-full text-left focus:outline-none group mb-4 p-2 rounded-xl hover:bg-muted/40 transition-colors" onClick={() => setIsSharedFilesOpen(!isSharedFilesOpen)}>
+              <h3 className="text-[13px] font-bold text-foreground uppercase tracking-widest flex-1">Shared Files</h3>
+              <div className="text-muted-foreground group-hover:text-foreground transition-colors bg-muted/50 p-1 rounded-lg">
+                <motion.div animate={{ rotate: isSharedFilesOpen ? 0 : -90 }}>
+                  <ChevronDown className="w-4 h-4" />
+                </motion.div>
               </div>
             </button>
             
-            {isSharedFilesOpen && (
-              <div className="space-y-3">
-                {messages
-                  .filter((m) => m.file)
-                  .map((message) => (
-                    <div key={`file-${message.id}`} className="flex items-start gap-3 p-3 rounded-xl border border-border/50 bg-muted/20 hover:bg-muted/40 transition-colors backdrop-blur-sm">
-                      <div className="rounded-lg border border-border/50 bg-muted/50 p-2.5 text-muted-foreground shrink-0">
-                        {message.file?.type === "image" ? (
-                          <ImageIcon className="h-4 w-4" />
-                        ) : (
-                          <FileText className="h-4 w-4" />
-                        )}
+            <AnimatePresence>
+              {isSharedFilesOpen && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="space-y-3 overflow-hidden"
+                >
+                  {messages.filter((m) => m.file).map((message) => (
+                    <motion.div 
+                      whileHover={{ scale: 1.02 }}
+                      key={`file-${message.id}`} 
+                      className="flex items-start gap-3 p-3.5 rounded-2xl border border-border/50 bg-card/60 shadow-sm hover:shadow-md hover:bg-card transition-all backdrop-blur-md cursor-pointer"
+                    >
+                      <div className="rounded-xl border border-border/50 bg-muted/50 p-2.5 text-muted-foreground shrink-0 shadow-sm">
+                        {message.file?.type === "image" ? <ImageIcon className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] font-medium text-foreground">
-                          {message.file?.name}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground mt-1 font-medium">
-                          {message.file?.size} • {message.author}
-                        </p>
+                        <p className="truncate text-[13px] font-semibold text-foreground/90">{message.file?.name}</p>
+                        <p className="text-[11px] text-muted-foreground mt-1 font-medium">{message.file?.size} • {message.author}</p>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:bg-muted/80 shrink-0 rounded-lg"
-                        aria-label={`Download ${message.file?.name}`}
-                      >
-                        <Download className="h-3.5 w-3.5" />
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-indigo-500/10 hover:text-indigo-500 shrink-0 rounded-lg">
+                        <Download className="h-4 w-4" />
                       </Button>
-                    </div>
+                    </motion.div>
                   ))}
-                {messages.filter((m) => m.file).length === 0 && (
-                  <p className="text-xs text-muted-foreground text-center py-4 font-medium">No files shared yet.</p>
-                )}
-              </div>
-            )}
+                  {messages.filter((m) => m.file).length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-6 px-4 text-center border border-dashed border-border/60 rounded-2xl bg-muted/20">
+                      <FileText className="w-6 h-6 text-muted-foreground/50 mb-2" />
+                      <p className="text-xs text-muted-foreground font-medium">No files shared yet</p>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </aside>
       </div>
     </section>
   );
-}
-
-function initialsFor(name: string) {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 3)
-    .toUpperCase();
 }
