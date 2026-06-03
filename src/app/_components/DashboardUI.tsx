@@ -255,9 +255,13 @@ export function ProjectCatalogCard({
           <span className="font-medium">Supervisor:</span>{" "}
           {project.supervisor}
         </p>
-        <p className="text-sm text-muted-foreground line-clamp-1" title={project.students.join(", ")}>
+        <p className="text-sm text-muted-foreground line-clamp-1" title={project.students?.join(", ") || ""}>
           <span className="font-medium">Students:</span>{" "}
-          {project.students.length > 0 ? project.students.join(", ") : "None"}
+          {project.students && project.students.length > 0
+            ? project.students.length > 4
+              ? `${project.students.slice(0, 4).join(", ")} and ${project.students.length - 4} more`
+              : project.students.join(", ")
+            : "None"}
         </p>
       </div>
 
@@ -387,7 +391,7 @@ export function ProjectTable({
             animate={{ opacity: 1, y: 0 }}
             whileHover={{ scale: 1.01, x: 2 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            className="dashboard-surface hover:shadow-[0_16px_48px_0_rgba(0,0,0,0.1)] hover:border-indigo-500/30 transition-all duration-200 p-6 group"
+            className="dashboard-surface hover:shadow-[0_16px_48px_0_rgba(0,0,0,0.1)] hover:border-indigo-500/30 transition-shadow transition-colors duration-200 p-6 group"
           >
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-5">
               <div className="flex-1 min-w-0">
@@ -397,10 +401,25 @@ export function ProjectTable({
                   </h3>
                   <StatusBadge status={row.status} />
                 </div>
-                <p className="text-sm text-muted-foreground mb-1">{row.subtitle} • {row.team}</p>
+                <div className="flex flex-wrap items-center gap-3">
+                  {row.subtitle && (
+                    <Badge variant="outline" className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/30">
+                      {row.subtitle}
+                    </Badge>
+                  )}
+                  {row.team && (
+                    <>
+                      {row.subtitle && <span className="text-sm text-muted-foreground">•</span>}
+                      <span className="text-sm text-muted-foreground">{row.team}</span>
+                    </>
+                  )}
+                </div>
               </div>
-              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-semibold shrink-0 h-fit ${scoreColor}`}>
-                <span>{row.originalityScore}%</span>
+              <div className="flex items-center gap-1.5 border border-indigo-500/20 bg-indigo-500/10 px-2.5 py-1 rounded-lg shrink-0 h-fit">
+                <Award className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-400">
+                  {Math.round((row.originalityScore || 0) * 100)}%
+                </span>
               </div>
             </div>
 

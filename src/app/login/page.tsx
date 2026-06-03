@@ -31,8 +31,12 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      await login(email, password);
-      router.push("/");
+      const response = await login(email, password);
+      if (response.role === "Professor") {
+        router.push("/professor/dashboard");
+      } else {
+        router.push("/");
+      }
     } catch (err: any) {
       setError(err.message || "Invalid email or password");
     } finally {

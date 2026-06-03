@@ -83,7 +83,7 @@ export function TeamChatWorkspace({
   className?: string;
 }) {
   const [draftMessage, setDraftMessage] = useState("");
-  const [isSharedFilesOpen, setIsSharedFilesOpen] = useState(true);
+  const [isSharedFilesOpen, setIsSharedFilesOpen] = useState(false);
   const [replyingTo, setReplyingTo] = useState<TeamChatMessage | null>(null);
   const [editingMessage, setEditingMessage] = useState<TeamChatMessage | null>(null);
   const [showEmojiPickerFor, setShowEmojiPickerFor] = useState<number | null>(null);
@@ -198,16 +198,17 @@ export function TeamChatWorkspace({
 
           <div className="flex-1 min-h-0 space-y-6 overflow-y-auto p-5 scroll-smooth" onClick={() => setShowEmojiPickerFor(null)}>
             {isLoading ? (
-              <div className="space-y-6 animate-pulse">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className={`flex items-end gap-3 ${i % 2 === 0 ? '' : 'justify-end'}`}>
-                    {i % 2 === 0 && <Skeleton className="h-9 w-9 rounded-full shrink-0" />}
-                    <div className={`space-y-2 ${i % 2 === 0 ? '' : 'flex flex-col items-end'}`}>
-                      {i % 2 === 0 && <Skeleton className="h-3 w-20" />}
-                      <Skeleton className={`h-12 rounded-2xl ${i % 3 === 0 ? 'w-64' : i % 3 === 1 ? 'w-48' : 'w-36'}`} />
-                    </div>
-                  </div>
-                ))}
+              <div className="h-full flex flex-col items-center justify-center text-indigo-500/70">
+                <Loader2 className="w-8 h-8 animate-spin mb-3" />
+                <p className="text-sm font-medium text-muted-foreground">Loading messages...</p>
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-70">
+                <div className="bg-muted/50 p-4 rounded-full mb-3">
+                  <Send className="w-6 h-6" />
+                </div>
+                <p className="text-sm font-medium">No messages yet.</p>
+                <p className="text-xs">Send a message to start the conversation!</p>
               </div>
             ) : (
             <AnimatePresence initial={false}>
@@ -220,6 +221,7 @@ export function TeamChatWorkspace({
                   <motion.div 
                     initial={{ opacity: 0, y: 15, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
                     layout="position"
                     key={message.id} 
@@ -380,8 +382,8 @@ export function TeamChatWorkspace({
                                 <div className={`flex items-center gap-1 shrink-0 ml-auto text-[10px] pb-0.5 ${isOwnMessage ? 'text-indigo-100' : 'text-muted-foreground/70'}`}>
                                   {message.isEdited && !message.isDeletedForAll && <span className="mr-1 italic opacity-80">edited</span>}
                                   <span>{message.timestamp}</span>
-                                  {isOwnMessage && message.status === "sending" && <Clock className="w-3 h-3 opacity-70" />}
-                                  {isOwnMessage && message.status === "sent" && <Check className="w-3.5 h-3.5 text-blue-200" />}
+                                  {isOwnMessage && message.status === "sending" && <Check className="w-3.5 h-3.5 text-white/50" />}
+                                  {isOwnMessage && message.status === "sent" && <Check className="w-3.5 h-3.5 text-emerald-400" />}
                                   {isOwnMessage && message.status === "error" && <AlertCircle className="w-3.5 h-3.5 text-red-300" />}
                                   
                                   {/* ChevronDown inside the bubble */}
@@ -441,7 +443,7 @@ export function TeamChatWorkspace({
                                     whileTap={{ scale: 0.95 }}
                                     key={emoji} 
                                     onClick={() => onReactToMessage?.(message.backendId!, emoji)} 
-                                    className="text-[13px] bg-card/80 backdrop-blur-md shadow-sm hover:shadow border border-border/50 rounded-full px-2.5 py-1 flex items-center gap-1.5 transition-all"
+                                    className="text-[13px] bg-card/80 backdrop-blur-md shadow-sm hover:shadow border border-border/50 rounded-full px-2.5 py-1 flex items-center gap-1.5 transition-shadow transition-colors"
                                   >
                                     <span>{emoji}</span>
                                     <span className="font-semibold text-foreground/80 text-[11px]">{count}</span>
@@ -619,13 +621,14 @@ export function TeamChatWorkspace({
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.4, ease: "easeInOut" }}
                   className="space-y-3 overflow-hidden"
                 >
                   {messages.filter((m) => m.file).map((message) => (
                     <motion.div 
                       whileHover={{ scale: 1.02 }}
                       key={`file-${message.id}`} 
-                      className="flex items-start gap-3 p-3.5 rounded-2xl border border-border/50 bg-card/60 shadow-sm hover:shadow-md hover:bg-card transition-all backdrop-blur-md cursor-pointer"
+                      className="flex items-start gap-3 p-3.5 rounded-2xl border border-border/50 bg-card/60 shadow-sm hover:shadow-md hover:bg-card transition-shadow transition-colors backdrop-blur-md cursor-pointer"
                     >
                       <div className="rounded-xl border border-border/50 bg-muted/50 p-2.5 text-muted-foreground shrink-0 shadow-sm">
                         {message.file?.type === "image" ? <ImageIcon className="h-4 w-4" /> : <FileText className="h-4 w-4" />}

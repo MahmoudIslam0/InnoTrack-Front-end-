@@ -29,7 +29,7 @@ interface Project {
   supervisor: string;
   status: string;
   technologies: string[];
-  students: { name: string; role: "Leader" | "Member"; major?: string; department?: string }[];
+  students: { name: string; role: "Leader" | "Member"; major?: string; department?: string; profilePictureUrl?: string | null }[];
   description?: string;
   abstract?: string;
   problemStatement?: string;
@@ -478,12 +478,22 @@ export default function ProjectDetails() {
                   key={index}
                   className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border/50"
                 >
-                  <div className="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 flex items-center justify-center font-semibold">
-                    {student.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </div>
+                  {student.profilePictureUrl ? (
+                    <img
+                      src={student.profilePictureUrl}
+                      alt={student.name}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 flex items-center justify-center font-semibold">
+                      {(() => {
+                        const parts = student.name.trim().split(" ");
+                        return parts.length > 1
+                          ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+                          : (parts[0][0] || "").toUpperCase();
+                      })()}
+                    </div>
+                  )}
                   <div className="flex-1">
                     <p className="text-sm font-medium text-foreground">{student.name}</p>
                     <p className="text-xs text-muted-foreground">
@@ -522,6 +532,7 @@ function mapProjectDetail(project: ProjectCatalogDetailDto): Project {
       name: student.name,
       role: student.role.toLowerCase().includes("leader") ? "Leader" : "Member",
       department: student.department,
+      profilePictureUrl: student.profilePictureUrl || undefined,
     })),
     description: project.description,
     abstract: project.abstract,

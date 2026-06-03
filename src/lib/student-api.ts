@@ -48,6 +48,7 @@ export type ProjectCatalogDetailDto = {
     name: string;
     role: string;
     department: string;
+    profilePictureUrl?: string | null;
   }[];
 };
 

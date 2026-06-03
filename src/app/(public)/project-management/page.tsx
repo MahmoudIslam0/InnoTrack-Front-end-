@@ -95,11 +95,12 @@ export default function ProjectManagement() {
   const [project, setProject] = useState<ActiveProject | null>(null);
   const [myProject, setMyProject] = useState<MyProjectDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState(() =>
-    typeof window === "undefined"
-      ? "submit-idea"
-      : localStorage.getItem("projectManagementActiveTab") || "submit-idea",
-  );
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("projectManagementActiveTab") || "submit-idea";
+    }
+    return "submit-idea";
+  });
 
   const [isSavedDraftsOpen, setIsSavedDraftsOpen] = useState(true);
   const [isAbandonDialogOpen, setIsAbandonDialogOpen] = useState(false);
@@ -127,7 +128,9 @@ export default function ProjectManagement() {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    localStorage.setItem("projectManagementActiveTab", value);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("projectManagementActiveTab", value);
+    }
   };
 
   // Load teams from localStorage on mount
@@ -147,6 +150,7 @@ export default function ProjectManagement() {
         setCurrentTeamId(mappedTeam.id);
       }
 
+      let hasActiveOrDraft = false;
       if (projectResult.status === "fulfilled" && projectResult.value) {
         const mappedProject = mapBackendProject(projectResult.value);
         if (mappedProject.status === "cancelled") {
@@ -155,6 +159,7 @@ export default function ProjectManagement() {
         } else {
           setMyProject(projectResult.value);
           setProject(mappedProject);
+          hasActiveOrDraft = true;
         }
       } else {
         setMyProject(null);
@@ -162,8 +167,12 @@ export default function ProjectManagement() {
       }
       if (draftsResult.status === "fulfilled") {
         setDrafts(draftsResult.value.map(mapBackendDraft));
+        if (draftsResult.value.length > 0) hasActiveOrDraft = true;
       } else {
         setDrafts([]);
+      }
+      if (typeof window !== "undefined" && !sessionStorage.getItem("projectManagementActiveTab")) {
+        setActiveTab(hasActiveOrDraft ? "my-projects" : "submit-idea");
       }
       setIsLoading(false);
     });

@@ -1,12 +1,15 @@
-import { CheckCircle2, ClipboardList, FolderKanban, Users } from "lucide-react";
-import Link from "next/link";
+"use client";
 
+import { CheckCircle2, ClipboardList, FolderKanban, Users, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { professorApi } from "@/lib/professor-api";
+import { studentApi } from "@/lib/student-api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OriginalProjectItem } from "@/app/_components/DashboardUI";
-import { OriginalProjectsSection } from "@/app/_components/PopularProjects";
+import { PopularProjects } from "@/app/_components/PopularProjects";
 import { TrendingTechnologies } from "@/app/_components/TrendingTechnologies";
-import { projects, teams } from "../_data";
 import {
   PageHeader,
   ProjectTable,
@@ -15,29 +18,45 @@ import {
 } from "../_components";
 
 export default function ProfessorDashboard() {
-  const pendingApprovals = projects.filter((project) => project.status === "draft");
-  const mostOriginalProjects: OriginalProjectItem[] = [...projects]
-    .sort(
-      (firstProject, secondProject) =>
-        secondProject.originalityScore - firstProject.originalityScore,
-    )
-    .slice(0, 4)
-    .map((project) => ({
-      id: project.id,
-      title: project.title,
-      domain: project.domain,
-      description: project.description,
-      originalityScore: project.originalityScore,
-      meta: project.team,
-      status: project.status,
-    }));
+  const [projects, setProjects] = useState<any[]>([]);
+  const [teams, setTeams] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [projectsData, teamsData] = await Promise.all([
+          professorApi.getSupervisedProjects(),
+          professorApi.getSupervisedTeams(),
+        ]);
+        setProjects(projectsData || []);
+        setTeams(teamsData || []);
+      } catch (error) {
+        console.error("Failed to load dashboard data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+      </div>
+    );
+  }
+
+  const pendingApprovals = projects.filter((project) => project.status === "UnderReview" || project.status === "draft");
+    
   const projectRows = projects.map((project) => ({
-    id: project.id,
+    id: project.id.toString(),
     title: project.title,
     subtitle: project.domain,
-    team: project.team,
+    team: project.teamName || "No Team",
     status: project.status,
-    originalityScore: project.originalityScore,
+    originalityScore: project.originalityScore || 0,
   }));
 
   return (
@@ -116,11 +135,10 @@ export default function ProfessorDashboard() {
             <ProjectTable rows={projectRows} />
           </SectionCard>
 
-          <OriginalProjectsSection
-            thisYearProjects={mostOriginalProjects}
-            allTimeProjects={mostOriginalProjects}
+          <PopularProjects
             actionLabel="Open Review"
             viewAllHref="/professor/projects"
+            hrefPrefix="/professor/projects"
           />
 
           <TrendingTechnologies />

@@ -1,142 +1,448 @@
 "use client";
 
-import { useState } from "react";
-import { Camera, Save } from "lucide-react";
-
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useState, useEffect } from "react";
+import {
+  Mail,
+  BookOpen,
+  LogOut,
+  Pencil,
+  Save,
+  Eye,
+  EyeOff,
+  Building2,
+  Users,
+  KeyRound,
+  X,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { professorProfile } from "../_data";
-import { PageHeader, SectionCard } from "../_components";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
+
+interface ProfessorProfileData {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  departmentId: number;
+  departmentName: string;
+  maxTeamLoad: number;
+}
 
 export default function ProfessorProfile() {
-  const [profile, setProfile] = useState(professorProfile);
+  const router = useRouter();
+  const { logout } = useAuth();
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<ProfessorProfileData | null>(null);
+  const [editMaxTeamLoad, setEditMaxTeamLoad] = useState("5");
 
-  const updateProfile = (field: keyof typeof professorProfile, value: string) => {
-    setProfile((currentProfile) => ({ ...currentProfile, [field]: value }));
+  // Change Password State
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  
+  // Show Password States
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      const data = await api.get("/api/Professor/me");
+      if (data) {
+        setProfile(data);
+        setEditMaxTeamLoad(data.maxTeamLoad.toString());
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to load profile details");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return (
-    <div className="p-4 md:p-8 max-w-350 mx-auto">
-      <PageHeader
-        title="Profile Management"
-        description="View and edit professor department, specialization, and profile picture details."
-      />
+  useEffect(() => {
+    fetchProfile();
+  }, []);
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-1">
-          <SectionCard title="Professor Profile">
-            <div className="flex flex-col items-center text-center">
-              <Avatar className="w-28 h-28 mb-4">
-                <AvatarFallback className="bg-indigo-100 text-indigo-600 dark:text-indigo-400 text-3xl">
-                  {profile.profilePicture}
-                </AvatarFallback>
-              </Avatar>
+  const handleSave = async () => {
+    if (!profile) return;
+    const parsedLoad = parseInt(editMaxTeamLoad, 10);
+    if (isNaN(parsedLoad) || parsedLoad < 1 || parsedLoad > 50) {
+      toast.error("Max team load must be between 1 and 50");
+      return;
+    }
+    try {
+      await api.patch("/api/Professor/me/profile", {
+        maxTeamLoad: parsedLoad,
+      });
+      toast.success("Profile updated successfully!");
+      setIsEditing(false);
+      fetchProfile();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save profile changes");
+    }
+  };
+
+  const handleCancel = () => {
+    if (profile) {
+      setEditMaxTeamLoad(profile.maxTeamLoad.toString());
+    }
+    setIsEditing(false);
+  };
+
+  const handleLogoutClick = async () => {
+    try {
+      await logout();
+      toast.success("Logged out successfully");
+      router.push("/login");
+    } catch {
+      router.push("/login");
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      toast.error("Please fill in all password fields.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("New passwords do not match.");
+      return;
+    }
+    if (newPassword.length < 8) {
+      toast.error("New password must be at least 8 characters.");
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      await api.put("/api/Users/change-password", {
+        oldPassword,
+        newPassword,
+      });
+      toast.success("Password changed successfully.");
+      setIsPasswordModalOpen(false);
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setShowOldPassword(false);
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to change password.");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center">
+        <div className="w-12 h-12 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin"></div>
+        <p className="text-muted-foreground mt-4 font-medium">Loading profile...</p>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-4">
+        <div className="text-center max-w-md bg-card border border-border rounded-2xl p-8 shadow-sm">
+          <h2 className="text-2xl font-bold text-foreground mb-2">Access Denied</h2>
+          <p className="text-muted-foreground mb-6">Please log in with a professor account to access this profile.</p>
+          <Button onClick={() => router.push("/login")} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
+            Go to Login
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const initials = `${profile.firstName[0]}${profile.lastName[0]}`.toUpperCase();
+
+  return (
+    <div className="dashboard-page max-w-5xl mx-auto">
+      <div className="space-y-8">
+
+        {/* ─── Header ─── */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">My Profile</h1>
+            <p className="text-muted-foreground mt-1 text-sm">Manage your professional information and preferences</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {!isEditing ? (
+              <Button
+                onClick={() => setIsEditing(true)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-5 h-10 gap-2"
+              >
+                <Pencil className="w-4 h-4" />
+                Edit Profile
+              </Button>
+            ) : (
+              <>
+                <Button variant="outline" onClick={handleCancel} className="rounded-xl h-10 gap-2">
+                  <X className="w-4 h-4" /> Cancel
+                </Button>
+                <Button onClick={handleSave} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl h-10 gap-2">
+                  <Save className="w-4 h-4" /> Save Changes
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* ─── Hero Card ─── */}
+        <div className="rounded-3xl border border-border/60 bg-card shadow-sm relative">
+          {/* Gradient Banner */}
+          <div className="h-28 md:h-36 rounded-t-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-700 relative">
+            <div className="absolute inset-0 rounded-t-3xl overflow-hidden opacity-20" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)", backgroundSize: "40px 40px" }}></div>
+            
+            {/* Avatar - Absolutely positioned relative to the banner to perfectly overlap without margin clipping */}
+            <div className="absolute -bottom-12 md:-bottom-14 left-6 md:left-8 w-24 h-24 md:w-28 md:h-28 shrink-0 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-4xl md:text-5xl font-bold text-white shadow-xl ring-4 ring-card z-20">
+              {initials}
+            </div>
+          </div>
+
+          {/* User Details Section */}
+          <div className="px-6 md:px-8 pb-6 md:pb-8 pt-16 md:pt-20 relative z-10">
+            <div className="space-y-1">
+              <div className="flex items-center flex-wrap gap-2 mb-2">
+                <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 px-3 py-1 text-xs font-semibold rounded-full border border-indigo-500/20">
+                  Professor
+                </Badge>
+                <Badge variant="secondary" className="bg-purple-500/10 text-purple-700 dark:text-purple-400 px-3 py-1 text-xs font-semibold rounded-full border border-purple-500/20">
+                  {profile.departmentName}
+                </Badge>
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground leading-tight">
+                {profile.firstName} {profile.lastName}
+              </h2>
+              <p className="text-muted-foreground text-sm font-medium">{profile.email}</p>
+            </div>
+
+            {/* Stats Strip */}
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-muted/40 rounded-2xl p-4 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center shrink-0">
+                  <Building2 className="w-4 h-4 text-indigo-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground font-medium">Department</p>
+                  <p className="text-sm font-semibold text-foreground truncate">{profile.departmentName}</p>
+                </div>
+              </div>
+              <div className="bg-muted/40 rounded-2xl p-4 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
+                  <Users className="w-4 h-4 text-emerald-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground font-medium">Max Team Load</p>
+                  <p className="text-sm font-semibold text-foreground">{profile.maxTeamLoad} Teams</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── Two-column info grid ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          {/* Personal Information */}
+          <div className="bg-card rounded-2xl border border-border/60 p-6 shadow-sm space-y-5">
+            <h3 className="text-base font-bold text-foreground flex items-center gap-2.5">
+              <span className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
+                <Mail className="w-4 h-4 text-indigo-500" />
+              </span>
+              Personal Information
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">First Name</Label>
+                <div className="px-3.5 py-2.5 rounded-xl bg-muted/40 text-sm text-foreground font-medium">
+                  {profile.firstName}
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Last Name</Label>
+                <div className="px-3.5 py-2.5 rounded-xl bg-muted/40 text-sm text-foreground font-medium">
+                  {profile.lastName}
+                </div>
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Email Address</Label>
+                <div className="px-3.5 py-2.5 rounded-xl bg-muted/40 text-sm text-foreground font-medium flex items-center gap-2">
+                  <Mail className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  <span className="truncate">{profile.email}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Professional Information */}
+          <div className="bg-card rounded-2xl border border-border/60 p-6 shadow-sm space-y-5">
+            <h3 className="text-base font-bold text-foreground flex items-center gap-2.5">
+              <span className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
+                <BookOpen className="w-4 h-4 text-purple-500" />
+              </span>
+              Professional Information
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Department</Label>
+                <div className="px-3.5 py-2.5 rounded-xl bg-muted/40 text-sm text-foreground font-medium">
+                  {profile.departmentName}
+                </div>
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Maximum Team Load</Label>
+                {isEditing ? (
+                  <Input
+                    value={editMaxTeamLoad}
+                    onChange={(e) => setEditMaxTeamLoad(e.target.value)}
+                    type="number"
+                    min="1"
+                    max="50"
+                    className="h-10 rounded-xl border-indigo-200 focus-visible:ring-indigo-500"
+                  />
+                ) : (
+                  <div className="px-3.5 py-2.5 rounded-xl bg-muted/40 text-sm font-semibold text-emerald-600">
+                    {profile.maxTeamLoad} Teams
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  The maximum number of teams you are willing to supervise.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── Actions Strip ─── */}
+        <div className="flex flex-col sm:flex-row justify-end items-center gap-3 pt-4 border-t border-border/40">
+          <Dialog open={isPasswordModalOpen} onOpenChange={setIsPasswordModalOpen}>
+            <DialogTrigger asChild>
               <Button
                 variant="outline"
-                className="border-indigo-200 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-500/100/10 mb-5"
+                className="w-full sm:w-auto text-foreground rounded-xl gap-2 h-10 border-border/60"
               >
-                <Camera className="w-4 h-4 mr-2" />
-                Update Picture
+                <KeyRound className="w-4 h-4" />
+                Change Password
               </Button>
-              <h2 className="text-lg font-semibold text-foreground">
-                {profile.name}
-              </h2>
-              <p className="text-sm text-muted-foreground mt-1">{profile.department}</p>
-              <p className="text-sm text-muted-foreground mt-1">{profile.office}</p>
-            </div>
-          </SectionCard>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Change Password</DialogTitle>
+                <DialogDescription>
+                  Update your account password securely.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleChangePassword} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="oldPassword">Current Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="oldPassword"
+                      type={showOldPassword ? "text" : "password"}
+                      value={oldPassword}
+                      onChange={(e) => setOldPassword(e.target.value)}
+                      className="pr-10"
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground"
+                      onClick={() => setShowOldPassword(!showOldPassword)}
+                    >
+                      {showOldPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="newPassword"
+                      type={showNewPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="pr-10"
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                    >
+                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="pr-10"
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button type="button" variant="outline" onClick={() => setIsPasswordModalOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" className="bg-indigo-600 text-white hover:bg-indigo-700" disabled={isChangingPassword}>
+                    {isChangingPassword ? "Saving..." : "Change Password"}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          <Button
+            variant="outline"
+            onClick={handleLogoutClick}
+            className="w-full sm:w-auto text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 dark:border-red-900/50 dark:text-red-500 dark:hover:bg-red-950/30 dark:hover:border-red-800 rounded-xl gap-2 h-10"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </Button>
         </div>
 
-        <div className="lg:col-span-2">
-          <SectionCard title="Editable Details">
-            <div className="space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="name">Full Name</Label>
-                  <Input
-                    id="name"
-                    value={profile.name}
-                    onChange={(event) =>
-                      updateProfile("name", event.target.value)
-                    }
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    value={profile.email}
-                    onChange={(event) =>
-                      updateProfile("email", event.target.value)
-                    }
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="department">Department</Label>
-                  <Input
-                    id="department"
-                    value={profile.department}
-                    onChange={(event) =>
-                      updateProfile("department", event.target.value)
-                    }
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="office">Office</Label>
-                  <Input
-                    id="office"
-                    value={profile.office}
-                    onChange={(event) =>
-                      updateProfile("office", event.target.value)
-                    }
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="specialization">Specialization</Label>
-                <Textarea
-                  id="specialization"
-                  value={profile.specialization}
-                  onChange={(event) =>
-                    updateProfile("specialization", event.target.value)
-                  }
-                  className="mt-1 min-h-24"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="profilePicture">Profile Initials</Label>
-                <Input
-                  id="profilePicture"
-                  value={profile.profilePicture}
-                  onChange={(event) =>
-                    updateProfile(
-                      "profilePicture",
-                      event.target.value.slice(0, 2).toUpperCase(),
-                    )
-                  }
-                  className="mt-1 max-w-40"
-                />
-              </div>
-
-              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                <Save className="w-4 h-4 mr-2" />
-                Save Profile
-              </Button>
-            </div>
-          </SectionCard>
-        </div>
       </div>
     </div>
   );

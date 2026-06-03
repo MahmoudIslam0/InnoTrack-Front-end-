@@ -82,9 +82,11 @@ export default function TeamsPage() {
   const [team, setTeam] = useState<Team | null>(null);
   const [requests, setRequests] = useState<JoinRequest[]>([]);
   const [activeView, setActiveView] = useState<"overview" | "chat">(() => {
-    if (typeof window === "undefined") return "overview";
-    const storedView = localStorage.getItem("teamsActiveView");
-    return storedView === "overview" || storedView === "chat" ? storedView : "overview";
+    if (typeof window !== "undefined") {
+      const stored = sessionStorage.getItem("teamsActiveView");
+      return stored === "overview" || stored === "chat" ? stored : "overview";
+    }
+    return "overview";
   });
   const [showHint, setShowHint] = useState(false);
   const [joinCodeInput, setJoinCodeInput] = useState("");
@@ -181,7 +183,9 @@ export default function TeamsPage() {
 
   const handleActiveViewChange = (view: "overview" | "chat") => {
     setActiveView(view);
-    localStorage.setItem("teamsActiveView", view);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("teamsActiveView", view);
+    }
   };
 
   useEffect(() => {

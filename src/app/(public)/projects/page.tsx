@@ -61,11 +61,12 @@ export default function Projects() {
   const [filterSupervisor, setFilterSupervisor] = useState<string>("");
   const [filterTechnology, setFilterTechnology] = useState<string>("");
   const [filterMinOriginality, setFilterMinOriginality] = useState<string>("");
-  const [activeTab, setActiveTab] = useState(() =>
-    typeof window === "undefined"
-      ? "current"
-      : localStorage.getItem("projectsActiveTab") || "current",
-  );
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("projectsActiveTab") || "current";
+    }
+    return "current";
+  });
 
   useEffect(() => {
     let ignore = false;
@@ -158,7 +159,9 @@ export default function Projects() {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    localStorage.setItem("projectsActiveTab", value);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("projectsActiveTab", value);
+    }
   };
 
   // Extract unique values for filter dropdowns

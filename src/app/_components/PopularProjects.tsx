@@ -9,7 +9,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OriginalProjectCard, OriginalProjectItem } from "./DashboardUI";
 import { normalizeOriginalityPercent, normalizeStatusTone, studentApi } from "@/lib/student-api";
 
-export function PopularProjects() {
+export function PopularProjects({
+  actionLabel = "View Details",
+  viewAllHref = "/projects",
+  hrefPrefix = "/projects"
+}: {
+  actionLabel?: string;
+  viewAllHref?: string;
+  hrefPrefix?: string;
+}) {
   const [thisYearProjects, setThisYearProjects] = useState<OriginalProjectItem[]>([]);
   const [allTimeProjects, setAllTimeProjects] = useState<OriginalProjectItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -70,7 +78,15 @@ export function PopularProjects() {
     );
   }
 
-  return <OriginalProjectsSection thisYearProjects={thisYearProjects} allTimeProjects={allTimeProjects} />;
+  return (
+    <OriginalProjectsSection
+      thisYearProjects={thisYearProjects}
+      allTimeProjects={allTimeProjects}
+      actionLabel={actionLabel}
+      viewAllHref={viewAllHref}
+      hrefPrefix={hrefPrefix}
+    />
+  );
 }
 
 export function OriginalProjectsSection({
@@ -78,11 +94,13 @@ export function OriginalProjectsSection({
   allTimeProjects,
   actionLabel = "View Details",
   viewAllHref = "/projects",
+  hrefPrefix = "/projects",
 }: {
   thisYearProjects: OriginalProjectItem[];
   allTimeProjects: OriginalProjectItem[];
   actionLabel?: string;
   viewAllHref?: string;
+  hrefPrefix?: string;
 }) {
   return (
     <section>
@@ -114,7 +132,7 @@ export function OriginalProjectsSection({
                 key={project.id}
                 project={project}
                 actionLabel={actionLabel}
-                href={`/projects/${project.id}`}
+                href={`${hrefPrefix}/${project.id}`}
               />
             ))}
           </div>
@@ -130,7 +148,7 @@ export function OriginalProjectsSection({
                 key={project.id}
                 project={project}
                 actionLabel={actionLabel}
-                href={`/projects/${project.id}`}
+                href={`${hrefPrefix}/${project.id}`}
               />
             ))}
           </div>

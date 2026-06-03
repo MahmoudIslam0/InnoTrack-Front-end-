@@ -271,6 +271,10 @@ export function useTeamChat(teamId: number | null) {
         // Fallback to REST
         await studentApi.sendChatMessage(content);
       }
+      
+      // Artificial delay to let the sending indicator show longer
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
       setMessages(prev => prev.map(m => m.id === msgId ? { ...m, status: "sent" } : m));
     } catch (err) {
       console.error("Failed to send message", err);

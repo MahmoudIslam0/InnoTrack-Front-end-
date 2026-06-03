@@ -135,7 +135,7 @@ export function TopNav({
   };
 
   return (
-    <header className={`fixed top-0 left-0 ${isSidebarCollapsed ? 'md:left-20' : 'md:left-64'} right-0 h-16 bg-background/60 backdrop-blur-2xl border-b border-border/50 z-40 shadow-[0_4px_30px_rgba(0,0,0,0.02)] transition-all duration-300`}>
+    <header className={`fixed top-0 left-0 ${isSidebarCollapsed ? 'md:left-20' : 'md:left-64'} right-0 h-16 bg-background/60 backdrop-blur-2xl border-b border-border/50 z-40 shadow-[0_4px_30px_rgba(0,0,0,0.02)] transition-all duration-500 ease-in-out`}>
       <div className="h-full px-4 md:px-8 flex items-center justify-between">
         {/* Mobile Menu Button & Page Title */}
         <div className="flex items-center gap-4">

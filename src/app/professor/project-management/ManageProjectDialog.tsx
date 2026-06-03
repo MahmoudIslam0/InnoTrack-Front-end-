@@ -4,7 +4,7 @@ import { useState } from "react";
 import {
   AlertTriangle, CheckCircle2, XCircle, Users,
   X, UserMinus, History, FileText, Award,
-  Clock, Info, Save,
+  Clock, Info, Save
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,16 +17,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { OriginalityMeter, StatusBadge } from "../_components";
 import { Project, teams as initialTeams } from "../_data";
-import { formatPercent } from "@/lib/student-api";
+import { formatPercent, normalizeStatusTone } from "@/lib/student-api";
+import { professorApi } from "@/lib/professor-api";
 
 interface ManageProjectDialogProps {
-  project: Project | null;
+  project: any | null;
+  teams: any[];
   defaultTab?: "overview" | "team" | "logs";
   onOpenChange: (open: boolean) => void;
-  onApproveProposal: (id: string) => void;
-  onRejectProposal: (id: string) => void;
-  onAcceptSubmission: (id: string) => void;
-  onRejectSubmission: (id: string) => void;
+  onApproveProposal: (id: string, feedback: string) => void;
+  onRejectProposal: (id: string, feedback: string) => void;
+  onAcceptSubmission: (id: string, feedback: string) => void;
+  onRejectSubmission: (id: string, feedback: string) => void;
 }
 
 interface LogEntry {
@@ -57,6 +59,7 @@ const initialLogs: Record<string, LogEntry[]> = {
 
 export function ManageProjectDialog({
   project,
+  teams,
   defaultTab = "team",
   onOpenChange,
   onApproveProposal,
@@ -67,13 +70,15 @@ export function ManageProjectDialog({
   const [teamSizeLimit, setTeamSizeLimit] = useState("4");
   const [feedback, setFeedback] = useState("");
   const [decisionMode, setDecisionMode] = useState<string | null>(null);
-  const [localTeams, setLocalTeams] = useState(initialTeams);
+  const [localTeams, setLocalTeams] = useState(teams);
   const [logs, setLogs] = useState<Record<string, LogEntry[]>>(initialLogs);
+  const [generalFeedback, setGeneralFeedback] = useState("");
+  const [isSendingFeedback, setIsSendingFeedback] = useState(false);
 
-  const team = project ? localTeams.find(t => t.projectId === project.id) : null;
+  const team = project ? teams.find((t: any) => t.projectId === project.id) : null;
   const projectLogs = project ? (logs[project.id] ?? []) : [];
 
-  const isRejecting = decisionMode === "reject-proposal" || decisionMode === "reject-submission";
+  const isRejecting = decisionMode === "reject-proposal";
   const cannotConfirm = isRejecting && !feedback.trim();
 
   const addLog = (projectId: string, action: string, type: LogEntry["type"]) => {
@@ -96,9 +101,9 @@ export function ManageProjectDialog({
   const handleRemoveMember = (memberId: string, memberName: string) => {
     if (!project) return;
     setLocalTeams(prev =>
-      prev.map(t =>
+      prev.map((t: any) =>
         t.projectId === project.id
-          ? { ...t, members: t.members.filter(m => m.id !== memberId) }
+          ? { ...t, members: t.members.filter((m: any) => m.id !== memberId) }
           : t
       )
     );
@@ -115,21 +120,17 @@ export function ManageProjectDialog({
   const handleDecision = () => {
     if (!project || !decisionMode || cannotConfirm) return;
     if (decisionMode === "approve-proposal") {
-      onApproveProposal(project.id);
+      onApproveProposal(project.id, feedback);
       addLog(project.id, `Proposal approved.${feedback ? ` Feedback: ${feedback}` : ""}`, "approval");
-      toast.success("Proposal approved!");
     } else if (decisionMode === "reject-proposal") {
-      onRejectProposal(project.id);
+      onRejectProposal(project.id, feedback);
       addLog(project.id, `Proposal rejected. Feedback: ${feedback}`, "rejection");
-      toast.error("Proposal rejected.");
     } else if (decisionMode === "accept-submission") {
-      onAcceptSubmission(project.id);
+      onAcceptSubmission(project.id, feedback);
       addLog(project.id, `Final submission accepted.${feedback ? ` Feedback: ${feedback}` : ""}`, "approval");
-      toast.success("Submission accepted!");
     } else if (decisionMode === "reject-submission") {
-      onRejectSubmission(project.id);
+      onRejectSubmission(project.id, feedback);
       addLog(project.id, `Final submission rejected. Feedback: ${feedback}`, "rejection");
-      toast.error("Submission rejected.");
     }
     setDecisionMode(null);
     setFeedback("");
@@ -143,6 +144,21 @@ export function ManageProjectDialog({
     return <Info className="w-4 h-4 text-muted-foreground shrink-0" />;
   };
 
+  const handleSendGeneralFeedback = async () => {
+    if (!project || !generalFeedback.trim()) return;
+    setIsSendingFeedback(true);
+    try {
+      await professorApi.addFeedback(project.id, generalFeedback);
+      toast.success("Feedback sent to the team successfully.");
+      addLog(project.id, `General feedback sent to team: "${generalFeedback}"`, "info");
+      setGeneralFeedback("");
+    } catch (e) {
+      toast.error("Failed to send feedback.");
+    } finally {
+      setIsSendingFeedback(false);
+    }
+  };
+
   return (
     <Dialog open={Boolean(project)} onOpenChange={handleClose}>
      <DialogContent className="w-[min(1100px,calc(100vw-32px))] sm:max-w-none max-h-[90vh] border-border/50 p-0 shadow-xl flex flex-col [&>button]:hidden">
@@ -153,13 +169,13 @@ export function ManageProjectDialog({
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                 <div>
                   <DialogTitle className="text-xl font-semibold text-foreground">{project.title}</DialogTitle>
-                  <p className="text-sm text-muted-foreground mt-1">{project.team} · {project.domain}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{project.teamName || "No team"} · {project.domain}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <StatusBadge status={project.status} />
+                  <StatusBadge status={normalizeStatusTone(project.status) as any} />
                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/20 rounded-lg">
                     <Award className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                    <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{project.originalityScore}%</span>
+                    <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{Math.round((project.originalityScore || 0) * 100)}%</span>
                   </div>
                   <button
                     onClick={handleClose}
@@ -173,47 +189,51 @@ export function ManageProjectDialog({
             </DialogHeader>
 
             {/* Tabs */}
-            <div className="px-6 pb-6 pt-4">
+            <div className="flex-1 overflow-y-auto px-6 pb-6 pt-4">
               <Tabs defaultValue={defaultTab}>
                 <TabsList className="mb-5 bg-muted/60 border border-border/50 rounded-xl p-1">
                   <TabsTrigger value="overview" className="rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white text-sm">
                     <FileText className="w-3.5 h-3.5 mr-1.5" /> Overview
                   </TabsTrigger>
-                  <TabsTrigger value="team" className="rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white text-sm">
-                    <Users className="w-3.5 h-3.5 mr-1.5" /> Team
+                  <TabsTrigger value="team" className="rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white text-sm px-4 py-2">
+                    <Users className="w-4 h-4 mr-2" /> Team
                   </TabsTrigger>
-                  <TabsTrigger value="logs" className="rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white text-sm">
-                    <History className="w-3.5 h-3.5 mr-1.5" /> Activity Log
+                  <TabsTrigger value="logs" className="rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white text-sm px-4 py-2">
+                    <History className="w-4 h-4 mr-2" /> Activity Log
                   </TabsTrigger>
                 </TabsList>
 
                 {/* ── OVERVIEW TAB ── */}
                 <TabsContent value="overview" className="space-y-6">
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Left: Project details */}
-                    <div className="lg:col-span-2 space-y-5">
-                      <div>
-                        <h4 className="text-sm font-semibold text-foreground mb-2">Description</h4>
-                        <p className="text-sm text-muted-foreground leading-relaxed">{project.description}</p>
+                    <div className="lg:col-span-2 space-y-6">
+                      <div className="bg-card p-6 rounded-2xl border border-border/50 shadow-sm">
+                        <h4 className="text-sm font-bold text-foreground mb-3 tracking-wide uppercase opacity-80">Description</h4>
+                        <p className="text-[15px] text-muted-foreground leading-relaxed">{project.description}</p>
                       </div>
-                      <div>
-                        <h4 className="text-sm font-semibold text-foreground mb-2">Abstract</h4>
-                        <p className="text-sm text-muted-foreground leading-relaxed">{project.abstract}</p>
+                      
+                      <div className="bg-card p-6 rounded-2xl border border-border/50 shadow-sm">
+                        <h4 className="text-sm font-bold text-foreground mb-3 tracking-wide uppercase opacity-80">Abstract</h4>
+                        <p className="text-[15px] text-muted-foreground leading-relaxed">{project.abstract}</p>
                       </div>
-                      <div>
-                        <h4 className="text-sm font-semibold text-foreground mb-2">Technologies</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {project.technologies.map(t => (
-                            <span key={t} className="px-2.5 py-1 bg-muted text-foreground text-xs rounded-md font-medium">{t}</span>
+                      
+                      <div className="bg-card p-6 rounded-2xl border border-border/50 shadow-sm">
+                        <h4 className="text-sm font-bold text-foreground mb-3 tracking-wide uppercase opacity-80">Technologies</h4>
+                        <div className="flex flex-wrap gap-2.5">
+                          {(project.technologies || []).map((t: string) => (
+                            <span key={t} className="px-3 py-1.5 bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 text-sm rounded-lg font-medium border border-indigo-500/20 shadow-sm">
+                              {t}
+                            </span>
                           ))}
                         </div>
                       </div>
                       {/* Similar Projects */}
-                      {project.similarProjects.length > 0 && (
+                      {project.similarProjects?.length > 0 && (
                         <div>
                           <h4 className="text-sm font-semibold text-foreground mb-2">Similar Projects</h4>
                           <div className="space-y-2">
-                            {project.similarProjects.map(sp => (
+                            {project.similarProjects.map((sp: any) => (
                               <div key={sp.title} className="flex items-start justify-between gap-3 p-3 bg-muted/40 rounded-lg border border-border/50">
                                 <div>
                                   <p className="text-xs font-medium text-foreground">{sp.title}</p>
@@ -228,17 +248,17 @@ export function ManageProjectDialog({
                     </div>
 
                     {/* Right: Originality + Decisions */}
-                    <div className="space-y-4">
-                      <div className="p-4 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
-                        <OriginalityMeter score={project.originalityScore} />
+                    <div className="space-y-5">
+                      <div className="p-6 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 rounded-2xl border border-indigo-500/20 shadow-sm flex justify-center">
+                        <OriginalityMeter score={Math.round((project.originalityScore || 0) * 100)} />
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground p-3 bg-muted/40 rounded-lg border border-border/50">
-                        <Clock className="w-3.5 h-3.5 shrink-0" />
-                        Submitted: {new Date(project.submittedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                      <div className="flex items-center gap-2.5 text-sm font-medium text-muted-foreground p-4 bg-card rounded-2xl border border-border/50 shadow-sm">
+                        <Clock className="w-5 h-5 text-indigo-500 shrink-0" />
+                        Submitted: <span className="text-foreground">{project.submittedAt ? new Date(project.submittedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "N/A"}</span>
                       </div>
 
                       {/* Proposal decision */}
-                      {project.status === "draft" && !decisionMode && (
+                      {normalizeStatusTone(project.status) === "submitted" && !decisionMode && (
                         <div className="p-4 bg-card rounded-xl border border-border/50 space-y-2">
                           <h4 className="text-sm font-semibold text-foreground mb-3">Proposal Decision</h4>
                           <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white" onClick={() => setDecisionMode("approve-proposal")}>
@@ -246,19 +266,6 @@ export function ManageProjectDialog({
                           </Button>
                           <Button variant="outline" className="w-full text-red-600 border-red-200 hover:bg-red-50 dark:border-red-900/30 dark:hover:bg-red-900/20" onClick={() => setDecisionMode("reject-proposal")}>
                             <XCircle className="w-4 h-4 mr-2" /> Reject Proposal
-                          </Button>
-                        </div>
-                      )}
-
-                      {/* Submission decision */}
-                      {project.status === "submitted" && !decisionMode && (
-                        <div className="p-4 bg-card rounded-xl border border-border/50 space-y-2">
-                          <h4 className="text-sm font-semibold text-foreground mb-3">Submission Decision</h4>
-                          <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setDecisionMode("accept-submission")}>
-                            <CheckCircle2 className="w-4 h-4 mr-2" /> Accept Submission
-                          </Button>
-                          <Button variant="outline" className="w-full text-red-600 border-red-200 hover:bg-red-50 dark:border-red-900/30 dark:hover:bg-red-900/20" onClick={() => setDecisionMode("reject-submission")}>
-                            <XCircle className="w-4 h-4 mr-2" /> Reject Submission
                           </Button>
                         </div>
                       )}
@@ -338,14 +345,14 @@ export function ManageProjectDialog({
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {team.members.map(member => (
+                        {team.members.map((member: any) => (
                           <div key={member.id} className="flex items-center gap-3 p-4 bg-card rounded-xl border border-border/50 hover:border-indigo-500/30 transition-colors">
                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                              {member.name.split(" ").map(n => n[0]).join("")}
+                              {member.fullName ? member.fullName.split(" ").map((n: string) => n[0]).join("") : "U"}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-foreground truncate">{member.name}</p>
-                              <p className="text-xs text-muted-foreground">{member.role} · GPA {member.gpa}</p>
+                              <p className="text-sm font-medium text-foreground truncate">{member.fullName}</p>
+                              <p className="text-xs text-muted-foreground">{member.role}</p>
                               <p className="text-xs text-muted-foreground truncate">{member.email}</p>
                             </div>
                             <div className="flex flex-col items-end gap-2 shrink-0">
@@ -360,7 +367,7 @@ export function ManageProjectDialog({
                               </Badge>
                               {member.role !== "Leader" && (
                                 <button
-                                  onClick={() => handleRemoveMember(member.id, member.name)}
+                                  onClick={() => handleRemoveMember(member.id, member.fullName)}
                                   className="flex items-center gap-1 text-[11px] text-red-500 hover:text-red-700 transition-colors"
                                 >
                                   <UserMinus className="w-3 h-3" /> Remove
@@ -378,9 +385,9 @@ export function ManageProjectDialog({
                     <div>
                       <h4 className="text-sm font-semibold text-foreground mb-3">Team Skills</h4>
                       <div className="flex flex-wrap gap-2">
-                        {[...new Set(team.members.flatMap(m => m.skills))].map(skill => (
-                          <span key={skill} className="px-2.5 py-1 bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 text-xs rounded-md font-medium border border-indigo-500/20">
-                            {skill}
+                        {[...new Set(team.members.flatMap((m: any) => m.skills || []))].map(skill => (
+                          <span key={skill as string} className="px-2.5 py-1 bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 text-xs rounded-md font-medium border border-indigo-500/20">
+                            {skill as string}
                           </span>
                         ))}
                       </div>

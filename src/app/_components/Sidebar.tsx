@@ -6,6 +6,7 @@ import {
   Bot,
   ClipboardList,
   Users,
+  MessageSquare,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -30,7 +31,6 @@ const professorMenuItems = [
   { id: "projects", label: "Projects", icon: FolderKanban, path: "/professor/projects" },
   { id: "project-management", label: "Project Management", icon: ClipboardList, path: "/professor/project-management" },
   { id: "teams", label: "Teams", icon: Users, path: "/professor/teams" },
-  { id: "innochat", label: "InnoChat", icon: Bot, path: "/professor/innochat" },
 ];
 
 export function SidebarContent({ activeItem, variant = "student" }: SidebarProps) {
@@ -43,7 +43,7 @@ export function SidebarContent({ activeItem, variant = "student" }: SidebarProps
     <div className="flex h-full flex-col">
       {/* Logo */}
       <div className="px-5 py-5 border-b border-border/50">
-        <div className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-3'}`}>
+        <div className="flex items-center">
           <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl flex items-center justify-center">
             <Image
               src="/logo-light.png"
@@ -60,7 +60,7 @@ export function SidebarContent({ activeItem, variant = "student" }: SidebarProps
               className="h-full w-full object-contain hidden dark:block mix-blend-screen"
             />
           </div>
-          <div className={`overflow-hidden transition-all duration-300 whitespace-nowrap ${isSidebarCollapsed ? 'max-w-0 opacity-0' : 'max-w-[200px] opacity-100'}`}>
+          <div className={`overflow-hidden transition-all duration-500 ease-in-out whitespace-nowrap ${isSidebarCollapsed ? 'max-w-0 opacity-0 ml-0' : 'max-w-[200px] opacity-100 ml-3'}`}>
             <h1 className="text-lg font-bold text-foreground leading-none tracking-tight">
               InnoTrack
             </h1>
@@ -85,8 +85,7 @@ export function SidebarContent({ activeItem, variant = "student" }: SidebarProps
                   href={item.path}
                   title={isSidebarCollapsed ? item.label : undefined}
                   className={`
-                    w-full flex items-center py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group
-                    ${isSidebarCollapsed ? 'px-0 justify-center' : 'px-3.5 gap-3'}
+                    w-full flex items-center h-11 rounded-xl text-sm font-medium transition-all duration-200 group overflow-hidden
                     ${
                       isActive
                         ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shadow-[inset_0_0_0_1px_rgba(79,70,229,0.1)]"
@@ -94,8 +93,10 @@ export function SidebarContent({ activeItem, variant = "student" }: SidebarProps
                     }
                   `}
                 >
-                  <Icon className={`w-5 h-5 transition-colors shrink-0 ${isActive ? "text-indigo-600 dark:text-indigo-400" : "group-hover:text-accent-foreground"}`} />
-                  <span className={`overflow-hidden transition-all duration-300 whitespace-nowrap ${isSidebarCollapsed ? 'max-w-0 opacity-0' : 'max-w-[200px] opacity-100'}`}>
+                  <div className="flex items-center justify-center w-12 shrink-0 h-full">
+                    <Icon className={`w-5 h-5 transition-colors shrink-0 ${isActive ? "text-indigo-600 dark:text-indigo-400" : "group-hover:text-accent-foreground"}`} />
+                  </div>
+                  <span className={`overflow-hidden transition-all duration-500 ease-in-out whitespace-nowrap ${isSidebarCollapsed ? 'max-w-0 opacity-0' : 'max-w-[200px] opacity-100'}`}>
                     {item.label}
                   </span>
                 </Link>
@@ -116,7 +117,7 @@ export function Sidebar({ variant = "student" }: SidebarProps) {
   
   return (
     <aside 
-      className={`fixed left-0 top-0 h-screen ${isSidebarCollapsed ? 'w-20' : 'w-64'} bg-background/70 backdrop-blur-2xl border-r border-border/50 hidden md:flex flex-col z-20 shadow-[8px_0_30px_rgba(0,0,0,0.03)] dark:shadow-none transition-all duration-300`}
+      className={`fixed left-0 top-0 h-screen ${isSidebarCollapsed ? 'w-20' : 'w-64'} bg-background/70 backdrop-blur-2xl border-r border-border/50 hidden md:flex flex-col z-20 shadow-[8px_0_30px_rgba(0,0,0,0.03)] dark:shadow-none transition-all duration-500 ease-in-out`}
     >
       <SidebarContent variant={variant} />
     </aside>

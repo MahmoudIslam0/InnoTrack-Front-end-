@@ -28,7 +28,7 @@ export function MainContentArea({ children }: { children: React.ReactNode }) {
   
   return (
     <main
-      className={`pt-16 pb-20 md:pb-6 transition-all duration-300 ${
+      className={`pt-16 pb-20 md:pb-6 transition-all duration-500 ease-in-out ${
         isSidebarCollapsed ? "md:ml-20" : "md:ml-64"
       }`}
     >

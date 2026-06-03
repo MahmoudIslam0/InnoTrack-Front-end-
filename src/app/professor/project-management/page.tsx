@@ -1,27 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search, Award, Users, Clock, CheckCircle2,
-  FileText, AlertTriangle, ChevronRight, Layers, ExternalLink,
+  FileText, AlertTriangle, ChevronRight, Layers, ExternalLink, Loader2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PageHeader, StatusBadge, OriginalityMeter } from "../_components";
-import { projects as initialProjects, teams, Project } from "../_data";
+import { PageHeader, StatusBadge } from "../_components";
 import { ManageProjectDialog } from "./ManageProjectDialog";
+import { professorApi } from "@/lib/professor-api";
+import { toast } from "sonner";
+import { normalizeStatusTone } from "@/lib/student-api";
 
-function StatPill({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <span className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${color}`}>
-      {value} {label}
-    </span>
-  );
-}
-
-function ProjectCard({ project, onManage, onViewDetails }: { project: Project; onManage: () => void; onViewDetails: () => void }) {
-  const team = teams.find(t => t.projectId === project.id);
+function ProjectCard({ project, onManage, onViewDetails }: { project: any; onManage: () => void; onViewDetails: () => void }) {
   const scoreColor = "text-indigo-600 dark:text-indigo-400";
   const scoreBg = "bg-indigo-500/10 border-indigo-500/20";
 
@@ -35,13 +28,13 @@ function ProjectCard({ project, onManage, onViewDetails }: { project: Project; o
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <h3 className="text-base font-semibold text-foreground truncate">{project.title}</h3>
-              <StatusBadge status={project.status} />
+              <StatusBadge status={normalizeStatusTone(project.status) as any} />
             </div>
-            <p className="text-sm text-muted-foreground">{project.team} · {project.domain}</p>
+            <p className="text-sm text-muted-foreground">{project.teamName || "No team"} · {project.domain}</p>
           </div>
           <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border ${scoreBg}`}>
             <Award className={`w-3.5 h-3.5 ${scoreColor}`} />
-            <span className={`text-sm font-bold ${scoreColor}`}>{project.originalityScore}%</span>
+            <span className={`text-sm font-bold ${scoreColor}`}>{Math.round((project.originalityScore || 0) * 100)}%</span>
           </div>
         </div>
 
@@ -50,12 +43,12 @@ function ProjectCard({ project, onManage, onViewDetails }: { project: Project; o
 
         {/* Technologies */}
         <div className="flex flex-wrap gap-1.5 mb-4">
-          {project.technologies.slice(0, 3).map(tech => (
+          {(project.technologies || []).slice(0, 3).map((tech: string) => (
             <span key={tech} className="px-2 py-0.5 bg-muted text-foreground text-xs rounded-md font-medium">
               {tech}
             </span>
           ))}
-          {project.technologies.length > 3 && (
+          {project.technologies?.length > 3 && (
             <span className="px-2 py-0.5 bg-muted text-muted-foreground text-xs rounded-md">
               +{project.technologies.length - 3}
             </span>
@@ -66,10 +59,14 @@ function ProjectCard({ project, onManage, onViewDetails }: { project: Project; o
         <div className="flex flex-wrap items-center justify-between gap-2 pt-4 border-t border-border/50">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Users className="w-3.5 h-3.5" />
-            <span>{team ? `${team.members.length} members` : "No team"}</span>
-            <span className="text-border">·</span>
-            <Clock className="w-3.5 h-3.5" />
-            <span>{new Date(project.submittedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+            <span>Team Project</span>
+            {project.submittedAt && (
+              <>
+                <span className="text-border">·</span>
+                <Clock className="w-3.5 h-3.5" />
+                <span>{new Date(project.submittedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -98,50 +95,91 @@ function ProjectCard({ project, onManage, onViewDetails }: { project: Project; o
 
 export default function ProfessorProjectManagement() {
   const router = useRouter();
-  const [projects, setProjects] = useState(initialProjects);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [teams, setTeams] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>("underreview");
+  const [selectedProject, setSelectedProject] = useState<any | null>(null);
   const [dialogTab, setDialogTab] = useState<"overview" | "team" | "logs">("team");
 
-  const openManage = (project: Project) => {
-    setDialogTab("team");
+  useEffect(() => {
+    const fetchAll = async () => {
+      try {
+        const [projRes, teamRes] = await Promise.all([
+          professorApi.getSupervisedProjects(),
+          professorApi.getSupervisedTeams()
+        ]);
+        const normalized = (projRes || []).map((p: any) => ({
+          ...p,
+          status: p.status === "In_Progress" ? "InProgress" : p.status
+        }));
+        setProjects(normalized);
+        setTeams(teamRes || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchAll();
+  }, []);
+
+  const openManage = (project: any) => {
+    setDialogTab("overview");
     setSelectedProject(project);
   };
 
-  const openViewDetails = (project: Project) => {
+  const openViewDetails = (project: any) => {
     router.push(`/professor/projects/${project.id}`);
   };
 
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return projects.filter(p => {
-      const matchesSearch = !q || p.title.toLowerCase().includes(q) || p.team.toLowerCase().includes(q) || p.domain.toLowerCase().includes(q);
-      const matchesStatus = statusFilter === "all" || p.status === statusFilter;
+      const matchesSearch = !q || p.title?.toLowerCase().includes(q) || p.teamName?.toLowerCase().includes(q) || p.domain?.toLowerCase().includes(q);
+      const matchesStatus = p.status?.toLowerCase() === statusFilter.toLowerCase();
       return matchesSearch && matchesStatus;
     });
   }, [projects, searchQuery, statusFilter]);
 
   const counts = {
     all: projects.length,
-    "in-progress": projects.filter(p => p.status === "in-progress").length,
-    submitted: projects.filter(p => p.status === "submitted").length,
-    completed: projects.filter(p => p.status === "completed").length,
-    draft: projects.filter(p => p.status === "draft").length,
+    "in-progress": projects.filter(p => p.status === "InProgress").length,
+    "underreview": projects.filter(p => p.status === "UnderReview").length,
+    completed: projects.filter(p => p.status === "Completed").length,
+    draft: projects.filter(p => p.status === "Draft").length,
   };
 
-  const setSystemStatus = (projectId: string, status: Project["status"]) => {
-    setProjects(prev => prev.map(p => p.id === projectId ? { ...p, status } : p));
-    setSelectedProject(prev => prev?.id === projectId ? { ...prev, status } : prev);
+  const setSystemStatus = async (projectId: string, status: string, isApproval: boolean, feedback: string) => {
+    try {
+      if (isApproval) {
+         await professorApi.reviewProject(projectId, status === "InProgress" || status === "In_Progress");
+      }
+      if (feedback) {
+        await professorApi.addFeedback(projectId, feedback);
+      }
+      setProjects(prev => prev.map(p => p.id === projectId ? { ...p, status } : p));
+      setSelectedProject((prev: any) => prev?.id === projectId ? { ...prev, status } : prev);
+      toast.success("Project updated successfully.");
+    } catch (e) {
+      toast.error("Failed to update project status.");
+      console.error(e);
+    }
   };
 
   const statusFilters = [
-    { key: "all", label: "All" },
-    { key: "in-progress", label: "In Progress" },
-    { key: "pending-review", label: "Pending Review" },
-    { key: "completed", label: "Completed" },
-    { key: "draft", label: "Draft" },
+    { key: "inprogress", label: "In Progress" },
+    { key: "underreview", label: "Under Review" },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-page">
@@ -151,12 +189,10 @@ export default function ProfessorProjectManagement() {
       />
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         {[
-          { label: "Assigned", value: counts.all, icon: Layers, color: "bg-indigo-500/10 border-indigo-500/20 text-indigo-700 dark:text-indigo-400" },
+          { label: "Awaiting Review", value: counts["underreview"], icon: AlertTriangle, color: "bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400" },
           { label: "In Progress", value: counts["in-progress"], icon: Clock, color: "bg-blue-500/10 border-blue-500/20 text-blue-700 dark:text-blue-400" },
-          { label: "Awaiting Review", value: counts.submitted, icon: AlertTriangle, color: "bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400" },
-          { label: "Completed", value: counts.completed, icon: CheckCircle2, color: "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400" },
         ].map(({ label, value, icon: Icon, color }) => (
           <div key={label} className={`flex items-center gap-3 p-4 rounded-xl border ${color} bg-opacity-50`}>
             <Icon className="w-5 h-5 shrink-0" />
@@ -191,7 +227,7 @@ export default function ProfessorProjectManagement() {
                   : "bg-muted text-muted-foreground border-border/50 hover:border-indigo-300"
               }`}
             >
-              {f.label} {f.key !== "all" && counts[f.key as keyof typeof counts] > 0 && `(${counts[f.key as keyof typeof counts]})`}
+              {f.label} {counts[f.key as keyof typeof counts] > 0 && `(${counts[f.key as keyof typeof counts]})`}
             </button>
           ))}
         </div>
@@ -218,12 +254,13 @@ export default function ProfessorProjectManagement() {
 
       <ManageProjectDialog
         project={selectedProject}
+        teams={teams}
         defaultTab={dialogTab}
         onOpenChange={open => !open && setSelectedProject(null)}
-        onApproveProposal={id => setSystemStatus(id, "in-progress")}
-        onRejectProposal={id => setSystemStatus(id, "draft")}
-        onAcceptSubmission={id => setSystemStatus(id, "completed")}
-        onRejectSubmission={id => setSystemStatus(id, "in-progress")}
+        onApproveProposal={(id, feedback) => setSystemStatus(id, "InProgress", true, feedback)}
+        onRejectProposal={(id, feedback) => setSystemStatus(id, "Rejected", true, feedback)}
+        onAcceptSubmission={(id, feedback) => setSystemStatus(id, "Completed", false, feedback)}
+        onRejectSubmission={(id, feedback) => setSystemStatus(id, "InProgress", false, feedback)}
       />
     </div>
   );
