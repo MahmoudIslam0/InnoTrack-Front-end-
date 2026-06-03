@@ -25,7 +25,7 @@ export default function StudentTeamChat() {
 
   const { messages, members, projectTitle, isConnected, isLoading, sendMessage } = useTeamChat(team?.id || null);
 
-  if (loadingTeam || isLoading) {
+  if (loadingTeam) {
     return (
       <div className="flex h-[calc(100vh-154px)] items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
@@ -54,6 +54,7 @@ export default function StudentTeamChat() {
         currentUserName={(user as any)?.name || (user as any)?.fullName || "Student"}
         currentUserRole="Student"
         onSendMessage={sendMessage}
+        isLoading={isLoading}
         className="h-full border border-border/50 shadow-lg rounded-2xl"
       />
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import type { ElementType } from "react";
 import Link from "next/link";
 import {
@@ -107,7 +107,8 @@ export default function TeamsPage() {
     deleteMessage: realDeleteMessage,
     togglePin: realTogglePin,
     reactToMessage: realReactToMessage,
-    replyToMessage: realReplyToMessage
+    replyToMessage: realReplyToMessage,
+    isLoading: isChatLoading
   } = useTeamChat(team ? Number(team.id) : null);
 
   useEffect(() => {
@@ -151,6 +152,32 @@ export default function TeamsPage() {
       ignore = true;
     };
   }, []);
+
+  // Periodic refresh of team data to detect new members joining
+  const refreshTeamData = useCallback(async () => {
+    try {
+      const [teamResult, requestsResult] = await Promise.allSettled([
+        studentApi.getMyTeam(),
+        studentApi.getPendingJoinRequests(),
+      ]);
+
+      if (teamResult.status === "fulfilled" && teamResult.value) {
+        const mappedTeam = mapTeam(teamResult.value);
+        setTeams([mappedTeam]);
+        setTeam(mappedTeam);
+      }
+
+      if (requestsResult.status === "fulfilled") {
+        setRequests(requestsResult.value.map(mapRequest));
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (!team) return;
+    const interval = setInterval(refreshTeamData, 30000);
+    return () => clearInterval(interval);
+  }, [team, refreshTeamData]);
 
   const handleActiveViewChange = (view: "overview" | "chat") => {
     setActiveView(view);
@@ -213,9 +240,12 @@ export default function TeamsPage() {
     }
 
     try {
-      const created = await studentApi.createTeam(name);
-      const mappedTeam = mapTeam(created);
-      saveTeams([mappedTeam], mappedTeam.id);
+      await studentApi.createTeam(name);
+      const created = await studentApi.getMyTeam();
+      if (created) {
+        const mappedTeam = mapTeam(created);
+        saveTeams([mappedTeam], mappedTeam.id);
+      }
       setNewTeamName("");
       handleActiveViewChange("overview");
       toast.success(`Team "${name}" created.`);
@@ -716,6 +746,7 @@ export default function TeamsPage() {
               onTogglePin={realTogglePin}
               onReactToMessage={realReactToMessage}
               onReplyToMessage={realReplyToMessage}
+              isLoading={isChatLoading}
               className="h-[calc(100vh-260px)] min-h-0"
             />
           )}

@@ -1,21 +1,25 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import dynamic from 'next/dynamic';
 import { 
   Download, FileText, ImageIcon, Paperclip, Send, ChevronDown, 
   ChevronRight, Check, Clock, AlertCircle, MoreHorizontal, 
-  Pin, Edit2, Trash2, Copy, Reply, Smile, X
+  Pin, Edit2, Trash2, Copy, Reply, Smile, X, Loader2
 } from "lucide-react";
-import EmojiPicker, { Theme } from 'emoji-picker-react';
+import { Theme } from 'emoji-picker-react';
 import { motion, AnimatePresence } from "framer-motion";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+
+const EmojiPicker = dynamic(() => import('emoji-picker-react'), { ssr: false, loading: () => <div className="w-[350px] h-[400px] flex items-center justify-center bg-card rounded-2xl border"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div> });
 
 export interface TeamChatMessage {
   id: string;
@@ -60,6 +64,7 @@ export function TeamChatWorkspace({
   onTogglePin,
   onReactToMessage,
   onReplyToMessage,
+  isLoading = false,
   className,
 }: {
   title: string;
@@ -74,6 +79,7 @@ export function TeamChatWorkspace({
   onTogglePin?: (messageId: number) => void;
   onReactToMessage?: (messageId: number, emoji: string) => void;
   onReplyToMessage?: (parentMessageId: number, content: string) => void;
+  isLoading?: boolean;
   className?: string;
 }) {
   const [draftMessage, setDraftMessage] = useState("");
@@ -191,6 +197,19 @@ export function TeamChatWorkspace({
           </AnimatePresence>
 
           <div className="flex-1 min-h-0 space-y-6 overflow-y-auto p-5 scroll-smooth" onClick={() => setShowEmojiPickerFor(null)}>
+            {isLoading ? (
+              <div className="space-y-6 animate-pulse">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className={`flex items-end gap-3 ${i % 2 === 0 ? '' : 'justify-end'}`}>
+                    {i % 2 === 0 && <Skeleton className="h-9 w-9 rounded-full shrink-0" />}
+                    <div className={`space-y-2 ${i % 2 === 0 ? '' : 'flex flex-col items-end'}`}>
+                      {i % 2 === 0 && <Skeleton className="h-3 w-20" />}
+                      <Skeleton className={`h-12 rounded-2xl ${i % 3 === 0 ? 'w-64' : i % 3 === 1 ? 'w-48' : 'w-36'}`} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
             <AnimatePresence initial={false}>
               {messages.map((message) => {
                 const isOwnMessage = message.author === currentUserName;
@@ -475,6 +494,7 @@ export function TeamChatWorkspace({
                 );
               })}
             </AnimatePresence>
+            )}
             <div ref={messagesEndRef} />
           </div>
 
