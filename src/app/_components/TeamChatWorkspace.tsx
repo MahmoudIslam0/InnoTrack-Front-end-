@@ -17,6 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const EmojiPicker = dynamic(() => import('emoji-picker-react'), { ssr: false, loading: () => <div className="w-[350px] h-[400px] flex items-center justify-center bg-card rounded-2xl border"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div> });
@@ -435,21 +437,91 @@ export function TeamChatWorkspace({
                           {/* Reactions */}
                           {message.reactions && message.reactions.length > 0 && (
                             <div className={`flex flex-wrap gap-1.5 mt-2 ${isOwnMessage ? "justify-end" : "justify-start"}`}>
-                              {Array.from(new Set(message.reactions.map(r => r.emoji))).map(emoji => {
-                                const count = message.reactions!.filter(r => r.emoji === emoji).length;
+                              {(() => {
+                                const totalCount = message.reactions!.length;
+                                const uniqueEmojis = Array.from(new Set(message.reactions!.map(r => r.emoji)));
+                                
                                 return (
-                                  <motion.button 
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    key={emoji} 
-                                    onClick={() => onReactToMessage?.(message.backendId!, emoji)} 
-                                    className="text-[13px] bg-card/80 backdrop-blur-md shadow-sm hover:shadow border border-border/50 rounded-full px-2.5 py-1 flex items-center gap-1.5 transition-shadow transition-colors"
-                                  >
-                                    <span>{emoji}</span>
-                                    <span className="font-semibold text-foreground/80 text-[11px]">{count}</span>
-                                  </motion.button>
+                                  <Dialog>
+                                    <DialogTrigger asChild>
+                                      <motion.button 
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        className="text-[13px] bg-card/80 backdrop-blur-md shadow-sm hover:shadow border border-border/50 rounded-full px-2.5 py-1 flex items-center gap-1.5 transition-shadow transition-colors"
+                                      >
+                                        <div className="flex -space-x-0.5">
+                                          {uniqueEmojis.slice(0, 3).map(emoji => (
+                                            <span key={emoji} className="z-10 text-[12px]">{emoji}</span>
+                                          ))}
+                                        </div>
+                                        <span className="font-semibold text-foreground/80 text-[11px] ml-0.5">{totalCount}</span>
+                                      </motion.button>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-sm rounded-2xl p-0 overflow-hidden gap-0 border-border/40 bg-card/95 backdrop-blur-xl">
+                                      <div className="p-4 border-b bg-muted/20">
+                                        <DialogTitle className="text-base font-semibold">Message Reactions</DialogTitle>
+                                      </div>
+                                      <Tabs defaultValue="all" className="w-full">
+                                        <TabsList className="w-full justify-start overflow-x-auto overflow-y-hidden h-auto bg-transparent gap-0 border-b rounded-none p-0 px-2 scrollbar-none">
+                                          <TabsTrigger value="all" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-3 font-medium transition-colors">
+                                            All <span className="ml-1.5 text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">{totalCount}</span>
+                                          </TabsTrigger>
+                                          {uniqueEmojis.map(emoji => {
+                                            const count = message.reactions!.filter(r => r.emoji === emoji).length;
+                                            return (
+                                              <TabsTrigger key={emoji} value={emoji} className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-3 font-medium transition-colors">
+                                                {emoji} <span className="ml-1.5 text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">{count}</span>
+                                              </TabsTrigger>
+                                            );
+                                          })}
+                                        </TabsList>
+                                        
+                                        <div className="max-h-[300px] overflow-y-auto p-2 scrollbar-thin">
+                                          <TabsContent value="all" className="m-0 focus-visible:outline-none focus-visible:ring-0">
+                                            <div className="flex flex-col">
+                                              {message.reactions!.map((r, i) => {
+                                                const member = members.find(m => m.id === r.userId.toString());
+                                                return (
+                                                  <div key={i} className="flex items-center justify-between group p-2 hover:bg-muted/50 rounded-xl transition-colors">
+                                                    <div className="flex items-center gap-3">
+                                                      <Avatar className="w-9 h-9 border border-border/40 shadow-sm">
+                                                        <AvatarFallback className="text-[10px] font-semibold bg-primary/5 text-primary">
+                                                          {member?.initials || "U"}
+                                                        </AvatarFallback>
+                                                      </Avatar>
+                                                      <span className="text-[14px] font-medium text-foreground/90">{member?.name || "Unknown User"}</span>
+                                                    </div>
+                                                    <span className="text-[18px] mr-2">{r.emoji}</span>
+                                                  </div>
+                                                );
+                                              })}
+                                            </div>
+                                          </TabsContent>
+                                          {uniqueEmojis.map(emoji => (
+                                            <TabsContent key={emoji} value={emoji} className="m-0 focus-visible:outline-none focus-visible:ring-0">
+                                              <div className="flex flex-col">
+                                                {message.reactions!.filter(r => r.emoji === emoji).map((r, i) => {
+                                                  const member = members.find(m => m.id === r.userId.toString());
+                                                  return (
+                                                    <div key={i} className="flex items-center gap-3 p-2 hover:bg-muted/50 rounded-xl transition-colors">
+                                                      <Avatar className="w-9 h-9 border border-border/40 shadow-sm">
+                                                        <AvatarFallback className="text-[10px] font-semibold bg-primary/5 text-primary">
+                                                          {member?.initials || "U"}
+                                                        </AvatarFallback>
+                                                      </Avatar>
+                                                      <span className="text-[14px] font-medium text-foreground/90">{member?.name || "Unknown User"}</span>
+                                                    </div>
+                                                  );
+                                                })}
+                                              </div>
+                                            </TabsContent>
+                                          ))}
+                                        </div>
+                                      </Tabs>
+                                    </DialogContent>
+                                  </Dialog>
                                 );
-                              })}
+                              })()}
                             </div>
                           )}
                         </div>

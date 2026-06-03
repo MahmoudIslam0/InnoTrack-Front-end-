@@ -169,7 +169,7 @@ export function useTeamChat(teamId: number | null) {
     });
 
     connection.on("MessageDeleted", (messageId: number) => {
-      setMessages(prev => prev.map(m => m.backendId === messageId ? { ...m, isDeletedForAll: true, content: "This message was deleted" } : m));
+      setMessages(prev => prev.map(m => m.backendId === messageId ? { ...m, isDeletedForAll: true, content: "This message was deleted", isPinned: false } : m));
     });
 
     connection.on("MessagePinned", (messageId: number) => {
@@ -192,36 +192,51 @@ export function useTeamChat(teamId: number | null) {
       }));
     });
 
-    async function startConnection() {
+    const joinTeamChat = async () => {
       try {
-        if (connection!.state === signalR.HubConnectionState.Disconnected) {
-          await connection!.start();
-        }
+        const onlineUserIds = (await connection.invoke<number[]>("JoinTeamChat", teamId)) || [];
+        
+        // Update members with actual online status
+        setMembers(prev => prev.map(m => ({ 
+          ...m, 
+          online: onlineUserIds.includes(parseInt(m.id))
+        })));
+        membersRef.current = membersRef.current.map(m => ({ 
+          ...m, 
+          online: onlineUserIds.includes(parseInt(m.id))
+        }));
+
         setIsConnected(true);
-        if (teamId) {
-          try {
-            await connection!.invoke("JoinTeamChat", teamId);
-          } catch (e) {
-            console.error("Failed to join team chat group", e);
-          }
-        }
-      } catch (err) {
-        console.error("SignalR Connection Error: ", err);
-        setIsConnected(false);
+      } catch (e) {
+        console.error("Failed to join team chat room", e);
+        toast.error("Failed to connect to live chat");
       }
+    };
+
+    if (connection.state === signalR.HubConnectionState.Connected) {
+      joinTeamChat();
+    } else {
+      connection.start().then(joinTeamChat).catch((err) => {
+        console.error("SignalR Connection Error: ", err);
+        toast.error("Failed to connect to chat server");
+      });
     }
 
-    startConnection();
+    connection.onreconnected(() => {
+      joinTeamChat();
+    });
+
+    connection.on("UserOnline", (userId: number) => {
+      setMembers(prev => prev.map(m => m.id === userId.toString() ? { ...m, online: true } : m));
+      membersRef.current = membersRef.current.map(m => m.id === userId.toString() ? { ...m, online: true } : m);
+    });
+
+    connection.on("UserOffline", (userId: number) => {
+      setMembers(prev => prev.map(m => m.id === userId.toString() ? { ...m, online: false } : m));
+      membersRef.current = membersRef.current.map(m => m.id === userId.toString() ? { ...m, online: false } : m);
+    });
 
     connection.onreconnecting(() => setIsConnected(false));
-    connection.onreconnected(async () => {
-      setIsConnected(true);
-      if (teamId) {
-        try {
-          await connection.invoke("JoinTeamChat", teamId);
-        } catch (e) { console.error("Failed to rejoin group after reconnect", e); }
-      }
-    });
 
     return () => {
       connection.off("ReceiveMessage");

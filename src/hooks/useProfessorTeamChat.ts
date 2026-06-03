@@ -128,41 +128,49 @@ export function useProfessorTeamChat(teamId: number | null) {
       );
     });
 
-    newConnection.on("MessageDeleted", (messageId: number, deleteForAll: boolean) => {
-      if (deleteForAll) {
-        setMessages((prev) =>
-          prev.map((m) => (m.backendId === messageId ? { ...m, isDeletedForAll: true, content: "" } : m))
-        );
-      } else {
-        setMessages((prev) => prev.filter((m) => m.backendId !== messageId));
-      }
-    });
-
-    newConnection.on("MessagePinned", (messageId: number, isPinned: boolean) => {
-      setMessages((prev) => prev.map((m) => (m.backendId === messageId ? { ...m, isPinned } : m)));
-    });
-
-    newConnection.on("MessageReacted", (messageId: number, reaction: any) => {
+    newConnection.on("MessageDeleted", (messageId: number) => {
       setMessages((prev) =>
-        prev.map((m) => {
-          if (m.backendId !== messageId) return m;
-          const updatedReactions = [...(m.reactions || [])];
-          const existingIndex = updatedReactions.findIndex((r) => r.userId === reaction.userId);
-          if (existingIndex >= 0) {
-            updatedReactions[existingIndex] = reaction;
-          } else {
-            updatedReactions.push(reaction);
-          }
-          return { ...m, reactions: updatedReactions };
-        })
+        prev.map((m) => (m.backendId === messageId ? { ...m, isDeletedForAll: true, content: "This message was deleted", isPinned: false } : m))
       );
+    });
+
+    newConnection.on("MessagePinned", (messageId: number) => {
+      setMessages((prev) => prev.map((m) => (m.backendId === messageId ? { ...m, isPinned: !m.isPinned } : m)));
+    });
+
+    newConnection.on("ReactionAdded", (messageId: number, userId: number, emoji: string) => {
+      setMessages(prev => prev.map(m => {
+        if (m.backendId === messageId) {
+          const reactions = m.reactions ? [...m.reactions] : [];
+          const existingIdx = reactions.findIndex(r => r.userId === userId && r.emoji === emoji);
+          if (existingIdx >= 0) {
+            reactions.splice(existingIdx, 1);
+          } else {
+            reactions.push({ userId, emoji });
+          }
+          return { ...m, reactions };
+        }
+        return m;
+      }));
+    });
+
+    newConnection.on("UserOnline", (userId: number) => {
+      setMembers(prev => prev.map(m => m.id === userId.toString() ? { ...m, online: true } : m));
+    });
+
+    newConnection.on("UserOffline", (userId: number) => {
+      setMembers(prev => prev.map(m => m.id === userId.toString() ? { ...m, online: false } : m));
     });
 
     const startConnection = async () => {
       try {
         await newConnection.start();
         if (teamId) {
-          await newConnection.invoke("JoinTeamChat", teamId);
+          const onlineUserIds = (await newConnection.invoke<number[]>("JoinTeamChat", teamId)) || [];
+          setMembers(prev => prev.map(m => ({
+            ...m,
+            online: onlineUserIds.includes(parseInt(m.id))
+          })));
         }
       } catch (err) {
         console.error("SignalR Connection Error:", err);
@@ -174,7 +182,11 @@ export function useProfessorTeamChat(teamId: number | null) {
     newConnection.onreconnected(async () => {
       if (teamId) {
         try {
-          await newConnection.invoke("JoinTeamChat", teamId);
+          const onlineUserIds = (await newConnection.invoke<number[]>("JoinTeamChat", teamId)) || [];
+          setMembers(prev => prev.map(m => ({
+            ...m,
+            online: onlineUserIds.includes(parseInt(m.id))
+          })));
         } catch (e) {
           console.error("Failed to rejoin group after reconnect", e);
         }
@@ -232,23 +244,51 @@ export function useProfessorTeamChat(teamId: number | null) {
   };
 
   const editMessage = async (messageId: number, newContent: string) => {
-    toast.error("Professor cannot edit messages yet.");
+    if (!newContent.trim() || !connectionRef.current) return;
+    try {
+      await connectionRef.current.invoke("EditMessage", teamId, messageId, newContent);
+    } catch (e) {
+      toast.error("Failed to edit message");
+    }
   };
 
   const deleteMessage = async (messageId: number, deleteForAll: boolean) => {
-    toast.error("Professor cannot delete messages yet.");
+    if (!connectionRef.current) return;
+    try {
+      if (!deleteForAll) {
+        setMessages((prev) => prev.filter((m) => m.backendId !== messageId));
+      }
+      await connectionRef.current.invoke("DeleteMessage", teamId, messageId, deleteForAll);
+    } catch (e) {
+      toast.error("Failed to delete message");
+    }
   };
 
   const togglePin = async (messageId: number) => {
-    toast.error("Professor cannot pin messages yet.");
+    if (!connectionRef.current) return;
+    try {
+      await connectionRef.current.invoke("TogglePin", teamId, messageId);
+    } catch (e) {
+      toast.error("Failed to pin message");
+    }
   };
 
   const reactToMessage = async (messageId: number, emoji: string) => {
-    toast.error("Professor cannot react to messages yet.");
+    if (!connectionRef.current) return;
+    try {
+      await connectionRef.current.invoke("ReactToMessage", teamId, messageId, emoji);
+    } catch (e) {
+      toast.error("Failed to react");
+    }
   };
 
   const replyToMessage = async (parentMessageId: number, content: string) => {
-    toast.error("Professor cannot reply to messages yet.");
+    if (!content.trim() || !connectionRef.current) return;
+    try {
+      await connectionRef.current.invoke("ReplyToMessage", teamId, parentMessageId, content);
+    } catch (e) {
+      toast.error("Failed to reply");
+    }
   };
 
   return {
