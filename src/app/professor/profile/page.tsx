@@ -175,7 +175,12 @@ export default function ProfessorProfile() {
     );
   }
 
-  const initials = `${profile.firstName[0]}${profile.lastName[0]}`.toUpperCase();
+  const getInitials = () => {
+    const first = profile.firstName ? profile.firstName.charAt(0) : "";
+    const last = profile.lastName ? profile.lastName.charAt(0) : "";
+    return `${first}${last}`.toUpperCase() || "P";
+  };
+  const initials = getInitials();
 
   return (
     <div className="dashboard-page max-w-5xl mx-auto">

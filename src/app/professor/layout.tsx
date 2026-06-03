@@ -12,9 +12,9 @@ export default function ProfessorLayout({
       <Sidebar variant="professor" />
       <TopNav
         title="Professor Dashboard"
-        profileName="Dr. Leila Hassan"
+        profileName="Dr. Mai Kamal"
         profileSubtitle="Computer Science Department"
-        initials="LH"
+        initials="MK"
         profileHref="/professor/profile"
         showNotifications
       />

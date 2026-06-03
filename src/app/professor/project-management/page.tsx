@@ -99,11 +99,24 @@ export default function ProfessorProjectManagement() {
   const [teams, setTeams] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("underreview");
+  const [statusFilter, setStatusFilter] = useState<string>("inprogress");
   const [selectedProject, setSelectedProject] = useState<any | null>(null);
   const [dialogTab, setDialogTab] = useState<"overview" | "team" | "logs">("team");
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const tab = searchParams.get('tab');
+    
+    if (tab && (tab === "inprogress" || tab === "underreview")) {
+      setStatusFilter(tab);
+      localStorage.setItem("professor_pm_tab", tab);
+    } else {
+      const savedTab = localStorage.getItem("professor_pm_tab");
+      if (savedTab && (savedTab === "inprogress" || savedTab === "underreview")) {
+        setStatusFilter(savedTab);
+      }
+    }
+
     const fetchAll = async () => {
       try {
         const [projRes, teamRes] = await Promise.all([
@@ -181,6 +194,33 @@ export default function ProfessorProjectManagement() {
     );
   }
 
+  const handleCancelSupervision = async (projectId: string, reason: string) => {
+    try {
+      await professorApi.cancelSupervision(projectId);
+      if (reason) {
+        await professorApi.addFeedback(projectId, reason);
+      }
+      setProjects(prev => prev.filter(p => p.id !== projectId));
+      setSelectedProject(null);
+      toast.success("Successfully cancelled supervision.");
+    } catch (e) {
+      toast.error("Failed to cancel supervision.");
+      console.error(e);
+    }
+  };
+
+  const handleRequestRevision = async (projectId: string, reason: string) => {
+    try {
+      await professorApi.requestRevision(projectId, reason);
+      setProjects(prev => prev.map(p => p.id === projectId ? { ...p, status: "Draft" } : p));
+      setSelectedProject((prev: any) => prev?.id === projectId ? { ...prev, status: "Draft" } : prev);
+      toast.success("Successfully requested revision.");
+    } catch (e) {
+      toast.error("Failed to request revision.");
+      console.error(e);
+    }
+  };
+
   return (
     <div className="dashboard-page">
       <PageHeader
@@ -220,7 +260,10 @@ export default function ProfessorProjectManagement() {
           {statusFilters.map(f => (
             <button
               key={f.key}
-              onClick={() => setStatusFilter(f.key)}
+              onClick={() => {
+                setStatusFilter(f.key);
+                localStorage.setItem("professor_pm_tab", f.key);
+              }}
               className={`px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
                 statusFilter === f.key
                   ? "bg-indigo-600 text-white border-indigo-600"
@@ -261,6 +304,8 @@ export default function ProfessorProjectManagement() {
         onRejectProposal={(id, feedback) => setSystemStatus(id, "Rejected", true, feedback)}
         onAcceptSubmission={(id, feedback) => setSystemStatus(id, "Completed", false, feedback)}
         onRejectSubmission={(id, feedback) => setSystemStatus(id, "InProgress", false, feedback)}
+        onCancelSupervision={handleCancelSupervision}
+        onRequestRevision={handleRequestRevision}
       />
     </div>
   );

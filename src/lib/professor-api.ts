@@ -24,4 +24,16 @@ export const professorApi = {
 
   sendChatMessage: (teamId: string | number, content: string) =>
     api.post(`/api/Professor/teams/${teamId}/chat/messages`, { content }),
+
+  cancelSupervision: (projectId: string | number) =>
+    api.post(`/api/Professor/projects/${projectId}/cancel-supervision`),
+
+  getDashboard: () =>
+    api.get("/api/Professor/dashboard"),
+
+  getProjectDetails: (projectId: string | number) =>
+    api.get(`/api/Professor/projects/${projectId}`),
+
+  requestRevision: (projectId: string | number, reason: string) =>
+    api.post(`/api/Professor/projects/${projectId}/request-revision`, { reason }),
 };

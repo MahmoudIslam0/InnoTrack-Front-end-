@@ -137,13 +137,15 @@ export function useTeamChat(teamId: number | null) {
 
       const member = membersRef.current.find(m => m.id === senderId?.toString());
       
+      const authorName = member?.name || data.authorName || data.AuthorName || "Unknown";
+      
       const newMsg: TeamChatMessage = {
         id: (data.id || `msg-${Date.now()}-${Math.random()}`).toString(),
         backendId: data.id,
         authorId: senderId,
-        author: member?.name || "Unknown",
-        initials: member?.initials || "??",
-        role: member?.role || "Student",
+        author: authorName,
+        initials: member?.initials || authorName.substring(0, 2).toUpperCase(),
+        role: member?.role || "Professor",
         content: content,
         timestamp: new Date(sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         status: "sent",

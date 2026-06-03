@@ -16,9 +16,36 @@ export function useProfessorTeamChat(teamId: number | null) {
     setIsLoading(true);
     try {
       const data = await professorApi.getTeamChat(teamId);
-      setMessages(data.messages || []);
-      setMembers(data.members || []);
-      membersRef.current = data.members || [];
+      const formattedMembers: TeamChatMember[] = (data.members || []).map((m: any) => ({
+        id: m.id.toString(),
+        name: m.fullName,
+        initials: m.initials,
+        role: m.role || "Student",
+        online: true,
+      }));
+      setMembers(formattedMembers);
+      membersRef.current = formattedMembers;
+
+      const formattedMessages: TeamChatMessage[] = (data.messages || []).map((msg: any) => {
+        const member = formattedMembers.find(m => m.id === msg.authorId?.toString());
+        return {
+          id: msg.id.toString(),
+          backendId: msg.id,
+          authorId: msg.authorId,
+          author: msg.authorName || "Unknown",
+          initials: member?.initials || (msg.authorName || "Unknown").substring(0, 2).toUpperCase(),
+          role: member?.role || "Student",
+          content: msg.content,
+          timestamp: new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          status: "sent",
+          isEdited: msg.isEdited,
+          isDeletedForAll: msg.isDeletedForAll,
+          isPinned: msg.isPinned,
+          parentMessageId: msg.parentMessageId,
+          reactions: msg.reactions || [],
+        };
+      });
+      setMessages(formattedMessages);
     } catch (error) {
       console.error("Failed to fetch chat:", error);
       toast.error("Failed to load chat history.");
@@ -35,42 +62,62 @@ export function useProfessorTeamChat(teamId: number | null) {
     if (!teamId) return;
 
     let isSubscribed = true;
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://innotrack-aneshpdxd6habnd6.uaenorth-01.azurewebsites.net";
+    const hubUrl = `${BASE_URL.replace(/\/$/, '')}/hubs/chat`;
 
     const newConnection = new signalR.HubConnectionBuilder()
-      .withUrl(`${process.env.NEXT_PUBLIC_API_URL || "https://localhost:7165"}/hubs/chat`, {
-        accessTokenFactory: () => token || "",
+      .withUrl(hubUrl, {
+        accessTokenFactory: () => token,
       })
       .withAutomaticReconnect()
       .build();
 
     connectionRef.current = newConnection;
 
-    newConnection.on("ReceiveMessage", (message: any) => {
+    newConnection.on("ReceiveMessage", (...args: any[]) => {
       if (!isSubscribed) return;
-      if (message.teamId !== teamId) return;
 
-      const senderId = message.senderId;
+      let data = args[0];
+      if (args.length >= 3 && typeof args[0] === 'number') {
+        data = { senderId: args[0], content: args[1], sentAt: args[2] };
+      }
+      if (!data) return;
+
+      const senderId = data.senderId || data.SenderId;
+      const content = data.content || data.Content;
+      const sentAt = data.sentAt || data.SentAt || new Date().toISOString();
+
       const member = membersRef.current.find(m => m.id === senderId?.toString());
 
+      const authorName = member?.name || data.authorName || data.AuthorName || "Unknown";
+
       const newMsg: TeamChatMessage = {
-        id: message.id.toString(),
-        backendId: message.id,
+        id: (data.id || `msg-${Date.now()}-${Math.random()}`).toString(),
+        backendId: data.id,
         authorId: senderId,
-        author: member?.name || message.senderName || "Unknown",
-        initials: member?.initials || (message.senderName || "Unknown").substring(0, 2).toUpperCase(),
-        role: member?.role || "Student",
-        content: message.content,
-        timestamp: new Date(message.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        isEdited: message.isEdited,
-        isDeletedForAll: message.isDeletedForAll,
-        isPinned: message.isPinned,
-        parentMessageId: message.parentMessageId,
-        reactions: message.reactions || [],
+        author: authorName,
+        initials: member?.initials || authorName.substring(0, 2).toUpperCase(),
+        role: member?.role || "Professor",
+        content: content,
+        timestamp: new Date(sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isEdited: data.isEdited,
+        isDeletedForAll: data.isDeletedForAll,
+        isPinned: data.isPinned,
+        parentMessageId: data.parentMessageId,
+        reactions: data.reactions || [],
       };
 
       setMessages((prev) => {
-        if (prev.some((m) => m.id === newMsg.id)) return prev;
+        const duplicateIdx = prev.findIndex(m => m.content === newMsg.content && !m.backendId);
+        if (duplicateIdx !== -1) {
+          const arr = [...prev];
+          arr[duplicateIdx] = { ...arr[duplicateIdx], backendId: newMsg.backendId, timestamp: newMsg.timestamp, status: "sent" };
+          return arr;
+        }
+        if (newMsg.backendId && prev.some((m) => m.backendId === newMsg.backendId)) return prev;
         return [...prev, newMsg];
       });
     });
@@ -111,7 +158,28 @@ export function useProfessorTeamChat(teamId: number | null) {
       );
     });
 
-    newConnection.start().catch((err) => console.error("SignalR Connection Error:", err));
+    const startConnection = async () => {
+      try {
+        await newConnection.start();
+        if (teamId) {
+          await newConnection.invoke("JoinTeamChat", teamId);
+        }
+      } catch (err) {
+        console.error("SignalR Connection Error:", err);
+      }
+    };
+
+    startConnection();
+
+    newConnection.onreconnected(async () => {
+      if (teamId) {
+        try {
+          await newConnection.invoke("JoinTeamChat", teamId);
+        } catch (e) {
+          console.error("Failed to rejoin group after reconnect", e);
+        }
+      }
+    });
 
     return () => {
       isSubscribed = false;
@@ -120,12 +188,46 @@ export function useProfessorTeamChat(teamId: number | null) {
   }, [teamId]);
 
   const sendMessage = async (content: string) => {
-    if (!teamId) return;
+    if (!teamId || !content.trim()) return;
+
+    // Optimistic UI update
+    const userStr = localStorage.getItem("user");
+    let authorName = "Professor";
+    let authorId = 0;
+    if (userStr) {
+      try {
+        const u = JSON.parse(userStr);
+        authorName = u.name || "Professor";
+        authorId = u.id || 0;
+      } catch (e) {}
+    }
+
+    const currentMember = membersRef.current.find((m) => m.id === authorId.toString());
+    const initials = currentMember?.initials || authorName.substring(0, 2).toUpperCase();
+
+    const tempId = `msg-${Date.now()}-${Math.random()}`;
+    const optimisticMsg: TeamChatMessage = {
+      id: tempId,
+      authorId,
+      author: authorName,
+      initials,
+      role: "Professor",
+      content,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      status: "sending",
+    };
+
+    setMessages((prev) => [...prev, optimisticMsg]);
+
     try {
-      await professorApi.sendChatMessage(teamId, content);
+      const data = await professorApi.sendChatMessage(teamId, content);
+      setMessages((prev) =>
+        prev.map((m) => (m.id === tempId ? { ...m, backendId: data.id, status: "sent" } : m))
+      );
     } catch (error) {
       console.error("Send message error:", error);
       toast.error("Failed to send message.");
+      setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, status: "error" } : m)));
     }
   };
 

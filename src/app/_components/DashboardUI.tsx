@@ -1,4 +1,16 @@
-import { ArrowRight, Award, LucideIcon } from "lucide-react";
+import { 
+  ArrowRight, 
+  Award, 
+  LucideIcon, 
+  Bell, 
+  CheckCircle2, 
+  ChevronRight, 
+  TrendingUp, 
+  Users, 
+  Calendar, 
+  Clock, 
+  FolderKanban 
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -379,61 +391,58 @@ export function ProjectTable({
   actionLabel?: string;
   onAction?: (projectId: string) => void;
 }) {
-  return (
-    <div className="space-y-4">
-      {rows.map((row) => {
-        const scoreColor = "bg-indigo-500/10 border-indigo-500/20 text-indigo-700 dark:text-indigo-400";
+  if (rows.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center bg-muted/20 rounded-xl border border-dashed border-border/60">
+        <FolderKanban className="w-10 h-10 text-muted-foreground/30 mb-3" />
+        <h3 className="text-sm font-medium text-foreground">No projects</h3>
+        <p className="text-xs text-muted-foreground mt-1">There are no projects to display here.</p>
+      </div>
+    );
+  }
 
+  return (
+    <div className="flex flex-col gap-3">
+      {rows.map((row) => {
         return (
-          <motion.div
+          <div
             key={row.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileHover={{ scale: 1.01, x: 2 }}
-            transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            className="dashboard-surface hover:shadow-[0_16px_48px_0_rgba(0,0,0,0.1)] hover:border-indigo-500/30 transition-shadow transition-colors duration-200 p-6 group"
+            className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border/40 bg-card/40 hover:bg-card hover:shadow-sm hover:border-indigo-500/30 transition-all duration-200"
           >
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-5">
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2 mb-3">
-                  <h3 className="text-lg font-semibold text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
-                    {row.title}
-                  </h3>
-                  <StatusBadge status={row.status} />
+            <div className="flex items-center gap-4 mb-3 sm:mb-0">
+              <div className="flex flex-col">
+                <h3 className="text-sm font-semibold text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
+                  {row.title}
+                </h3>
+                <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5" />
+                    <span className="font-medium">{row.team || "No team"}</span>
+                  </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  {row.subtitle && (
-                    <Badge variant="outline" className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/30">
-                      {row.subtitle}
-                    </Badge>
-                  )}
-                  {row.team && (
-                    <>
-                      {row.subtitle && <span className="text-sm text-muted-foreground">•</span>}
-                      <span className="text-sm text-muted-foreground">{row.team}</span>
-                    </>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 border border-indigo-500/20 bg-indigo-500/10 px-2.5 py-1 rounded-lg shrink-0 h-fit">
-                <Award className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-400">
-                  {Math.round((row.originalityScore || 0) * 100)}%
-                </span>
               </div>
             </div>
-
-            {onAction && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-indigo-600 dark:text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/10"
-                onClick={() => onAction(row.id)}
-              >
-                {actionLabel}
-              </Button>
-            )}
-          </motion.div>
+            
+            <div className="flex items-center gap-3 self-end sm:self-auto">
+              {row.originalityScore !== undefined && (
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 font-semibold text-xs border border-indigo-500/20">
+                  <Award className="w-3.5 h-3.5" />
+                  {Math.round((row.originalityScore || 0) * 100)}%
+                </div>
+              )}
+              {onAction && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-3 text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-500/10"
+                  onClick={() => onAction(row.id)}
+                >
+                  {actionLabel}
+                  <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+                </Button>
+              )}
+            </div>
+          </div>
         );
       })}
     </div>

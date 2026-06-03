@@ -4,7 +4,7 @@ import { CheckCircle2, ClipboardList, FolderKanban, Users, Loader2 } from "lucid
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { professorApi } from "@/lib/professor-api";
-import { studentApi } from "@/lib/student-api";
+import { studentApi, normalizeStatusTone } from "@/lib/student-api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OriginalProjectItem } from "@/app/_components/DashboardUI";
@@ -18,19 +18,14 @@ import {
 } from "../_components";
 
 export default function ProfessorDashboard() {
-  const [projects, setProjects] = useState<any[]>([]);
-  const [teams, setTeams] = useState<any[]>([]);
+  const [dashboardData, setDashboardData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [projectsData, teamsData] = await Promise.all([
-          professorApi.getSupervisedProjects(),
-          professorApi.getSupervisedTeams(),
-        ]);
-        setProjects(projectsData || []);
-        setTeams(teamsData || []);
+        const data = await professorApi.getDashboard();
+        setDashboardData(data);
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
       } finally {
@@ -40,7 +35,7 @@ export default function ProfessorDashboard() {
     fetchData();
   }, []);
 
-  if (isLoading) {
+  if (isLoading || !dashboardData) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
@@ -48,15 +43,23 @@ export default function ProfessorDashboard() {
     );
   }
 
-  const pendingApprovals = projects.filter((project) => project.status === "UnderReview" || project.status === "draft");
-    
-  const projectRows = projects.map((project) => ({
-    id: project.id.toString(),
-    title: project.title,
-    subtitle: project.domain,
-    team: project.teamName || "No Team",
-    status: project.status,
-    originalityScore: project.originalityScore || 0,
+  const {
+    totalSupervisedTeams,
+    pendingReviewCount,
+    activeProjectCount,
+    approvedCount,
+    rejectedCount,
+    averageOriginalityScore,
+    recentTeams,
+  } = dashboardData;
+
+  const projectRows = recentTeams.map((team: any) => ({
+    id: team.projectId || team.id?.toString(),
+    title: team.projectTitle || "No Project",
+    subtitle: team.projectDomain || "General",
+    team: team.name,
+    status: normalizeStatusTone(team.projectStatus) as any,
+    originalityScore: team.originalityScore || 0,
   }));
 
   return (
@@ -77,7 +80,7 @@ export default function ProfessorDashboard() {
                 variant="secondary"
                 className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/30"
               >
-                {pendingApprovals.length} Pending
+                {pendingReviewCount} Pending
               </Badge>
             </div>
             <p className="text-sm md:text-base text-muted-foreground max-w-2xl">
@@ -97,21 +100,21 @@ export default function ProfessorDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <ProfessorStatCard
           title="Assigned Teams"
-          value={String(teams.length)}
+          value={String(totalSupervisedTeams)}
           subtitle="Across current graduation cycle"
           icon={Users}
           tone="primary"
         />
         <ProfessorStatCard
           title="Projects Supervised"
-          value={String(projects.length)}
+          value={String(activeProjectCount + approvedCount + pendingReviewCount + rejectedCount)}
           subtitle="Draft, active, and submitted projects"
           icon={FolderKanban}
           tone="info"
         />
         <ProfessorStatCard
           title="Pending Approvals"
-          value={String(pendingApprovals.length)}
+          value={String(pendingReviewCount)}
           subtitle="Draft proposals need decision"
           icon={CheckCircle2}
           tone="warning"
@@ -122,7 +125,7 @@ export default function ProfessorDashboard() {
           <SectionCard
             title="Projects Under Supervision"
             action={
-              <Link href="/professor/project-management">
+              <Link href="/professor/project-management?tab=inprogress">
                 <Button
                   variant="ghost"
                   className="text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10"

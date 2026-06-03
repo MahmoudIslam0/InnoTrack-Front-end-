@@ -18,6 +18,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 import { useSidebar } from "@/contexts/SidebarContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 function timeAgo(dateString: string) {
   const date = new Date(dateString);
@@ -58,6 +59,7 @@ export function TopNav({
   const router = useRouter();
   const pathname = usePathname();
   const { isSidebarCollapsed, toggleSidebar } = useSidebar();
+  const { isAuthenticated } = useAuth();
   const [notifications, setNotifications] = useState<any[]>([]);
 
   useEffect(() => {
@@ -181,84 +183,103 @@ export function TopNav({
         <div className="flex items-center gap-3 md:gap-4">
           <ThemeToggle />
 
-          {showNotifications && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className="relative p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground rounded-xl transition-colors"
-                  aria-label="Open notifications"
-                >
-                  <Bell className="w-5 h-5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-indigo-500 ring-2 ring-background animate-pulse" />
-                  )}
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] sm:w-96 p-0 border-border/50 bg-background/95 backdrop-blur-xl shadow-xl">
-                <DropdownMenuLabel className="px-4 py-3 border-b border-border/50">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-foreground">
-                      Notifications
-                    </span>
-                    <div className="flex items-center gap-3">
-                      <button onClick={markAllAsRead} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Mark all as read</button>
-                      <span className="text-xs font-medium text-indigo-500 bg-indigo-500/10 px-2 py-0.5 rounded-full">
-                        {unreadCount} new
-                      </span>
-                    </div>
-                  </div>
-                </DropdownMenuLabel>
-                <div className="py-1 max-h-[300px] overflow-y-auto">
-                  {notifications.length === 0 ? (
-                    <div className="px-4 py-8 text-center text-muted-foreground text-sm">
-                      No new notifications
-                    </div>
-                  ) : (
-                    notifications.map((notification) => (
-                      <Link
-                        key={notification.id}
-                        href={getNotificationHref(notification.title, profileHref.startsWith("/professor"))}
-                        className={`block px-4 py-3 hover:bg-accent cursor-pointer transition-colors group relative ${notification.unread ? 'bg-muted/30' : ''}`}
-                        onMouseEnter={() => markAsRead(notification.id)}
-                        onClick={() => markAsRead(notification.id)}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-medium text-foreground group-hover:text-indigo-500 transition-colors">
-                              {notification.title}
-                            </p>
-                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                              {notification.message}
-                            </p>
-                            <p className="text-xs text-muted-foreground/60 mt-2 font-medium">
-                              {notification.time}
-                            </p>
-                          </div>
-                          {notification.unread && <span className="h-2 w-2 rounded-full bg-indigo-500 mt-1.5 shrink-0 shadow-[0_0_8px_rgba(99,102,241,0.6)]" />}
+          {isAuthenticated ? (
+            <>
+              {showNotifications && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="relative p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground rounded-xl transition-colors"
+                      aria-label="Open notifications"
+                    >
+                      <Bell className="w-5 h-5" />
+                      {unreadCount > 0 && (
+                        <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-indigo-500 ring-2 ring-background animate-pulse" />
+                      )}
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] sm:w-96 p-0 border-border/50 bg-background/95 backdrop-blur-xl shadow-xl">
+                    <DropdownMenuLabel className="px-4 py-3 border-b border-border/50">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-foreground">
+                          Notifications
+                        </span>
+                        <div className="flex items-center gap-3">
+                          <button onClick={markAllAsRead} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Mark all as read</button>
+                          <span className="text-xs font-medium text-indigo-500 bg-indigo-500/10 px-2 py-0.5 rounded-full">
+                            {unreadCount} new
+                          </span>
                         </div>
+                      </div>
+                    </DropdownMenuLabel>
+                    <div className="py-1 max-h-[300px] overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <div className="px-4 py-8 text-center text-muted-foreground text-sm">
+                          No new notifications
+                        </div>
+                      ) : (
+                        notifications.map((notification) => (
+                          <Link
+                            key={notification.id}
+                            href={getNotificationHref(notification.title, profileHref.startsWith("/professor"))}
+                            className={`block px-4 py-3 hover:bg-accent cursor-pointer transition-colors group relative ${notification.unread ? 'bg-muted/30' : ''}`}
+                            onMouseEnter={() => markAsRead(notification.id)}
+                            onClick={() => markAsRead(notification.id)}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-medium text-foreground group-hover:text-indigo-500 transition-colors">
+                                  {notification.title}
+                                </p>
+                                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                  {notification.message}
+                                </p>
+                                <p className="text-xs text-muted-foreground/60 mt-2 font-medium">
+                                  {notification.time}
+                                </p>
+                              </div>
+                              {notification.unread && <span className="h-2 w-2 rounded-full bg-indigo-500 mt-1.5 shrink-0 shadow-[0_0_8px_rgba(99,102,241,0.6)]" />}
+                            </div>
+                          </Link>
+                        ))
+                      )}
+                    </div>
+                    <div className="p-2 border-t border-border/50 bg-accent/30">
+                      <Link
+                        href={notificationsHref}
+                        className="flex h-9 items-center justify-center rounded-lg bg-indigo-500/10 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition-colors"
+                      >
+                        View all notifications
                       </Link>
-                    ))
-                  )}
-                </div>
-                <div className="p-2 border-t border-border/50 bg-accent/30">
-                  <Link
-                    href={notificationsHref}
-                    className="flex h-9 items-center justify-center rounded-lg bg-indigo-500/10 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition-colors"
-                  >
-                    View all notifications
-                  </Link>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
 
-          <Link href={profileHref} className="flex items-center gap-2 rounded-xl p-1 hover:bg-accent transition-all duration-300 hover:scale-105 active:scale-95">
-            <Avatar className="w-8 h-8 border border-border/50 shadow-sm">
-              <AvatarFallback className="bg-indigo-600 text-white text-xs font-semibold">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-          </Link>
+              <Link href={profileHref} className="flex items-center gap-2 rounded-xl p-1 hover:bg-accent transition-all duration-300 hover:scale-105 active:scale-95">
+                <Avatar className="w-8 h-8 border border-border/50 shadow-sm">
+                  <AvatarFallback className="bg-indigo-600 text-white text-xs font-semibold">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
+            </>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/login"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-2 rounded-lg hover:bg-accent"
+              >
+                Log In
+              </Link>
+              <Link
+                href="/register"
+                className="text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors px-4 py-2 rounded-lg shadow-sm"
+              >
+                Sign Up
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </header>
