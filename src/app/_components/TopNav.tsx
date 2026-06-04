@@ -19,6 +19,8 @@ import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { useAuth } from "@/contexts/AuthContext";
+import * as signalR from "@microsoft/signalr";
+import { toast } from "sonner";
 
 function timeAgo(dateString: string) {
   const date = new Date(dateString);
@@ -135,6 +137,61 @@ export function TopNav({
       return "/notifications";
     }
   };
+
+  useEffect(() => {
+    if (!showNotifications) return;
+
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://innotrack-aneshpdxd6habnd6.uaenorth-01.azurewebsites.net";
+    const hubUrl = `${BASE_URL.replace(/\/$/, '')}/hubs/notifications`;
+
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl(hubUrl, {
+        accessTokenFactory: () => token,
+      })
+      .withAutomaticReconnect()
+      .build();
+
+    connection.on("ReceiveNotification", (n: any) => {
+      if (!n) return;
+      const isReadVal = n.isRead !== undefined ? n.isRead : (n.IsRead !== undefined ? n.IsRead : false);
+      const titleVal = n.title || n.Title || "Notification";
+      const messageVal = n.message || n.Message || "";
+      const idVal = n.id !== undefined ? n.id : (n.Id !== undefined ? n.Id : Date.now());
+
+      setNotifications(prev => [
+        {
+          id: idVal,
+          title: titleVal,
+          message: messageVal,
+          time: "Just now",
+          unread: !isReadVal,
+        },
+        ...prev,
+      ]);
+
+      toast.info(`${titleVal}: ${messageVal}`, {
+        action: {
+          label: "View",
+          onClick: () => {
+            const isProf = profileHref.startsWith("/professor");
+            const href = getNotificationHref(titleVal, isProf);
+            router.push(href);
+          }
+        }
+      });
+    });
+
+    connection.start()
+      .then(() => console.log("SignalR Notifications Connected"))
+      .catch((err) => console.error("SignalR Notifications Connection Error: ", err));
+
+    return () => {
+      connection.stop();
+    };
+  }, [showNotifications, profileHref, router]);
 
   return (
     <header className={`fixed top-0 left-0 ${isSidebarCollapsed ? 'md:left-20' : 'md:left-64'} right-0 h-16 bg-background/90 backdrop-blur-md border-b border-border z-40 transition-all duration-300 ease-in-out`}>

@@ -18,8 +18,12 @@ import { normalizeStatusTone } from "@/lib/student-api";
 function ProjectCard({ project, onManage, onViewDetails }: { project: any; onManage: () => void; onViewDetails: () => void }) {
   const scoreColor = "text-primary dark:text-primary";
   const scoreBg = "bg-primary/10 border-primary/20";
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(project.isMuted ?? false);
   const [isMuteLoading, setIsMuteLoading] = useState(false);
+
+  useEffect(() => {
+    setIsMuted(project.isMuted ?? false);
+  }, [project.isMuted]);
 
   const handleToggleMute = async (e: React.MouseEvent) => {
     e.stopPropagation();

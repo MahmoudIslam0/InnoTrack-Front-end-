@@ -6,6 +6,7 @@ import { History, ArrowLeft, Loader2, GitCommit, FileText, Activity } from "luci
 import { PageHeader } from "@/app/professor/_components";
 import { Button } from "@/components/ui/button";
 import { professorApi } from "@/lib/professor-api";
+import * as signalR from "@microsoft/signalr";
 
 export default function ProjectLogsPage() {
   const { id } = useParams() as { id: string };
@@ -46,6 +47,58 @@ export default function ProjectLogsPage() {
       }
     };
     fetchLogs();
+  }, [id]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://innotrack-aneshpdxd6habnd6.uaenorth-01.azurewebsites.net";
+    const hubUrl = `${BASE_URL.replace(/\/$/, '')}/hubs/notifications`;
+
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl(hubUrl, {
+        accessTokenFactory: () => token,
+      })
+      .withAutomaticReconnect()
+      .build();
+
+    connection.on("ReceiveProjectLog", (log: any) => {
+      if (!log) return;
+      const logProjectId = log.projectId || log.ProjectId;
+      if (logProjectId?.toString() === id.toString()) {
+        const typeVal = log.type || log.Type || "update";
+        const messageVal = log.message || log.Message || "";
+        const timestampVal = log.timestamp || log.Timestamp || new Date().toISOString();
+        const actorNameVal = log.actorName || log.ActorName || "System";
+        const iconNameVal = log.iconName || log.IconName || "Activity";
+        const colorClassVal = log.colorClass || log.ColorClass || "text-blue-500";
+        const bgClassVal = log.bgClass || log.BgClass || "bg-blue-500/10";
+        const idVal = log.id || log.Id || Date.now();
+
+        setLogs(prev => [
+          {
+            id: idVal,
+            type: typeVal,
+            message: messageVal,
+            timestamp: timestampVal,
+            actorName: actorNameVal,
+            iconName: iconNameVal,
+            colorClass: colorClassVal,
+            bgClass: bgClassVal
+          },
+          ...prev
+        ]);
+      }
+    });
+
+    connection.start()
+      .then(() => console.log("SignalR project logs connected"))
+      .catch(err => console.error("SignalR project logs error:", err));
+
+    return () => {
+      connection.stop();
+    };
   }, [id]);
 
   if (isLoading) {
