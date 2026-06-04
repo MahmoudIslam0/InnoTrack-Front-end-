@@ -41,7 +41,7 @@ export function TrendingTechnologies() {
         Trending Technologies
       </h3>
 
-      <div className="bg-card text-card-foreground rounded-2xl p-6 border border-border shadow-sm">
+      <div className="bg-card text-card-foreground rounded-xl p-6 border border-border shadow-sm">
         <div className="flex flex-wrap gap-3">
           {isLoading && ["w-24", "w-32", "w-20", "w-28", "w-36", "w-24"].map((width, idx) => (
             <div key={idx} className={`h-10 ${width} animate-pulse rounded-xl bg-muted/60`} />
@@ -49,14 +49,14 @@ export function TrendingTechnologies() {
           {!isLoading && technologies.map((tech) => (
             <div
               key={tech.name}
-              className="flex items-center gap-2 px-4 py-2.5 bg-background/50 hover:bg-indigo-500/10 border border-border/50 hover:border-indigo-500/30 rounded-xl transition-all duration-300 group cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2.5 bg-background/50 hover:bg-primary/5 border border-border/50 hover:border-primary/30 rounded-xl transition-all duration-300 group cursor-pointer"
             >
-              <span className="font-medium text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+              <span className="font-medium text-foreground group-hover:text-primary dark:group-hover:text-primary transition-colors">
                 {tech.name}
               </span>
               <Badge
                 variant="secondary"
-                className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs border-transparent"
+                className="bg-primary/10 text-primary dark:text-primary text-xs border-transparent"
               >
                 {tech.count}
               </Badge>

@@ -183,7 +183,7 @@ export default function StudentProfile() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center">
-        <div className="w-12 h-12 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin"></div>
+        <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
         <p className="text-muted-foreground mt-4 font-medium">Loading profile...</p>
       </div>
     );
@@ -195,7 +195,7 @@ export default function StudentProfile() {
         <div className="text-center max-w-md bg-card border border-border rounded-2xl p-8 shadow-sm">
           <h2 className="text-2xl font-bold text-foreground mb-2">Access Denied</h2>
           <p className="text-muted-foreground mb-6">Please log in with a student account to access this profile.</p>
-          <Button onClick={() => router.push("/login")} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
+          <Button onClick={() => router.push("/login")} className="w-full bg-primary hover:bg-primary/90 text-white">
             Go to Login
           </Button>
         </div>
@@ -207,7 +207,7 @@ export default function StudentProfile() {
   const gpaColor = (profile.gpa ?? 0) >= 3.5
     ? "text-emerald-500"
     : (profile.gpa ?? 0) >= 2.5
-      ? "text-indigo-500"
+      ? "text-primary"
       : "text-amber-500";
 
   return (
@@ -224,7 +224,7 @@ export default function StudentProfile() {
             {!isEditing ? (
               <Button
                 onClick={() => setIsEditing(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-5 h-10 gap-2"
+                className="bg-primary hover:bg-primary/90 text-white rounded-xl px-5 h-10 gap-2"
               >
                 <Pencil className="w-4 h-4" />
                 Edit Profile
@@ -245,11 +245,11 @@ export default function StudentProfile() {
         {/* ─── Hero Card ─── */}
         <div className="rounded-3xl border border-border/60 bg-card shadow-sm relative">
           {/* Gradient Banner */}
-          <div className="h-28 md:h-36 rounded-t-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-700 relative">
+          <div className="h-28 md:h-36 rounded-t-3xl bg-gradient-to-br from-primary via-purple-600 to-primary/90 relative">
             <div className="absolute inset-0 rounded-t-3xl overflow-hidden opacity-20" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)", backgroundSize: "40px 40px" }}></div>
             
             {/* Avatar - Absolutely positioned relative to the banner to perfectly overlap without margin clipping */}
-            <div className="absolute -bottom-12 md:-bottom-14 left-6 md:left-8 w-24 h-24 md:w-28 md:h-28 shrink-0 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-4xl md:text-5xl font-bold text-white shadow-xl ring-4 ring-card z-20">
+            <div className="absolute -bottom-12 md:-bottom-14 left-6 md:left-8 w-24 h-24 md:w-28 md:h-28 shrink-0 rounded-2xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-4xl md:text-5xl font-bold text-white shadow-xl ring-4 ring-card z-20">
               {initials}
             </div>
           </div>
@@ -258,7 +258,7 @@ export default function StudentProfile() {
           <div className="px-6 md:px-8 pb-6 md:pb-8 pt-16 md:pt-20 relative z-10">
             <div className="space-y-1">
               <div className="flex items-center flex-wrap gap-2 mb-2">
-                <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 px-3 py-1 text-xs font-semibold rounded-full border border-indigo-500/20">
+                <Badge variant="secondary" className="bg-primary/10 text-primary/90 dark:text-primary px-3 py-1 text-xs font-semibold rounded-full border border-primary/20">
                   {profile.departmentName}
                 </Badge>
                 {profile.hasTeam && (
@@ -276,8 +276,8 @@ export default function StudentProfile() {
             {/* Stats Strip */}
             <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-4">
               <div className="bg-muted/40 rounded-2xl p-4 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center shrink-0">
-                  <Building2 className="w-4 h-4 text-indigo-500" />
+                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <Building2 className="w-4 h-4 text-primary" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs text-muted-foreground font-medium">Department</p>
@@ -314,8 +314,8 @@ export default function StudentProfile() {
           {/* Personal Information */}
           <div className="bg-card rounded-2xl border border-border/60 p-6 shadow-sm space-y-5">
             <h3 className="text-base font-bold text-foreground flex items-center gap-2.5">
-              <span className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
-                <Mail className="w-4 h-4 text-indigo-500" />
+              <span className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Mail className="w-4 h-4 text-primary" />
               </span>
               Personal Information
             </h3>
@@ -367,7 +367,7 @@ export default function StudentProfile() {
                     step="0.01"
                     min="0"
                     max="4"
-                    className="h-10 rounded-xl border-indigo-200 focus-visible:ring-indigo-500"
+                    className="h-10 rounded-xl border-primary focus-visible:ring-primary"
                   />
                 ) : (
                   <div className={`px-3.5 py-2.5 rounded-xl bg-muted/40 text-sm font-semibold ${gpaColor}`}>
@@ -399,19 +399,19 @@ export default function StudentProfile() {
             <div className="space-y-3">
               {/* Chip Input */}
               <div
-                className="flex flex-wrap items-center gap-2 min-h-12 p-2 rounded-xl border border-border bg-background/50 focus-within:ring-1 focus-within:ring-indigo-500/50 focus-within:bg-background transition-all duration-200 cursor-text"
+                className="flex flex-wrap items-center gap-2 min-h-12 p-2 rounded-xl border border-border bg-background/50 focus-within:ring-1 focus-within:ring-primary/50 focus-within:bg-background transition-all duration-200 cursor-text"
                 onClick={() => skillInputRef.current?.focus()}
               >
                 {editSkills.map((skill) => (
                   <div
                     key={skill}
-                    className="flex items-center gap-1 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-full text-sm font-medium border border-indigo-500/20"
+                    className="flex items-center gap-1 bg-primary/10 text-primary dark:text-primary px-3 py-1.5 rounded-full text-sm font-medium border border-primary/20"
                   >
                     {skill}
                     <button
                       type="button"
                       onClick={() => removeSkill(skill)}
-                      className="ml-1 rounded-full p-0.5 hover:bg-indigo-500/20 hover:text-indigo-800 dark:hover:text-indigo-200 transition-colors"
+                      className="ml-1 rounded-full p-0.5 hover:bg-primary/20 hover:text-indigo-800 dark:hover:text-primary transition-colors"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -445,7 +445,7 @@ export default function StudentProfile() {
                 profile.skills.map((skill, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center gap-1.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-3.5 py-1.5 rounded-full text-sm font-medium border border-indigo-500/20"
+                    className="flex items-center gap-1.5 bg-primary/10 text-primary dark:text-primary px-3.5 py-1.5 rounded-full text-sm font-medium border border-primary/20"
                   >
                     <Star className="w-3 h-3 shrink-0" />
                     {skill}
@@ -550,7 +550,7 @@ export default function StudentProfile() {
                   <Button type="button" variant="outline" onClick={() => setIsPasswordModalOpen(false)}>
                     Cancel
                   </Button>
-                  <Button type="submit" className="bg-indigo-600 text-white hover:bg-indigo-700" disabled={isChangingPassword}>
+                  <Button type="submit" className="bg-primary text-white hover:bg-primary/90" disabled={isChangingPassword}>
                     {isChangingPassword ? "Saving..." : "Change Password"}
                   </Button>
                 </div>

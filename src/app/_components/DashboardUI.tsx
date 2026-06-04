@@ -26,26 +26,26 @@ export type StatusTone =
 export type StatTone = "success" | "info" | "primary" | "warning" | "error";
 
 const statToneMap: Record<StatTone, string> = {
-  success: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  info: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
-  primary: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
-  warning: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  error: "bg-red-500/10 text-red-600 dark:text-red-400",
+  success: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400",
+  info: "bg-sky-50 text-sky-600 dark:bg-sky-950/30 dark:text-sky-400",
+  primary: "bg-primary/10 text-primary dark:bg-primary/20",
+  warning: "bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400",
+  error: "bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400",
 };
 
 const statusToneMap: Record<StatusTone, string> = {
-  draft: "bg-amber-500/20 text-amber-700 dark:text-amber-400",
-  "in-progress": "bg-blue-500/20 text-blue-700 dark:text-blue-400",
-  submitted: "bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 dark:text-indigo-400",
-  completed: "bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 dark:text-emerald-400",
-  approved: "bg-blue-500/20 text-blue-700 dark:text-blue-400",
-  rejected: "bg-red-500/20 text-red-700 dark:text-red-400",
+  draft: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900",
+  "in-progress": "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-900",
+  submitted: "bg-primary/10 text-primary border-primary/20 dark:bg-primary/20",
+  completed: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900",
+  approved: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-900",
+  rejected: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900",
 };
 
 const statusLabelMap: Record<StatusTone, string> = {
   draft: "Draft",
   "in-progress": "In Progress",
-  submitted: "Submitted",
+  submitted: "Pending",
   completed: "Completed",
   approved: "Approved",
   rejected: "Rejected",
@@ -180,7 +180,7 @@ export function StatCard({
 
 export function StatusBadge({ status }: { status: StatusTone }) {
   return (
-    <Badge variant="secondary" className={statusToneMap[status]}>
+    <Badge variant="outline" className={statusToneMap[status]}>
       {statusLabelMap[status]}
     </Badge>
   );
@@ -217,7 +217,7 @@ export function TechChips({
 
 export function ProjectCatalogCard({
   project,
-  actionLabel = "View Details",
+  actionLabel = "View",
   onAction,
   href,
   secondaryActionLabel,
@@ -232,15 +232,15 @@ export function ProjectCatalogCard({
 }) {
   const scoreColor =
     project.originality !== undefined
-      ? "bg-indigo-500/10 border-indigo-500/20 text-indigo-700 dark:text-indigo-400"
+      ? "bg-primary/10 border-primary/20 text-primary dark:text-primary"
       : "";
 
   return (
-    <div className="dashboard-card hover:border-indigo-500/30 flex flex-col h-full p-6">
+    <div className="dashboard-card hover:border-primary/50 flex flex-col h-full p-6">
       <div className="flex items-start justify-between mb-4">
         <Badge
           variant="outline"
-          className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/30"
+          className="bg-primary/10 text-primary dark:text-primary border-primary/30"
         >
           {project.category}
         </Badge>
@@ -287,7 +287,7 @@ export function ProjectCatalogCard({
         {href ? (
           <Button
             variant="outline"
-            className="flex-1 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10 hover:text-indigo-700 dark:text-indigo-300 border-indigo-500/30"
+            className="flex-1 text-primary dark:text-primary hover:bg-primary/10 hover:text-primary dark:text-primary border-primary/30"
             asChild
           >
             <Link href={href}>
@@ -297,7 +297,7 @@ export function ProjectCatalogCard({
         ) : (
           <Button
             variant="outline"
-            className="flex-1 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10 hover:text-indigo-700 dark:text-indigo-300 border-indigo-500/30"
+            className="flex-1 text-primary dark:text-primary hover:bg-primary/10 hover:text-primary dark:text-primary border-primary/30"
             onClick={onAction}
           >
             {actionLabel}
@@ -307,7 +307,7 @@ export function ProjectCatalogCard({
         {secondaryActionLabel && onSecondaryAction && (
           <Button
             variant="secondary"
-            className="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20"
+            className="flex-1 bg-primary/10 hover:bg-primary/20 text-primary dark:bg-primary/10 dark:hover:bg-primary/20 dark:text-primary border border-primary/30 dark:border-primary/20"
             onClick={onSecondaryAction}
           >
             {secondaryActionLabel}
@@ -322,7 +322,7 @@ import Link from "next/link";
 
 export function OriginalProjectCard({
   project,
-  actionLabel = "View Details",
+  actionLabel = "View",
   onAction,
   href,
 }: {
@@ -332,23 +332,23 @@ export function OriginalProjectCard({
   href?: string;
 }) {
   return (
-    <div className="dashboard-card hover:border-indigo-500/30 group">
+    <div className="dashboard-card hover:border-primary/50 group">
       <div className="flex items-start justify-between mb-3">
         <Badge
           variant="outline"
-          className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/30"
+          className="bg-primary/10 text-primary dark:text-primary border-primary/30"
         >
           {project.domain}
         </Badge>
-        <div className="flex items-center gap-1.5 border border-indigo-500/20 bg-indigo-500/10 px-2.5 py-1 rounded-lg">
-          <Award className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-          <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-400">
+        <div className="flex items-center gap-1.5 border border-primary/20 bg-primary/10 px-2.5 py-1 rounded-lg">
+          <Award className="w-3.5 h-3.5 text-primary dark:text-primary" />
+          <span className="text-sm font-semibold text-primary dark:text-primary">
             {project.originalityScore}%
           </span>
         </div>
       </div>
 
-      <h4 className="text-base font-semibold text-foreground mb-2 group-hover:text-indigo-600 dark:text-indigo-400 transition-colors">
+      <h4 className="text-base font-semibold text-foreground mb-2 group-hover:text-primary dark:text-primary transition-colors">
         {project.title}
       </h4>
 
@@ -362,7 +362,7 @@ export function OriginalProjectCard({
       </div>
 
       {href ? (
-        <Button variant="ghost" className="w-full text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10 hover:text-indigo-700 dark:text-indigo-300" asChild>
+        <Button variant="ghost" className="w-full text-primary dark:text-primary hover:bg-primary/10 hover:text-primary dark:text-primary" asChild>
           <Link href={href}>
             {actionLabel}
             <ArrowRight className="w-4 h-4 ml-2" />
@@ -371,7 +371,7 @@ export function OriginalProjectCard({
       ) : (
         <Button
           variant="ghost"
-          className="w-full text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10 hover:text-indigo-700 dark:text-indigo-300"
+          className="w-full text-primary dark:text-primary hover:bg-primary/10 hover:text-primary dark:text-primary"
           onClick={onAction}
         >
           {actionLabel}
@@ -384,7 +384,7 @@ export function OriginalProjectCard({
 
 export function ProjectTable({
   rows,
-  actionLabel = "Open Details",
+  actionLabel = "Review",
   onAction,
 }: {
   rows: ProjectTableRow[];
@@ -407,11 +407,11 @@ export function ProjectTable({
         return (
           <div
             key={row.id}
-            className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border/40 bg-card/40 hover:bg-card hover:shadow-sm hover:border-indigo-500/30 transition-all duration-200"
+            className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border/40 bg-card/40 hover:bg-card hover:shadow-sm hover:border-primary/50 transition-all duration-200"
           >
             <div className="flex items-center gap-4 mb-3 sm:mb-0">
               <div className="flex flex-col">
-                <h3 className="text-sm font-semibold text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
+                <h3 className="text-sm font-semibold text-foreground group-hover:text-primary dark:group-hover:text-primary transition-colors line-clamp-1">
                   {row.title}
                 </h3>
                 <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
@@ -425,7 +425,7 @@ export function ProjectTable({
             
             <div className="flex items-center gap-3 self-end sm:self-auto">
               {row.originalityScore !== undefined && (
-                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 font-semibold text-xs border border-indigo-500/20">
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-primary/10 text-primary dark:text-primary font-semibold text-xs border border-primary/20">
                   <Award className="w-3.5 h-3.5" />
                   {Math.round((row.originalityScore || 0) * 100)}%
                 </div>
@@ -434,7 +434,7 @@ export function ProjectTable({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 px-3 text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-500/10"
+                  className="h-8 px-3 text-xs font-semibold text-primary hover:text-primary hover:bg-primary/10 dark:text-primary dark:hover:bg-primary/10"
                   onClick={() => onAction(row.id)}
                 >
                   {actionLabel}
@@ -475,7 +475,7 @@ export function NotificationList({
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-semibold text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                    <p className="text-sm font-semibold text-foreground group-hover:text-primary dark:group-hover:text-primary transition-colors">
                       {notification.title}
                     </p>
                     {notification.type && (
@@ -487,7 +487,7 @@ export function NotificationList({
                   </p>
                 </div>
                 {notification.unread && (
-                  <span className="h-2.5 w-2.5 rounded-full bg-indigo-600 dark:bg-indigo-400 mt-1.5 shrink-0 shadow-[0_0_8px_rgba(99,102,241,0.6)]" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-primary dark:bg-primary mt-1.5 shrink-0 " />
                 )}
               </div>
               <p className="text-xs text-muted-foreground mt-2">

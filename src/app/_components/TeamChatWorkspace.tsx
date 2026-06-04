@@ -171,7 +171,7 @@ export function TeamChatWorkspace({
                 className="overflow-hidden"
               >
                 <div 
-                  className="bg-indigo-500/10 backdrop-blur-md border-b border-indigo-500/20 px-4 py-3 text-sm flex items-center gap-3 shadow-sm cursor-pointer hover:bg-indigo-500/20 transition-colors"
+                  className="bg-primary/10 backdrop-blur-md border-b border-primary/20 px-4 py-3 text-sm flex items-center gap-3 shadow-sm cursor-pointer hover:bg-primary/20 transition-colors"
                   onClick={() => {
                     const targetId = `message-${pinnedMessages[pinnedMessages.length - 1].backendId}`;
                     const el = document.getElementById(targetId);
@@ -186,11 +186,11 @@ export function TeamChatWorkspace({
                     }
                   }}
                 >
-                  <div className="p-1.5 bg-indigo-500/20 rounded-full text-indigo-500">
+                  <div className="p-1.5 bg-primary/20 rounded-full text-primary">
                     <Pin className="w-3.5 h-3.5" />
                   </div>
                   <div className="flex-1 truncate">
-                    <span className="font-semibold text-indigo-600 dark:text-indigo-400 mr-2">Pinned</span>
+                    <span className="font-semibold text-primary dark:text-primary mr-2">Pinned</span>
                     <span className="text-foreground/90">{pinnedMessages[pinnedMessages.length - 1].content}</span>
                   </div>
                 </div>
@@ -200,7 +200,7 @@ export function TeamChatWorkspace({
 
           <div className="flex-1 min-h-0 space-y-6 overflow-y-auto p-5 scroll-smooth" onClick={() => setShowEmojiPickerFor(null)}>
             {isLoading ? (
-              <div className="h-full flex flex-col items-center justify-center text-indigo-500/70">
+              <div className="h-full flex flex-col items-center justify-center text-primary/70">
                 <Loader2 className="w-8 h-8 animate-spin mb-3" />
                 <p className="text-sm font-medium text-muted-foreground">Loading messages...</p>
               </div>
@@ -240,7 +240,7 @@ export function TeamChatWorkspace({
 
                     <div className={`flex max-w-[85%] lg:max-w-[75%] flex-col ${isOwnMessage ? "items-end" : "items-start"}`}>
                       {message.isPinned && (
-                        <div className={`flex items-center gap-1 mb-1 px-2 text-[11px] font-semibold ${isOwnMessage ? 'text-indigo-500' : 'text-muted-foreground'}`}>
+                        <div className={`flex items-center gap-1 mb-1 px-2 text-[11px] font-semibold ${isOwnMessage ? 'text-primary' : 'text-muted-foreground'}`}>
                           <Pin className="w-3 h-3" fill="currentColor" /> Pinned
                         </div>
                       )}
@@ -285,7 +285,7 @@ export function TeamChatWorkspace({
 
                         <div className="flex flex-col relative z-10 max-w-full">                          {message.file ? (
                             <div className={`relative flex flex-col min-w-[280px] p-2 border shadow-sm backdrop-blur-md transition-all rounded-2xl
-                              ${isOwnMessage ? "bg-gradient-to-br from-indigo-500 to-indigo-600 border-indigo-400/20 text-white rounded-br-sm" : "bg-card border-border/50 text-foreground rounded-bl-sm"}
+                              ${isOwnMessage ? "bg-primary border-primary/20 text-white rounded-br-sm" : "bg-card border-border/50 text-foreground rounded-bl-sm"}
                             `}>
                                 {parentMsg && (
                                   <div 
@@ -293,23 +293,23 @@ export function TeamChatWorkspace({
                                       const el = document.getElementById(`message-${parentMsg.backendId}`);
                                       if (el) {
                                         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                        el.classList.add('ring-2', 'ring-indigo-500/50', 'bg-muted/30', 'rounded-xl', 'transition-all', 'duration-500');
-                                        setTimeout(() => el.classList.remove('ring-2', 'ring-indigo-500/50', 'bg-muted/30'), 1500);
+                                        el.classList.add('ring-2', 'ring-primary/50', 'bg-muted/30', 'rounded-xl', 'transition-all', 'duration-500');
+                                        setTimeout(() => el.classList.remove('ring-2', 'ring-primary/50', 'bg-muted/30'), 1500);
                                       }
                                     }}
-                                    className={`cursor-pointer text-xs px-3 py-2 rounded-r-xl rounded-l-[3px] mb-2 border-l-4 transition-all opacity-90 hover:opacity-100 ${isOwnMessage ? 'bg-black/15 border-indigo-200' : 'bg-black/5 dark:bg-white/5 border-emerald-500'}`}
+                                    className={`cursor-pointer text-xs px-3 py-2 rounded-r-xl rounded-l-[3px] mb-2 border-l-4 transition-all opacity-90 hover:opacity-100 ${isOwnMessage ? 'bg-black/15 border-primary/40' : 'bg-black/5 dark:bg-white/5 border-emerald-500'}`}
                                   >
-                                    <div className={`font-bold mb-0.5 ${isOwnMessage ? 'text-indigo-200' : 'text-emerald-600 dark:text-emerald-400'}`}>{parentMsg.author}</div>
+                                    <div className={`font-bold mb-0.5 ${isOwnMessage ? 'text-white/80' : 'text-emerald-600 dark:text-emerald-400'}`}>{parentMsg.author}</div>
                                     <div className="truncate opacity-80">{parentMsg.isDeletedForAll ? "This message was deleted" : parentMsg.content}</div>
                                   </div>
                                 )}
                                 <div className="flex items-center gap-3 px-2 pb-2">
-                                  <div className={`rounded-xl border p-3 ${isOwnMessage ? "border-indigo-400/30 bg-white/10 text-white" : "border-border/50 bg-muted/50 text-muted-foreground"}`}>
+                                  <div className={`rounded-xl border p-3 ${isOwnMessage ? "border-primary/30 bg-white/10 text-white" : "border-border/50 bg-muted/50 text-muted-foreground"}`}>
                                   {message.file.type === "image" ? <ImageIcon className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <p className="truncate text-sm font-medium">{message.file.name}</p>
-                                  <p className={`text-[11px] font-medium mt-0.5 ${isOwnMessage ? 'text-indigo-100' : 'text-muted-foreground'}`}>{message.file.size}</p>
+                                  <p className={`text-[11px] font-medium mt-0.5 ${isOwnMessage ? 'text-white/70' : 'text-muted-foreground'}`}>{message.file.size}</p>
                                 </div>
                                 <Button variant="ghost" size="icon" className={`rounded-xl ${isOwnMessage ? "text-white hover:bg-white/20" : "text-muted-foreground hover:bg-muted/80"}`}>
                                   <Download className="h-4 w-4" />
@@ -342,9 +342,9 @@ export function TeamChatWorkspace({
                                 )}
                             </div>
                           ) : (
-                            <div className={`relative p-2 px-3 text-[15px] leading-relaxed shadow-sm transition-all max-w-full rounded-2xl
+                            <div className={`relative px-4 py-2.5 text-[15px] leading-relaxed shadow-sm transition-all max-w-full rounded-2xl
                               ${message.isDeletedForAll ? "italic text-muted-foreground bg-muted/30 border border-border/30" : 
-                              isOwnMessage ? "bg-gradient-to-br from-indigo-500 to-indigo-600 text-white border border-indigo-400/20 shadow-indigo-500/10 rounded-br-sm" : "bg-card border border-border/50 text-foreground rounded-bl-sm"}
+                              isOwnMessage ? "bg-primary text-primary-foreground border border-primary/20 shadow-primary/10 rounded-br-sm" : "bg-card border border-border/50 text-foreground rounded-bl-sm"}
                             `}>
                               
                               {parentMsg && (
@@ -353,13 +353,13 @@ export function TeamChatWorkspace({
                                     const el = document.getElementById(`message-${parentMsg.backendId}`);
                                     if (el) {
                                       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                      el.classList.add('ring-2', 'ring-indigo-500/50', 'bg-muted/30', 'rounded-xl', 'transition-all', 'duration-500');
-                                      setTimeout(() => el.classList.remove('ring-2', 'ring-indigo-500/50', 'bg-muted/30'), 1500);
+                                      el.classList.add('ring-2', 'ring-primary/50', 'bg-muted/30', 'rounded-xl', 'transition-all', 'duration-500');
+                                      setTimeout(() => el.classList.remove('ring-2', 'ring-primary/50', 'bg-muted/30'), 1500);
                                     }
                                   }}
-                                  className={`cursor-pointer text-xs px-3 py-2 rounded-r-xl rounded-l-[3px] mb-1.5 border-l-4 transition-all opacity-90 hover:opacity-100 ${isOwnMessage ? 'bg-black/15 border-indigo-200' : 'bg-black/5 dark:bg-white/5 border-emerald-500'}`}
+                                  className={`cursor-pointer text-xs px-3 py-2 rounded-r-xl rounded-l-[3px] mb-1.5 border-l-4 transition-all opacity-90 hover:opacity-100 ${isOwnMessage ? 'bg-black/15 border-primary/40' : 'bg-black/5 dark:bg-white/5 border-emerald-500'}`}
                                 >
-                                  <div className={`font-bold mb-0.5 ${isOwnMessage ? 'text-indigo-200' : 'text-emerald-600 dark:text-emerald-400'}`}>{parentMsg.author}</div>
+                                  <div className={`font-bold mb-0.5 ${isOwnMessage ? 'text-white/80' : 'text-emerald-600 dark:text-emerald-400'}`}>{parentMsg.author}</div>
                                   <div className="truncate opacity-80">{parentMsg.isDeletedForAll ? "This message was deleted" : parentMsg.content}</div>
                                 </div>
                               )}
@@ -381,7 +381,7 @@ export function TeamChatWorkspace({
                                   {message.isDeletedForAll ? "This message was deleted" : message.content}
                                 </div>
                                 
-                                <div className={`flex items-center gap-1 shrink-0 ml-auto text-[10px] pb-0.5 ${isOwnMessage ? 'text-indigo-100' : 'text-muted-foreground/70'}`}>
+                                <div className={`flex items-center gap-1 shrink-0 ml-auto text-[10px] pb-0.5 ${isOwnMessage ? 'text-white/70' : 'text-muted-foreground/70'}`}>
                                   {message.isEdited && !message.isDeletedForAll && <span className="mr-1 italic opacity-80">edited</span>}
                                   <span>{message.timestamp}</span>
                                   {isOwnMessage && message.status === "sending" && <Check className="w-3.5 h-3.5 text-white/50" />}
@@ -583,8 +583,8 @@ export function TeamChatWorkspace({
                 >
                   <div className="flex items-center justify-between bg-muted/50 border border-border/50 rounded-xl p-3 mb-3 backdrop-blur-sm shadow-sm">
                     <div className="flex items-center gap-3 text-sm text-muted-foreground truncate">
-                      <div className="bg-indigo-500/20 p-1.5 rounded-full">
-                        <Reply className="w-4 h-4 text-indigo-500" />
+                      <div className="bg-primary/20 p-1.5 rounded-full">
+                        <Reply className="w-4 h-4 text-primary" />
                       </div>
                       <div className="truncate">
                         <span className="font-semibold text-foreground mr-2">{replyingTo.author}</span>
@@ -632,11 +632,11 @@ export function TeamChatWorkspace({
                 onChange={(event) => setDraftMessage(event.target.value)}
                 onKeyDown={(event) => { if (event.key === "Enter") sendMessage(); }}
                 placeholder={editingMessage ? "Edit your message..." : "Type a message..."}
-                className="h-14 rounded-2xl border border-border/60 bg-background/50 px-5 text-[15px] text-foreground shadow-sm focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:border-indigo-500/50 backdrop-blur-sm transition-all"
+                className="h-14 rounded-2xl border border-border/60 bg-background/50 px-5 text-[15px] text-foreground shadow-sm focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary/50 backdrop-blur-sm transition-all"
               />
               <Button
                 size="icon"
-                className="h-14 w-14 shrink-0 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 transition-all group"
+                className="h-14 w-14 shrink-0 rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all group"
                 onClick={sendMessage}
               >
                 <Send className="h-5 w-5 ml-0.5 group-hover:scale-110 transition-transform" />
@@ -709,7 +709,7 @@ export function TeamChatWorkspace({
                         <p className="truncate text-[13px] font-semibold text-foreground/90">{message.file?.name}</p>
                         <p className="text-[11px] text-muted-foreground mt-1 font-medium">{message.file?.size} • {message.author}</p>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-indigo-500/10 hover:text-indigo-500 shrink-0 rounded-lg">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-primary/10 hover:text-primary shrink-0 rounded-lg">
                         <Download className="h-4 w-4" />
                       </Button>
                     </motion.div>

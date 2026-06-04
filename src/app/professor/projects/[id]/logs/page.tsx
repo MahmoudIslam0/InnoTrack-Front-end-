@@ -1,0 +1,118 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { History, ArrowLeft, Loader2, GitCommit, FileText, Activity } from "lucide-react";
+import { PageHeader } from "@/app/professor/_components";
+import { Button } from "@/components/ui/button";
+import { professorApi } from "@/lib/professor-api";
+
+export default function ProjectLogsPage() {
+  const { id } = useParams() as { id: string };
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [projectTitle, setProjectTitle] = useState("");
+  const [logs, setLogs] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Fetch project details for the title
+    const fetchProject = async () => {
+      try {
+        const details = await professorApi.getProjectDetails(id);
+        if (details) {
+          setProjectTitle(details.title);
+        } else {
+          setProjectTitle("Adaptive Music Learning Platform for Individuals with Cognitive...");
+        }
+      } catch (err) {
+        console.error("Failed to load project details", err);
+        setProjectTitle("Adaptive Music Learning Platform for Individuals with Cognitive...");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProject();
+  }, [id]);
+
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const data = await professorApi.getProjectLogs(id);
+        if (data && Array.isArray(data)) {
+          setLogs(data);
+        }
+      } catch (err) {
+        console.error("Failed to load project logs", err);
+      }
+    };
+    fetchLogs();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="dashboard-page max-w-4xl mx-auto">
+      <div className="mb-6 flex items-center gap-4">
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={() => router.back()}
+          className="rounded-full w-10 h-10 border-border/50 hover:bg-muted"
+        >
+          <ArrowLeft className="w-5 h-5 text-muted-foreground" />
+        </Button>
+        <PageHeader
+          title="Project Activity Logs"
+          description={`Viewing history and changes for: ${projectTitle || "Project"}`}
+        />
+      </div>
+
+      <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm p-6 md:p-10 mt-6">
+        <div className="relative border-l-2 border-border/60 ml-4 space-y-10">
+          {logs.length === 0 && (
+            <div className="text-center text-muted-foreground py-10">
+              No activity logs found for this project.
+            </div>
+          )}
+          {logs.map((log) => {
+            // Determine icon dynamically or fallback
+            let Icon = Activity;
+            if (log.iconName === 'FileText') Icon = FileText;
+            if (log.iconName === 'GitCommit') Icon = GitCommit;
+            if (log.iconName === 'History') Icon = History;
+
+            const iconColor = log.colorClass || "text-blue-500";
+            const iconBg = log.bgClass || "bg-blue-500/10";
+
+            return (
+              <div key={log.id} className="relative pl-8">
+                {/* Timeline Node */}
+                <div className={`absolute -left-[17px] top-1 w-8 h-8 rounded-full ${iconBg} flex items-center justify-center ring-4 ring-card`}>
+                  <Icon className={`w-4 h-4 ${iconColor}`} />
+                </div>
+                
+                {/* Log Content */}
+                <div className="bg-muted/30 border border-border/50 rounded-xl p-5 hover:border-primary/20 hover:bg-muted/50 transition-colors">
+                  <p className="text-[15px] font-medium text-foreground leading-relaxed">
+                    {log.message}
+                  </p>
+                  <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground font-medium">
+                    <span>{new Date(log.timestamp).toLocaleString()}</span>
+                    <span className="w-1 h-1 rounded-full bg-border"></span>
+                    <span>By {log.actorName || log.actor || "System"}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}

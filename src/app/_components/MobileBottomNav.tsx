@@ -28,14 +28,14 @@ export function MobileBottomNav() {
               href={item.path}
               className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 ${
                 isActive
-                  ? "text-indigo-600 dark:text-indigo-400"
+                  ? "text-primary dark:text-primary"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <div className={`p-1.5 rounded-lg transition-all duration-200 ${isActive ? "bg-indigo-500/10" : ""}`}>
+              <div className={`p-1.5 rounded-lg transition-all duration-200 ${isActive ? "bg-primary/10" : ""}`}>
                 <Icon className="w-5 h-5" />
               </div>
-              <span className={`text-[10px] font-medium leading-none ${isActive ? "text-indigo-600 dark:text-indigo-400" : ""}`}>
+              <span className={`text-[10px] font-medium leading-none ${isActive ? "text-primary dark:text-primary" : ""}`}>
                 {item.label}
               </span>
             </Link>

@@ -88,13 +88,13 @@ export function SidebarContent({ activeItem, variant = "student" }: SidebarProps
                     w-full flex items-center h-11 rounded-xl text-sm font-medium transition-all duration-200 group overflow-hidden
                     ${
                       isActive
-                        ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shadow-[inset_0_0_0_1px_rgba(79,70,229,0.1)]"
-                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:scale-[1.02]"
+                        ? "bg-primary/10 text-primary border border-primary/20"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:scale-[1.02] border border-transparent"
                     }
                   `}
                 >
                   <div className="flex items-center justify-center w-12 shrink-0 h-full">
-                    <Icon className={`w-5 h-5 transition-colors shrink-0 ${isActive ? "text-indigo-600 dark:text-indigo-400" : "group-hover:text-accent-foreground"}`} />
+                    <Icon className={`w-5 h-5 transition-colors shrink-0 ${isActive ? "text-primary" : "group-hover:text-accent-foreground"}`} />
                   </div>
                   <span className={`overflow-hidden transition-all duration-500 ease-in-out whitespace-nowrap ${isSidebarCollapsed ? 'max-w-0 opacity-0' : 'max-w-[200px] opacity-100'}`}>
                     {item.label}

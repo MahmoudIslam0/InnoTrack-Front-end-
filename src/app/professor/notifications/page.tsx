@@ -108,7 +108,7 @@ export default function ProfessorNotifications() {
         action={
           <Button
             variant="outline"
-            className="border-indigo-200 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-500/100/10"
+            className="border-primary text-primary/90 dark:text-primary hover:bg-primary/100/10"
             onClick={markAllRead}
           >
             <CheckCircle2 className="w-4 h-4 mr-2" />

@@ -36,4 +36,10 @@ export const professorApi = {
 
   requestRevision: (projectId: string | number, reason: string) =>
     api.post(`/api/Professor/projects/${projectId}/request-revision`, { reason }),
+
+  getProjectLogs: (projectId: string | number) =>
+    api.get(`/api/Projects/${projectId}/logs`),
+
+  toggleProjectMute: (projectId: string | number) =>
+    api.post(`/api/Projects/${projectId}/mute`),
 };

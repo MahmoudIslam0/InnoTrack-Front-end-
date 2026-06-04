@@ -19,7 +19,7 @@ export default function MemberCard({ member, isLeaderView, onRemove }: { member:
   return (
     <div className="bg-card p-4 rounded-xl border border-border/50 flex items-center justify-between gap-3">
       <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-indigo-700">{member.name.split(" ").map(n=>n[0]).join("")}</div>
+        <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-primary/90">{member.name.split(" ").map(n=>n[0]).join("")}</div>
         <div>
           <div className="font-semibold">{member.name}</div>
           <div className="text-sm text-muted-foreground">{member.role || 'Member'}</div>

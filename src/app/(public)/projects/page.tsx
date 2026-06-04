@@ -232,14 +232,14 @@ export default function Projects() {
               setCurrentPage(1);
               setOldPage(1);
             }}
-            className="w-full pl-10 pr-4 py-2.5 text-sm bg-card/60 backdrop-blur-lg border border-white/20 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/30 transition-colors text-foreground placeholder:text-muted-foreground"
+            className="w-full pl-10 pr-4 py-2.5 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-colors text-foreground placeholder:text-muted-foreground"
           />
         </div>
       </div>
 
       {/* Filters Section */}
       <div className="mb-8">
-        <div className="bg-gradient-to-r from-card/70 to-card/50 backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.05)] overflow-hidden">
+        <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <div>
@@ -250,7 +250,7 @@ export default function Projects() {
                 {hasActiveFilters && (
                   <button
                     onClick={clearAllFilters}
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 hover:bg-indigo-500/10 rounded-lg transition-colors"
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-primary hover:text-primary dark:text-primary dark:hover:text-primary/70 hover:bg-primary/10 rounded-lg transition-colors"
                   >
                     <X className="w-4 h-4" />
                     Clear All
@@ -264,7 +264,7 @@ export default function Projects() {
                   <button
                     onClick={() => setShowFilters(!showFilters)}
                     className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${showFilters
-                      ? "bg-indigo-600 hover:bg-indigo-700"
+                      ? "bg-primary hover:bg-primary"
                       : "bg-muted hover:bg-muted/80"
                       }`}
                   >
@@ -289,7 +289,7 @@ export default function Projects() {
                       setCurrentPage(1);
                       setOldPage(1);
                     }}
-                    className="w-full px-3.5 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all text-foreground font-medium"
+                    className="w-full px-3.5 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all text-foreground font-medium"
                   >
                     <option value="">All Years</option>
                     {uniqueYears.map(year => (
@@ -308,7 +308,7 @@ export default function Projects() {
                       setCurrentPage(1);
                       setOldPage(1);
                     }}
-                    className="w-full px-3.5 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all text-foreground font-medium"
+                    className="w-full px-3.5 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all text-foreground font-medium"
                   >
                     <option value="">All Domains</option>
                     {uniqueDomains.map(domain => (
@@ -327,7 +327,7 @@ export default function Projects() {
                       setCurrentPage(1);
                       setOldPage(1);
                     }}
-                    className="w-full px-3.5 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all text-foreground font-medium"
+                    className="w-full px-3.5 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all text-foreground font-medium"
                   >
                     <option value="">All Supervisors</option>
                     {uniqueSupervisors.map(supervisor => (
@@ -346,7 +346,7 @@ export default function Projects() {
                       setCurrentPage(1);
                       setOldPage(1);
                     }}
-                    className="w-full px-3.5 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all text-foreground font-medium"
+                    className="w-full px-3.5 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all text-foreground font-medium"
                   >
                     <option value="">All Technologies</option>
                     {uniqueTechnologies.map(tech => (
@@ -370,7 +370,7 @@ export default function Projects() {
                         setOldPage(1);
                       }}
                       placeholder="0"
-                      className="w-full pl-3.5 pr-12 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500/50 transition-all text-foreground placeholder:text-muted-foreground font-medium"
+                      className="w-full pl-3.5 pr-12 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all text-foreground placeholder:text-muted-foreground font-medium"
                     />
                     <span className="absolute right-8 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-semibold pointer-events-none">%</span>
                   </div>
@@ -395,7 +395,7 @@ export default function Projects() {
                 >
                   <Calendar className="w-4 h-4" />
                   <span>This Year</span>
-                  <span className="ml-1 px-2 py-0.5 bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 rounded-md text-xs font-bold">
+                  <span className="ml-1 px-2 py-0.5 bg-primary/20 text-primary dark:text-primary/70 rounded-md text-xs font-bold">
                     {currentTotalRecords}
                   </span>
                 </TabsTrigger>
@@ -405,7 +405,7 @@ export default function Projects() {
                 >
                   <Archive className="w-4 h-4" />
                   <span>Old Projects</span>
-                  <span className="ml-1 px-2 py-0.5 bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 rounded-md text-xs font-bold">
+                  <span className="ml-1 px-2 py-0.5 bg-primary/20 text-primary dark:text-primary/70 rounded-md text-xs font-bold">
                     {oldTotalRecords}
                   </span>
                 </TabsTrigger>
@@ -507,7 +507,7 @@ export default function Projects() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setRequestDialogProject(null)}>Cancel</Button>
-                <Button onClick={handleRequestSubmit} className="bg-indigo-600 hover:bg-indigo-700 text-white">Send Request</Button>
+                <Button onClick={handleRequestSubmit} className="bg-primary hover:bg-primary text-white">Send Request</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -553,7 +553,7 @@ function PaginationControls({
   const end = Math.min(page * PROJECTS_PAGE_SIZE, totalRecords);
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-white/20 dark:border-white/10 bg-card/60 backdrop-blur-xl px-4 py-3 shadow-sm">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-sm">
       <p className="text-sm text-muted-foreground">
         Showing {start}-{end} of {totalRecords} projects
       </p>

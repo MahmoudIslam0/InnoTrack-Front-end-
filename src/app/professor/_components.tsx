@@ -1,9 +1,4 @@
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-  FileText,
-} from "lucide-react";
+import { AlertTriangle, Clock, FileText, CheckCircle2 } from "lucide-react";
 
 export {
   PageHeader,
@@ -18,7 +13,7 @@ export function OriginalityMeter({ score }: { score: number }) {
   const color = isLow ? "#EF4444" : score < 80 ? "#F59E0B" : "#10B981";
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex flex-col items-center gap-2">
       <div className="relative w-24 h-24 flex items-center justify-center shrink-0">
         <svg className="w-24 h-24 transform -rotate-90">
           <circle
@@ -45,21 +40,7 @@ export function OriginalityMeter({ score }: { score: number }) {
           {score}%
         </span>
       </div>
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          {isLow ? (
-            <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
-          ) : (
-            <CheckCircle2 className="w-4 h-4 text-green-600" />
-          )}
-          <p className="text-sm font-semibold text-foreground">
-            {isLow ? "Low originality score" : "Originality acceptable"}
-          </p>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Projects below 70% are highlighted for professor review.
-        </p>
-      </div>
+      <p className="text-xs font-medium text-muted-foreground">Originality Score</p>
     </div>
   );
 }

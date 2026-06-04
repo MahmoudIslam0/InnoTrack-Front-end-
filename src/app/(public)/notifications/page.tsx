@@ -118,7 +118,7 @@ export default function StudentNotifications() {
         action={
           <Button
             variant="outline"
-            className="border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+            className="border-primary text-primary/90 hover:bg-indigo-50"
             onClick={markAllRead}
           >
             <CheckCircle2 className="w-4 h-4 mr-2" />

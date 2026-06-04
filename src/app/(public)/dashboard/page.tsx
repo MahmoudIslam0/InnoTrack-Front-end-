@@ -5,7 +5,7 @@ import { TrendingTechnologies } from "@/app/_components/TrendingTechnologies";
 
 export default function Dashboard() {
   return (
-    <div className="p-4 md:p-8 max-w-350 mx-auto">
+    <div className="dashboard-page">
       {/* Hero Card - Submit Idea */}
       <div className="mb-8">
         <HeroCard />

@@ -69,7 +69,7 @@ interface StoredTeam {
 function getProjectStatusLabel(status: ActiveProject["status"]) {
   if (status === "cancelled") return "Cancelled";
   if (status === "in-progress") return "In Progress";
-  if (status === "submitted") return "Submitted";
+  if (status === "submitted") return "Pending";
   if (status === "draft") return "Draft";
   return "Approved";
 }
@@ -82,11 +82,11 @@ function getProjectStatusClasses(status: ActiveProject["status"]) {
     return "bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20";
   }
   if (status === "submitted") {
-    return "bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20";
+    return "bg-primary/10 text-primary/90 dark:text-primary border border-primary/20";
   }
 
   return status === "in-progress"
-    ? "bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20"
+    ? "bg-primary/10 text-blue-700 dark:text-blue-400 border border-primary/20"
     : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20";
 }
 
@@ -379,8 +379,8 @@ export default function ProjectManagement() {
         {/* ─── Tab 3: Submit New Idea ─── */}
         <TabsContent value="submit-idea">
           <div className="bg-card text-card-foreground rounded-xl border border-border/50 shadow-sm p-8 md:p-10 text-center max-w-2xl mx-auto">
-            <div className="w-40 h-25 bg-indigo-500/10 rounded-2xl mx-auto flex items-center justify-center mb-6">
-              <Lightbulb className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+            <div className="w-40 h-25 bg-primary/10 rounded-2xl mx-auto flex items-center justify-center mb-6">
+              <Lightbulb className="w-8 h-8 text-primary dark:text-primary" />
             </div>
             <h2 className="text-2xl font-semibold text-foreground mb-3">
               Submit a New Project Idea
@@ -392,7 +392,7 @@ export default function ProjectManagement() {
             </p>
             <div>
               <Button
-                className="bg-indigo-600 hover:bg-indigo-700 text-white h-12 px-8 text-base"
+                className="bg-primary hover:bg-primary/90 text-white h-12 px-8 text-base"
                 disabled={hasBlockingProject}
                 onClick={() => {
                   if (hasBlockingProject) {
@@ -420,7 +420,7 @@ export default function ProjectManagement() {
               ) : (!teams || teams.length === 0) ? (
                 <p className="text-sm text-muted-foreground mt-3">
                   You must be on a team before submitting a project.
-                  <button className="ml-1 underline text-sm text-indigo-600 hover:text-indigo-700" onClick={() => router.push("/teams")}>Go to Teams page</button>
+                  <button className="ml-1 underline text-sm text-primary hover:text-primary/90" onClick={() => router.push("/teams")}>Go to Teams page</button>
                 </p>
               ) : (
                 <p className="text-sm text-muted-foreground mt-3">
@@ -490,9 +490,9 @@ export default function ProjectManagement() {
                           {project.supervisor}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2 bg-indigo-500/10 px-4 py-2 rounded-lg border border-indigo-500/20">
-                        <Award className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                        <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                      <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-lg border border-primary/20">
+                        <Award className="w-4 h-4 text-primary dark:text-primary" />
+                        <span className="text-lg font-bold text-primary dark:text-primary">
                           {project.originalityScore}%
                         </span>
                         <span className="text-xs text-muted-foreground">
@@ -554,7 +554,7 @@ export default function ProjectManagement() {
                           key={member.name}
                           className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg border border-border/50 group"
                         >
-                          <div className="w-6 h-6 rounded-full bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 flex items-center justify-center text-xs font-bold">
+                          <div className="w-6 h-6 rounded-full bg-primary/10 text-primary/90 dark:text-primary flex items-center justify-center text-xs font-bold">
                             {member.name
                               .split(" ")
                               .map((n) => n[0])
@@ -566,7 +566,7 @@ export default function ProjectManagement() {
                           {member.role === "Leader" ? (
                             <Badge
                               variant="outline"
-                              className="text-[10px] px-1.5 py-0 bg-indigo-500/10 border-indigo-500/20 text-indigo-700 dark:text-indigo-400"
+                              className="text-[10px] px-1.5 py-0 bg-primary/10 border-primary/20 text-primary/90 dark:text-primary"
                             >
                               Leader
                             </Badge>
@@ -596,7 +596,7 @@ export default function ProjectManagement() {
                     {/* Actions */}
                     {isTeamLeader && (
                       <div className="flex flex-wrap gap-3 pt-4 border-t border-border/50">
-                        <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                        <Button asChild className="bg-primary hover:bg-primary/90 text-white">
                           <Link
                             href={`/project-submission?edit=${project.id}&mode=details-only`}
                           >
@@ -697,7 +697,7 @@ export default function ProjectManagement() {
                       {drafts.map((draft) => (
                         <div
                           key={draft.id}
-                          className="bg-card text-card-foreground rounded-xl border border-border/50 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-indigo-500/30 transition-colors"
+                          className="bg-card text-card-foreground rounded-xl border border-border/50 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-primary/30 transition-colors"
                         >
                           <div className="flex-1 min-w-0">
                             <h4 className="font-semibold text-foreground truncate">
@@ -709,7 +709,7 @@ export default function ProjectManagement() {
                                 Edited {draft.lastEdited}
                               </span>
                               {draft.originalityScore > 0 && (
-                                <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
+                                <span className="text-xs font-medium text-primary dark:text-primary">
                                   {draft.originalityScore}% originality
                                 </span>
                               )}
@@ -811,7 +811,7 @@ export default function ProjectManagement() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
                   <div>
                     <p className="text-xs text-muted-foreground">Originality Score</p>
-                    <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{project.originalityScore}%</p>
+                    <p className="text-sm font-semibold text-primary dark:text-primary">{project.originalityScore}%</p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Team</p>
@@ -819,7 +819,7 @@ export default function ProjectManagement() {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Status</p>
-                    <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400">
+                    <p className="text-sm font-medium text-primary dark:text-primary">
                       {getProjectStatusLabel(project.status)}
                     </p>
                   </div>

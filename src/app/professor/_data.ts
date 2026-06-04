@@ -33,6 +33,9 @@ export interface Project {
   originalityScore: number;
   submittedAt: string;
   progress: number;
+  problemStatement?: string;
+  proposedSolution?: string;
+  objectives?: string[];
   similarProjects: SimilarProject[];
 }
 

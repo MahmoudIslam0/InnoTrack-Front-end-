@@ -155,7 +155,7 @@ export default function ProfessorProfile() {
   if (loading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center">
-        <div className="w-12 h-12 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin"></div>
+        <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
         <p className="text-muted-foreground mt-4 font-medium">Loading profile...</p>
       </div>
     );
@@ -167,7 +167,7 @@ export default function ProfessorProfile() {
         <div className="text-center max-w-md bg-card border border-border rounded-2xl p-8 shadow-sm">
           <h2 className="text-2xl font-bold text-foreground mb-2">Access Denied</h2>
           <p className="text-muted-foreground mb-6">Please log in with a professor account to access this profile.</p>
-          <Button onClick={() => router.push("/login")} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
+          <Button onClick={() => router.push("/login")} className="w-full bg-primary hover:bg-primary/90 text-white">
             Go to Login
           </Button>
         </div>
@@ -196,7 +196,7 @@ export default function ProfessorProfile() {
             {!isEditing ? (
               <Button
                 onClick={() => setIsEditing(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-5 h-10 gap-2"
+                className="bg-primary hover:bg-primary/90 text-white rounded-xl px-5 h-10 gap-2"
               >
                 <Pencil className="w-4 h-4" />
                 Edit Profile
@@ -217,11 +217,11 @@ export default function ProfessorProfile() {
         {/* ─── Hero Card ─── */}
         <div className="rounded-3xl border border-border/60 bg-card shadow-sm relative">
           {/* Gradient Banner */}
-          <div className="h-28 md:h-36 rounded-t-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-700 relative">
+          <div className="h-28 md:h-36 rounded-t-3xl bg-primary relative">
             <div className="absolute inset-0 rounded-t-3xl overflow-hidden opacity-20" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)", backgroundSize: "40px 40px" }}></div>
             
             {/* Avatar - Absolutely positioned relative to the banner to perfectly overlap without margin clipping */}
-            <div className="absolute -bottom-12 md:-bottom-14 left-6 md:left-8 w-24 h-24 md:w-28 md:h-28 shrink-0 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-4xl md:text-5xl font-bold text-white shadow-xl ring-4 ring-card z-20">
+            <div className="absolute -bottom-12 md:-bottom-14 left-6 md:left-8 w-24 h-24 md:w-28 md:h-28 shrink-0 rounded-2xl bg-primary flex items-center justify-center text-4xl md:text-5xl font-bold text-white shadow-xl ring-4 ring-card z-20">
               {initials}
             </div>
           </div>
@@ -230,10 +230,10 @@ export default function ProfessorProfile() {
           <div className="px-6 md:px-8 pb-6 md:pb-8 pt-16 md:pt-20 relative z-10">
             <div className="space-y-1">
               <div className="flex items-center flex-wrap gap-2 mb-2">
-                <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 px-3 py-1 text-xs font-semibold rounded-full border border-indigo-500/20">
+                <Badge variant="secondary" className="bg-primary/10 text-primary/90 dark:text-primary px-3 py-1 text-xs font-semibold rounded-full border border-primary/20">
                   Professor
                 </Badge>
-                <Badge variant="secondary" className="bg-purple-500/10 text-purple-700 dark:text-purple-400 px-3 py-1 text-xs font-semibold rounded-full border border-purple-500/20">
+                <Badge variant="secondary" className="bg-blue-500/10 text-blue-800 dark:text-blue-300 px-3 py-1 text-xs font-semibold rounded-full border border-blue-500/20">
                   {profile.departmentName}
                 </Badge>
               </div>
@@ -246,8 +246,8 @@ export default function ProfessorProfile() {
             {/* Stats Strip */}
             <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="bg-muted/40 rounded-2xl p-4 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center shrink-0">
-                  <Building2 className="w-4 h-4 text-indigo-500" />
+                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <Building2 className="w-4 h-4 text-primary" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs text-muted-foreground font-medium">Department</p>
@@ -273,8 +273,8 @@ export default function ProfessorProfile() {
           {/* Personal Information */}
           <div className="bg-card rounded-2xl border border-border/60 p-6 shadow-sm space-y-5">
             <h3 className="text-base font-bold text-foreground flex items-center gap-2.5">
-              <span className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
-                <Mail className="w-4 h-4 text-indigo-500" />
+              <span className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Mail className="w-4 h-4 text-primary" />
               </span>
               Personal Information
             </h3>
@@ -304,8 +304,8 @@ export default function ProfessorProfile() {
           {/* Professional Information */}
           <div className="bg-card rounded-2xl border border-border/60 p-6 shadow-sm space-y-5">
             <h3 className="text-base font-bold text-foreground flex items-center gap-2.5">
-              <span className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
-                <BookOpen className="w-4 h-4 text-purple-500" />
+              <span className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                <BookOpen className="w-4 h-4 text-blue-500" />
               </span>
               Professional Information
             </h3>
@@ -325,7 +325,7 @@ export default function ProfessorProfile() {
                     type="number"
                     min="1"
                     max="50"
-                    className="h-10 rounded-xl border-indigo-200 focus-visible:ring-indigo-500"
+                    className="h-10 rounded-xl border-primary focus-visible:ring-primary"
                   />
                 ) : (
                   <div className="px-3.5 py-2.5 rounded-xl bg-muted/40 text-sm font-semibold text-emerald-600">
@@ -430,7 +430,7 @@ export default function ProfessorProfile() {
                   <Button type="button" variant="outline" onClick={() => setIsPasswordModalOpen(false)}>
                     Cancel
                   </Button>
-                  <Button type="submit" className="bg-indigo-600 text-white hover:bg-indigo-700" disabled={isChangingPassword}>
+                  <Button type="submit" className="bg-primary text-white hover:bg-primary/90" disabled={isChangingPassword}>
                     {isChangingPassword ? "Saving..." : "Change Password"}
                   </Button>
                 </div>

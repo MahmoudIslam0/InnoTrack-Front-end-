@@ -111,7 +111,7 @@ export function OriginalProjectsSection({
         <Link href={viewAllHref}>
           <Button
             variant="ghost"
-            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-500/10"
+            className="text-primary dark:text-primary hover:text-primary dark:hover:text-primary hover:bg-primary/10"
           >
             View All
             <ArrowRight className="w-4 h-4 ml-2" />

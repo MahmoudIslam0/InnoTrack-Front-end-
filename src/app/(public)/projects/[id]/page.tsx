@@ -15,6 +15,8 @@ import {
   Presentation,
   MessageSquare,
   FileText,
+  Target,
+  Lightbulb,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -237,22 +239,27 @@ export default function ProjectDetails() {
 
   if (isLoading) {
     return (
-      <div className="p-4 md:p-8 max-w-[1400px] mx-auto">
-        <div className="dashboard-card h-80 animate-pulse bg-muted/30" />
+      <div className="dashboard-page flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4 text-muted-foreground">
+          <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+          <p>Loading project details...</p>
+        </div>
       </div>
     );
   }
 
   if (!project) {
     return (
-      <div className="p-4 md:p-8 max-w-[1400px] mx-auto">
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">Project not found</p>
-          <Button
-            onClick={() => router.push("/projects")}
-            className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white"
-          >
-            Back to Projects
+      <div className="dashboard-page flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 text-red-500 rounded-full flex items-center justify-center">
+            <span className="text-2xl font-bold">!</span>
+          </div>
+          <h2 className="text-xl font-bold text-foreground">Project Not Found</h2>
+          <p className="text-muted-foreground">The project you're looking for doesn't exist or you don't have access to it.</p>
+          <Button variant="outline" onClick={() => router.back()} className="mt-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Go Back
           </Button>
         </div>
       </div>
@@ -260,9 +267,9 @@ export default function ProjectDetails() {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-[1400px] mx-auto">
+    <div className="dashboard-page">
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-8">
         <Button
           variant="ghost"
           onClick={() => router.back()}
@@ -274,13 +281,13 @@ export default function ProjectDetails() {
 
         <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
           <div className="flex-1">
-            <h1 className="text-3xl font-semibold text-foreground mb-3">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground mb-3">
               {project.title}
             </h1>
             <div className="flex flex-wrap gap-2">
               <Badge
                 variant="outline"
-                className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/20"
+                className="bg-primary/10 text-primary border-primary/20"
               >
                 {project.category}
               </Badge>
@@ -292,28 +299,37 @@ export default function ProjectDetails() {
               </Badge>
             </div>
           </div>
-
-          {project.originalityScore && (
-            <div className="flex flex-col items-center justify-center bg-card text-card-foreground rounded-xl p-4 border border-border/50 shadow-sm min-w-[140px]">
-              <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
-                {project.originalityScore}%
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Originality Score
-              </p>
+          {project.originalityScore !== undefined && (
+            <div className="flex flex-col items-center justify-center bg-card border border-border shadow-sm rounded-2xl px-6 py-3 shrink-0">
+              <span className="text-3xl font-bold text-primary">{project.originalityScore}%</span>
+              <span className="text-[11px] text-muted-foreground font-medium mt-1">Originality Score</span>
             </div>
           )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="xl:col-span-2 space-y-8">
+
+          {/* Abstract (First as requested) */}
+          {project.abstract && (
+            <div className="bg-card text-card-foreground rounded-xl p-6 md:p-8 border border-border shadow-sm">
+              <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-primary" />
+                Abstract
+              </h2>
+              <p className="text-muted-foreground leading-relaxed text-base md:text-lg">
+                {project.abstract}
+              </p>
+            </div>
+          )}
+
           {/* Description */}
           {project.description && (
-            <div className="bg-card text-card-foreground rounded-xl p-6 border border-border/50 shadow-sm">
+            <div className="bg-card text-card-foreground rounded-xl p-6 md:p-8 border border-border shadow-sm">
               <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                <FileText className="w-5 h-5 text-primary" />
                 Project Description
               </h2>
               <p className="text-muted-foreground leading-relaxed">
@@ -322,21 +338,11 @@ export default function ProjectDetails() {
             </div>
           )}
 
-          {/* Abstract */}
-          <div className="bg-card text-card-foreground rounded-xl p-6 border border-border/50 shadow-sm">
-            <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-              Abstract
-            </h2>
-            <p className="text-muted-foreground leading-relaxed">
-              {project.abstract}
-            </p>
-          </div>
-
           {/* Problem Statement */}
           {project.problemStatement && (
-            <div className="bg-card text-card-foreground rounded-xl p-6 border border-border/50 shadow-sm">
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+            <div className="bg-card text-card-foreground rounded-xl p-6 md:p-8 border border-border shadow-sm">
+              <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Target className="w-5 h-5 text-primary" />
                 Problem Statement
               </h2>
               <p className="text-muted-foreground leading-relaxed">
@@ -347,8 +353,9 @@ export default function ProjectDetails() {
 
           {/* Proposed Solution */}
           {project.proposedSolution && (
-            <div className="bg-card text-card-foreground rounded-xl p-6 border border-border/50 shadow-sm">
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+            <div className="bg-card text-card-foreground rounded-xl p-6 md:p-8 border border-border shadow-sm">
+              <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Lightbulb className="w-5 h-5 text-primary" />
                 Proposed Solution
               </h2>
               <p className="text-muted-foreground leading-relaxed">
@@ -358,16 +365,16 @@ export default function ProjectDetails() {
           )}
 
           {/* Objectives */}
-          {project.objectives && (
-            <div className="bg-card text-card-foreground rounded-xl p-6 border border-border/50 shadow-sm">
+          {project.objectives && project.objectives.length > 0 && (
+            <div className="bg-card text-card-foreground rounded-xl p-6 md:p-8 border border-border shadow-sm">
               <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                <CheckCircle className="w-5 h-5 text-primary" />
                 Objectives
               </h2>
-              <ul className="space-y-3">
+              <ul className="space-y-4">
                 {project.objectives.map((objective, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <li key={index} className="flex items-start gap-4">
+                    <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
                       <span className="text-sm font-semibold">{index + 1}</span>
                     </div>
                     <p className="text-muted-foreground leading-relaxed flex-1">
@@ -380,50 +387,100 @@ export default function ProjectDetails() {
           )}
 
           {/* Technologies */}
-          <div className="bg-card text-card-foreground rounded-xl p-6 border border-border/50 shadow-sm">
-            <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Code className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-              Technologies Used
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {project.technologies.map((tech) => (
-                <span
-                  key={tech}
-                  className="px-3 py-1.5 bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 text-sm rounded-lg font-medium border border-indigo-500/20"
-                >
-                  {tech}
-                </span>
-              ))}
+          {project.technologies && project.technologies.length > 0 && (
+            <div className="bg-card text-card-foreground rounded-xl p-6 md:p-8 border border-border shadow-sm">
+              <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Code className="w-5 h-5 text-primary" />
+                Technologies Used
+              </h2>
+              <div className="flex flex-wrap gap-2.5">
+                {project.technologies.map((tech) => (
+                  <span
+                    key={tech}
+                    className="px-3 py-1.5 bg-muted text-foreground text-sm rounded-lg font-medium border border-border/50"
+                  >
+                    {tech}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Sidebar */}
-        <div className="lg:col-span-1 space-y-6">
-          {/* Project Info */}
-          <div className="bg-card text-card-foreground rounded-xl p-6 border border-border/50 shadow-sm">
-            <h3 className="text-lg font-semibold text-foreground mb-4">
-              Project Information
+        <div className="xl:col-span-1 space-y-8">
+          
+          {/* Team Members (Moved to Top) */}
+          <div className="bg-card text-card-foreground rounded-xl p-6 border border-border shadow-sm">
+            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Users className="w-5 h-5 text-primary" />
+              Team Members
             </h3>
 
             <div className="space-y-4">
+              {project.students.map((student, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-4 p-3 bg-muted/30 rounded-lg border border-border/50"
+                >
+                  {student.profilePictureUrl ? (
+                    <img
+                      src={student.profilePictureUrl}
+                      alt={student.name}
+                      className="w-10 h-10 rounded-full object-cover border border-border"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold border border-primary/20">
+                      {(() => {
+                        const parts = student.name.trim().split(" ");
+                        return parts.length > 1
+                          ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+                          : (parts[0][0] || "").toUpperCase();
+                      })()}
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-foreground">{student.name}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {student.role}
+                      {student.major && ` • ${student.major}`}
+                      {student.department && ` • ${student.department}`}
+                    </p>
+                  </div>
+                  {student.role === "Leader" && (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 border-primary/20 text-primary">
+                      Leader
+                    </Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Project Info */}
+          <div className="bg-card text-card-foreground rounded-xl p-6 border border-border shadow-sm">
+            <h3 className="text-lg font-semibold text-foreground mb-5">
+              Project Information
+            </h3>
+
+            <div className="space-y-5">
               <div className="flex items-start gap-3">
                 <Calendar className="w-5 h-5 text-muted-foreground mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-foreground">
+                  <p className="text-sm font-semibold text-foreground">
                     Academic Year
                   </p>
-                  <p className="text-sm text-muted-foreground">{project.year}</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">{project.year}</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
                 <Award className="w-5 h-5 text-muted-foreground mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-foreground">
+                  <p className="text-sm font-semibold text-foreground">
                     Supervisor
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground mt-0.5">
                     {project.supervisor}
                   </p>
                 </div>
@@ -433,10 +490,10 @@ export default function ProjectDetails() {
                 <div className="flex items-start gap-3">
                   <Clock className="w-5 h-5 text-muted-foreground mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-foreground">
+                    <p className="text-sm font-semibold text-foreground">
                       Date Submitted
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground mt-0.5">
                       {new Date(project.dateSubmitted).toLocaleDateString(
                         "en-US",
                         { year: "numeric", month: "long", day: "numeric" }
@@ -448,12 +505,12 @@ export default function ProjectDetails() {
 
               {project.dateApproved && (
                 <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-emerald-500 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-green-700 dark:text-green-500">
+                    <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-500">
                       Date Approved
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground mt-0.5">
                       {new Date(project.dateApproved).toLocaleDateString(
                         "en-US",
                         { year: "numeric", month: "long", day: "numeric" }
@@ -465,52 +522,6 @@ export default function ProjectDetails() {
             </div>
           </div>
 
-          {/* Team Members */}
-          <div className="bg-card text-card-foreground rounded-xl p-6 border border-border/50 shadow-sm">
-            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Users className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-              Team Members
-            </h3>
-
-            <div className="space-y-3">
-              {project.students.map((student, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border/50"
-                >
-                  {student.profilePictureUrl ? (
-                    <img
-                      src={student.profilePictureUrl}
-                      alt={student.name}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 flex items-center justify-center font-semibold">
-                      {(() => {
-                        const parts = student.name.trim().split(" ");
-                        return parts.length > 1
-                          ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-                          : (parts[0][0] || "").toUpperCase();
-                      })()}
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">{student.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {student.role}
-                      {student.major && ` • ${student.major}`}
-                      {student.department && ` • ${student.department}`}
-                    </p>
-                  </div>
-                  {student.role === "Leader" && (
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-indigo-500/10 border-indigo-500/20 text-indigo-700 dark:text-indigo-400">
-                      Leader
-                    </Badge>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </div>

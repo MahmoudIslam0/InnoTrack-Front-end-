@@ -137,7 +137,7 @@ export function TopNav({
   };
 
   return (
-    <header className={`fixed top-0 left-0 ${isSidebarCollapsed ? 'md:left-20' : 'md:left-64'} right-0 h-16 bg-background/60 backdrop-blur-2xl border-b border-border/50 z-40 shadow-[0_4px_30px_rgba(0,0,0,0.02)] transition-all duration-500 ease-in-out`}>
+    <header className={`fixed top-0 left-0 ${isSidebarCollapsed ? 'md:left-20' : 'md:left-64'} right-0 h-16 bg-background/90 backdrop-blur-md border-b border-border z-40 transition-all duration-300 ease-in-out`}>
       <div className="h-full px-4 md:px-8 flex items-center justify-between">
         {/* Mobile Menu Button & Page Title */}
         <div className="flex items-center gap-4">
@@ -169,11 +169,11 @@ export function TopNav({
         {shouldShowSearch && (
           <div className="hidden lg:block flex-1 max-w-md mx-8">
             <div className="relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-indigo-500 transition-colors" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
               <input
                 type="text"
                 placeholder="Search projects, teams, students..."
-                className="w-full pl-9 pr-4 py-2 text-sm bg-accent/50 border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/30 focus:bg-background transition-all duration-300"
+                className="w-full pl-9 pr-4 py-2 text-sm bg-muted border border-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 focus:bg-background transition-all duration-300"
               />
             </div>
           </div>
@@ -194,7 +194,7 @@ export function TopNav({
                     >
                       <Bell className="w-5 h-5" />
                       {unreadCount > 0 && (
-                        <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-indigo-500 ring-2 ring-background animate-pulse" />
+                        <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-background animate-pulse" />
                       )}
                     </button>
                   </DropdownMenuTrigger>
@@ -206,7 +206,7 @@ export function TopNav({
                         </span>
                         <div className="flex items-center gap-3">
                           <button onClick={markAllAsRead} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Mark all as read</button>
-                          <span className="text-xs font-medium text-indigo-500 bg-indigo-500/10 px-2 py-0.5 rounded-full">
+                          <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
                             {unreadCount} new
                           </span>
                         </div>
@@ -228,7 +228,7 @@ export function TopNav({
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div>
-                                <p className="text-sm font-medium text-foreground group-hover:text-indigo-500 transition-colors">
+                                <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
                                   {notification.title}
                                 </p>
                                 <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
@@ -238,7 +238,7 @@ export function TopNav({
                                   {notification.time}
                                 </p>
                               </div>
-                              {notification.unread && <span className="h-2 w-2 rounded-full bg-indigo-500 mt-1.5 shrink-0 shadow-[0_0_8px_rgba(99,102,241,0.6)]" />}
+                              {notification.unread && <span className="h-2 w-2 rounded-full bg-primary mt-1.5 shrink-0" />}
                             </div>
                           </Link>
                         ))
@@ -247,7 +247,7 @@ export function TopNav({
                     <div className="p-2 border-t border-border/50 bg-accent/30">
                       <Link
                         href={notificationsHref}
-                        className="flex h-9 items-center justify-center rounded-lg bg-indigo-500/10 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition-colors"
+                        className="flex h-9 items-center justify-center rounded-lg bg-primary/10 text-sm font-medium text-primary hover:bg-primary/20 transition-colors"
                       >
                         View all notifications
                       </Link>
@@ -256,9 +256,9 @@ export function TopNav({
                 </DropdownMenu>
               )}
 
-              <Link href={profileHref} className="flex items-center gap-2 rounded-xl p-1 hover:bg-accent transition-all duration-300 hover:scale-105 active:scale-95">
+              <Link href={profileHref} className="flex items-center gap-2 rounded-xl p-1 hover:bg-accent transition-all duration-300 ">
                 <Avatar className="w-8 h-8 border border-border/50 shadow-sm">
-                  <AvatarFallback className="bg-indigo-600 text-white text-xs font-semibold">
+                  <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
@@ -274,7 +274,7 @@ export function TopNav({
               </Link>
               <Link
                 href="/register"
-                className="text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors px-4 py-2 rounded-lg shadow-sm"
+                className="text-sm font-medium bg-primary text-primary-foreground hover:bg-indigo-700 transition-colors px-4 py-2 rounded-lg shadow-sm"
               >
                 Sign Up
               </Link>

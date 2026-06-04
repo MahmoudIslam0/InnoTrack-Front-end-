@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search, Award, Users, Clock, CheckCircle2,
-  FileText, AlertTriangle, ChevronRight, Layers, ExternalLink, Loader2
+  FileText, AlertTriangle, ChevronRight, Layers, ExternalLink, Loader2, BellOff, Bell, History
 } from "lucide-react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageHeader, StatusBadge } from "../_components";
@@ -15,13 +16,30 @@ import { toast } from "sonner";
 import { normalizeStatusTone } from "@/lib/student-api";
 
 function ProjectCard({ project, onManage, onViewDetails }: { project: any; onManage: () => void; onViewDetails: () => void }) {
-  const scoreColor = "text-indigo-600 dark:text-indigo-400";
-  const scoreBg = "bg-indigo-500/10 border-indigo-500/20";
+  const scoreColor = "text-primary dark:text-primary";
+  const scoreBg = "bg-primary/10 border-primary/20";
+  const [isMuted, setIsMuted] = useState(true);
+  const [isMuteLoading, setIsMuteLoading] = useState(false);
+
+  const handleToggleMute = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsMuteLoading(true);
+    try {
+      await professorApi.toggleProjectMute(project.id);
+      setIsMuted(!isMuted);
+      toast.success(isMuted ? "Notifications enabled" : "Notifications muted");
+    } catch (err) {
+      console.error("Failed to toggle mute", err);
+      toast.error("Failed to update notification preference");
+    } finally {
+      setIsMuteLoading(false);
+    }
+  };
 
   return (
-    <div className="bg-card text-card-foreground rounded-2xl border border-border/50 shadow-sm hover:shadow-md hover:border-indigo-500/30 transition-all duration-200 overflow-hidden group">
+    <div className="bg-card text-card-foreground rounded-2xl border border-border/50 shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-200 overflow-hidden group">
       {/* Top accent bar */}
-      <div className="h-1 w-full bg-gradient-to-r from-indigo-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="h-1 w-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
       <div className="p-6">
         {/* Header */}
         <div className="flex items-start justify-between gap-3 mb-4">
@@ -69,23 +87,47 @@ function ProjectCard({ project, onManage, onViewDetails }: { project: any; onMan
             )}
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 gap-1.5 text-xs"
-              onClick={onViewDetails}
-            >
-              <ExternalLink className="w-3 h-3" />
-              View Details
-            </Button>
-            <Button
-              size="sm"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white h-8 gap-1.5"
-              onClick={onManage}
-            >
-              Manage
-              <ChevronRight className="w-3.5 h-3.5" />
-            </Button>
+            {project.status === "InProgress" || project.status === "In_Progress" ? (
+              <>
+                <Link href={`/professor/projects/${project.id}/logs`} onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="w-8 h-8 rounded-full border-border/50 hover:bg-accent hover:text-accent-foreground text-muted-foreground transition-colors"
+                    title="View Activity Log"
+                  >
+                    <History className="w-3.5 h-3.5" />
+                  </Button>
+                </Link>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="w-8 h-8 rounded-full border-border/50 hover:bg-accent hover:text-accent-foreground text-muted-foreground transition-colors"
+                  title={isMuted ? "Enable notifications" : "Mute notifications"}
+                  disabled={isMuteLoading}
+                  onClick={handleToggleMute}
+                >
+                  {isMuteLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : isMuted ? <BellOff className="w-3.5 h-3.5" /> : <Bell className="w-3.5 h-3.5 text-primary" />}
+                </Button>
+                <Button
+                  size="sm"
+                  className="bg-primary hover:bg-primary/90 text-white h-8 gap-1.5"
+                  onClick={onViewDetails}
+                >
+                  View Details
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Button>
+              </>
+            ) : (
+              <Button
+                size="sm"
+                className="bg-primary hover:bg-primary/90 text-white h-8 gap-1.5"
+                onClick={onManage}
+              >
+                Review
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -189,7 +231,7 @@ export default function ProfessorProjectManagement() {
   if (isLoading) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -232,7 +274,7 @@ export default function ProfessorProjectManagement() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         {[
           { label: "Awaiting Review", value: counts["underreview"], icon: AlertTriangle, color: "bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400" },
-          { label: "In Progress", value: counts["in-progress"], icon: Clock, color: "bg-blue-500/10 border-blue-500/20 text-blue-700 dark:text-blue-400" },
+          { label: "In Progress", value: counts["in-progress"], icon: Clock, color: "bg-primary/10 border-primary/20 text-blue-700 dark:text-blue-400" },
         ].map(({ label, value, icon: Icon, color }) => (
           <div key={label} className={`flex items-center gap-3 p-4 rounded-xl border ${color} bg-opacity-50`}>
             <Icon className="w-5 h-5 shrink-0" />
@@ -253,7 +295,7 @@ export default function ProfessorProjectManagement() {
             placeholder="Search projects, teams, or domains..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm bg-muted border border-border/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 transition-colors"
+            className="w-full pl-9 pr-4 py-2 text-sm bg-muted border border-border/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-indigo-300 transition-colors"
           />
         </div>
         <div className="flex flex-wrap gap-2">
@@ -266,7 +308,7 @@ export default function ProfessorProjectManagement() {
               }}
               className={`px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
                 statusFilter === f.key
-                  ? "bg-indigo-600 text-white border-indigo-600"
+                  ? "bg-primary text-white border-primary"
                   : "bg-muted text-muted-foreground border-border/50 hover:border-indigo-300"
               }`}
             >

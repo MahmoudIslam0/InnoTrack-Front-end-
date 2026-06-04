@@ -582,7 +582,7 @@ export default function TeamsPage() {
                   </div>
 
                   <div className="flex gap-4">
-                    <MetricCard label="MEMBERS" value={teamMembers.length.toString()} valueColorClass="text-blue-600 dark:text-blue-500" />
+                    <MetricCard label="MEMBERS" value={teamMembers.length.toString()} valueColorClass="text-primary dark:text-primary" />
                     <MetricCard label="REQUESTS" value={requests.length.toString()} />
                   </div>
                 </div>
@@ -590,7 +590,7 @@ export default function TeamsPage() {
 
               {showHint && (
                 <div className="border-b border-border px-5 py-4 md:px-6">
-                  <div className="flex items-start gap-3 rounded-xl border border-indigo-500/20 bg-indigo-500/10 px-4 py-3 text-sm text-indigo-900 dark:text-indigo-200">
+                  <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-primary dark:text-primary">
                     <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
                     <p className="leading-5">
                       Manage members, join codes, and requests in Overview. Chat is for
@@ -599,7 +599,7 @@ export default function TeamsPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="-mr-2 -mt-1 h-7 w-7 shrink-0 hover:bg-indigo-500/10"
+                      className="-mr-2 -mt-1 h-7 w-7 shrink-0 hover:bg-primary/10"
                       onClick={dismissHint}
                       aria-label="Dismiss tip"
                     >
@@ -627,7 +627,7 @@ export default function TeamsPage() {
                         {isLeader && (
                           <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
                             <DialogTrigger asChild>
-                              <Button className="gap-2 bg-indigo-600 text-white hover:bg-indigo-700">
+                              <Button className="gap-2 bg-primary text-white hover:bg-primary/90">
                                 <UserPlus className="h-4 w-4" />
                                 Add Member
                               </Button>
@@ -649,7 +649,7 @@ export default function TeamsPage() {
                                       onChange={(event) => setMemberContact(event.target.value)}
                                     />
                                     <Button
-                                      className="bg-indigo-600 text-white hover:bg-indigo-700"
+                                      className="bg-primary text-white hover:bg-primary/90"
                                       onClick={addMember}
                                       disabled={isSendingInvite}
                                     >
@@ -681,8 +681,8 @@ export default function TeamsPage() {
                                   </div>
 
                                   {inviteCode ? (
-                                    <div className="flex items-center justify-between rounded-xl border border-indigo-500/30 bg-indigo-500/5 p-3">
-                                      <span className="text-2xl font-bold tracking-[0.2em] text-indigo-600 dark:text-indigo-400">
+                                    <div className="flex items-center justify-between rounded-xl border border-primary/30 bg-primary/5 p-3">
+                                      <span className="text-2xl font-bold tracking-[0.2em] text-primary dark:text-primary">
                                         {inviteCode}
                                       </span>
                                       <Button variant="ghost" size="icon" onClick={copyInviteCode}>
@@ -797,7 +797,7 @@ function NoTeamState({
             </TabsList>
           </div>
           <TabsContent value="join" className="mt-0 outline-none">
-            <div className="mx-auto mb-6 flex h-25 w-25 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+            <div className="mx-auto mb-6 flex h-25 w-25 items-center justify-center rounded-2xl bg-primary/10 text-primary dark:text-primary">
               <KeyRound className="h-8 w-8" />
             </div>
 
@@ -822,7 +822,7 @@ function NoTeamState({
 
               <Button
                 onClick={joinByCode}
-                className="h-14 w-full bg-indigo-600 text-base text-white hover:bg-indigo-700"
+                className="h-14 w-full bg-primary text-base text-white hover:bg-primary/90"
               >
                 Join Team
               </Button>

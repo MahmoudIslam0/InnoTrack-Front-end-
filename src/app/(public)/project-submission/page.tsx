@@ -476,7 +476,7 @@ function ProjectSubmissionPage() {
     return (
       <div className="p-4 md:p-8 max-w-350 mx-auto">
         <div className="bg-card text-card-foreground rounded-2xl p-12 border border-border shadow-sm text-center backdrop-blur-xl">
-          <AlertCircle className="w-16 h-16 text-indigo-500 mx-auto mb-4" />
+          <AlertCircle className="w-16 h-16 text-primary mx-auto mb-4" />
           <h2 className="text-2xl font-semibold mb-3">
             Authentication Required
           </h2>
@@ -486,7 +486,7 @@ function ProjectSubmissionPage() {
           </p>
           <div className="flex gap-4 justify-center">
             <Link href="/login">
-              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+              <Button className="bg-primary hover:bg-primary/90 text-white">
                 Sign In
               </Button>
             </Link>
@@ -621,7 +621,7 @@ function ProjectSubmissionPage() {
                   <Label htmlFor="category" className="flex items-center gap-2">
                     Category
                     {hasRunSimilarityCheck && (
-                      <span className="text-xs text-indigo-500 bg-indigo-500/10 px-2 py-0.5 rounded-full">
+                      <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">
                         Auto-generated
                       </span>
                     )}
@@ -631,7 +631,7 @@ function ProjectSubmissionPage() {
                   value={formData.category}
                   onChange={(event) => handleInputChange("category", event.target.value)}
                   disabled={lockAllFields}
-                  className="h-12 w-full rounded-xl border border-border bg-background/50 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
+                  className="h-12 w-full rounded-xl border border-border bg-background/50 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
                 >
                   <option value="">Select a domain</option>
                   {domains.map((domain) => (
@@ -644,13 +644,13 @@ function ProjectSubmissionPage() {
               <div className="space-y-1.5">
                 <Label htmlFor="technologies">Technologies *</Label>
                 <div 
-                  className={`flex flex-wrap items-center gap-2 min-h-12 p-2 rounded-xl border border-border shadow-sm transition-all duration-200 ${lockAllFields ? "bg-muted text-muted-foreground" : "bg-background/50 focus-within:ring-1 focus-within:ring-indigo-500/50 focus-within:bg-background"}`}
+                  className={`flex flex-wrap items-center gap-2 min-h-12 p-2 rounded-xl border border-border shadow-sm transition-all duration-200 ${lockAllFields ? "bg-muted text-muted-foreground" : "bg-background/50 focus-within:ring-1 focus-within:ring-primary/50 focus-within:bg-background"}`}
                 >
                   {technologyTokens.map((tech) => (
-                    <div key={tech} className="flex items-center gap-1 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-full text-sm font-medium border border-indigo-500/20">
+                    <div key={tech} className="flex items-center gap-1 bg-primary/10 text-primary dark:text-primary px-3 py-1.5 rounded-full text-sm font-medium border border-primary/20">
                       {tech}
                       {!lockAllFields && (
-                        <button type="button" onClick={() => removeTechnology(tech)} className="hover:text-indigo-800 dark:hover:text-indigo-200 ml-1 rounded-full p-0.5 hover:bg-indigo-500/20 transition-colors">
+                        <button type="button" onClick={() => removeTechnology(tech)} className="hover:text-indigo-800 dark:hover:text-primary ml-1 rounded-full p-0.5 hover:bg-primary/20 transition-colors">
                           <X className="w-3.5 h-3.5" />
                         </button>
                       )}
@@ -686,7 +686,7 @@ function ProjectSubmissionPage() {
                         key={technology.id}
                         type="button"
                         onClick={() => handleTechnologySuggestion(technology.name)}
-                        className="rounded-full border border-border bg-muted/40 px-3 py-1 text-xs font-medium text-foreground hover:border-indigo-500/40 hover:text-indigo-600"
+                        className="rounded-full border border-border bg-muted/40 px-3 py-1 text-xs font-medium text-foreground hover:border-primary/40 hover:text-primary"
                       >
                         {technology.name}
                       </button>
@@ -822,7 +822,7 @@ function ProjectSubmissionPage() {
               </Button>
               <Button
                 onClick={handleSubmitToSupervisor}
-                className="flex-1 h-12 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-500/20"
+                className="flex-1 h-12 rounded-xl bg-primary text-white hover:bg-primary/90 shadow-md shadow-primary/20"
                 disabled={Boolean(submitLockReason) || isSubmitting || isSaving}
               >
                 {isSubmitting ? (
@@ -943,7 +943,7 @@ function ProjectSubmissionPage() {
                   </div>
                   <Button
                     variant="ghost"
-                    className="w-full text-xs text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10 h-8"
+                    className="w-full text-xs text-primary dark:text-primary hover:bg-primary/10 h-8"
                     asChild
                   >
                     <Link href={project.id ? `/projects/${project.id}` : "/projects"}>

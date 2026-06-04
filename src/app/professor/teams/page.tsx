@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Users, Loader2, MessageSquare, ChevronRight, Briefcase, Award } from "lucide-react";
+import { Users, Loader2, MessageSquare, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "../_components";
 import { professorApi } from "@/lib/professor-api";
@@ -29,7 +29,7 @@ export default function ProfessorTeams() {
   if (isLoading) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -43,8 +43,8 @@ export default function ProfessorTeams() {
 
       {teams.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 px-4 bg-card/60 backdrop-blur-xl border border-border/50 rounded-3xl mt-6 shadow-sm">
-          <div className="w-20 h-20 rounded-3xl bg-indigo-500/10 flex items-center justify-center mb-6">
-            <Users className="w-10 h-10 text-indigo-500" />
+          <div className="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center mb-6">
+            <Users className="w-10 h-10 text-primary" />
           </div>
           <h3 className="text-2xl font-bold text-foreground">No Teams Assigned</h3>
           <p className="text-muted-foreground mt-3 max-w-md text-center leading-relaxed">
@@ -52,78 +52,89 @@ export default function ProfessorTeams() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mt-6">
           {teams.map((team) => (
             <div 
               key={team.id} 
-              className="group relative bg-card border border-border/60 hover:border-indigo-500/30 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col"
+              className="bg-card text-card-foreground rounded-2xl border border-border/50 shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-200 overflow-hidden group"
             >
-              {/* Header section */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="min-w-0 pr-4">
-                  <h3 className="text-lg font-semibold text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
-                    {team.name}
-                  </h3>
-                  <div className="flex items-center gap-2 mt-1.5 text-sm text-muted-foreground">
-                    <Briefcase className="w-4 h-4 shrink-0 text-muted-foreground/70" />
-                    <span className="truncate">{team.projectTitle || "No project assigned"}</span>
+              {/* Top accent bar */}
+              <div className="h-1 w-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="p-6">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-semibold text-foreground truncate">{team.name}</h3>
+                    <p className="text-sm text-muted-foreground mt-1 truncate">
+                      {team.projectTitle || "No project assigned"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-primary/10 border-primary/20">
+                    <Users className="w-3.5 h-3.5 text-primary" />
+                    <span className="text-sm font-bold text-primary">{team.members?.length || 0}</span>
                   </div>
                 </div>
-                
-                {/* Minimal size badge */}
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400 text-xs font-semibold shrink-0 border border-indigo-100 dark:border-indigo-500/20">
-                  <Users className="w-3.5 h-3.5" />
-                  {team.members?.length || 0}
-                </div>
-              </div>
 
-              {/* Members Section */}
-              <div className="flex-1 mt-2">
-                <div className="flex items-center gap-3 mb-6">
+                {/* Members */}
+                <div className="flex items-center gap-2 mb-4">
                   <div className="flex -space-x-2 overflow-hidden">
-                    {(team.members || []).slice(0, 5).map((member: any) => (
+                    {(team.members || []).slice(0, 4).map((member: any) => (
                       <div 
                         key={member.id} 
-                        className="inline-flex h-8 w-8 rounded-full ring-2 ring-card bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300 items-center justify-center text-xs font-bold shadow-sm transition-transform hover:-translate-y-1 relative"
+                        className="inline-flex h-8 w-8 rounded-full ring-2 ring-card bg-primary/10 text-primary items-center justify-center text-xs font-bold"
                         title={member.fullName}
                       >
                         {member.fullName?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
                       </div>
                     ))}
-                    {(team.members?.length || 0) > 5 && (
-                      <div className="inline-flex h-8 w-8 rounded-full ring-2 ring-card bg-muted items-center justify-center text-[10px] text-muted-foreground font-semibold shadow-sm z-0">
-                        +{team.members.length - 5}
+                    {(team.members?.length || 0) > 4 && (
+                      <div className="inline-flex h-8 w-8 rounded-full ring-2 ring-card bg-muted items-center justify-center text-xs text-muted-foreground font-bold">
+                        +{team.members.length - 4}
                       </div>
                     )}
                   </div>
-                  {(!team.members || team.members.length === 0) ? (
-                    <span className="text-sm text-muted-foreground italic">No members found</span>
-                  ) : null}
+                  {(!team.members || team.members.length === 0) && (
+                    <span className="text-xs text-muted-foreground italic">No members</span>
+                  )}
                 </div>
-              </div>
 
-              {/* Footer */}
-              <div className="flex items-center justify-between pt-4 border-t border-border/50">
-                <Link href={`/professor/teams/${team.id}?view=chat`}>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="h-8 text-muted-foreground hover:text-indigo-600 hover:bg-indigo-50 dark:hover:text-indigo-400 dark:hover:bg-indigo-500/10 transition-colors px-2"
-                  >
-                    <MessageSquare className="w-4 h-4 mr-1.5" />
-                    Chat
-                  </Button>
-                </Link>
-                <Link href={`/professor/teams/${team.id}`}>
-                  <Button 
-                    variant="default"
-                    size="sm"
-                    className="h-8 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm px-3"
-                  >
-                    Overview
-                    <ChevronRight className="w-3.5 h-3.5 ml-1" />
-                  </Button>
-                </Link>
+                {/* Status badge if project exists */}
+                {team.projectStatus && (
+                  <div className="flex flex-wrap gap-1.5 mb-4">
+                    <span className="px-2 py-0.5 bg-muted text-foreground text-xs rounded-md font-medium">
+                      {team.projectStatus.replace("_", " ")}
+                    </span>
+                  </div>
+                )}
+
+                {/* Footer */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-4 border-t border-border/50">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Users className="w-3.5 h-3.5" />
+                    <span>Team</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Link href={`/professor/teams/${team.id}?view=chat`}>
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-muted-foreground hover:text-primary border-border/50"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
+                        Chat
+                      </Button>
+                    </Link>
+                    <Link href={`/professor/teams/${team.id}`}>
+                      <Button 
+                        size="sm"
+                        className="bg-primary hover:bg-primary/90 text-white h-8 gap-1.5"
+                      >
+                        Overview
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
               </div>
             </div>
           ))}

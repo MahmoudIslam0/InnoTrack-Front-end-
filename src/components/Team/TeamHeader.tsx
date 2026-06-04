@@ -21,7 +21,7 @@ export default function TeamHeader({ teamName, supervisor, status, isLeader, onM
           {status && <Badge variant="secondary">{status}</Badge>}
           {supervisor && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-semibold">{supervisor.name.split(" ").map(n=>n[0]).join("")}</div>
+              <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-primary/90 font-semibold">{supervisor.name.split(" ").map(n=>n[0]).join("")}</div>
               <div>{supervisor.name}</div>
             </div>
           )}

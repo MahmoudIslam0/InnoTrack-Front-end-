@@ -38,7 +38,7 @@ export default function ProfessorDashboard() {
   if (isLoading || !dashboardData) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -69,7 +69,7 @@ export default function ProfessorDashboard() {
         description="Monitor supervised teams, proposal approvals, originality alerts, and recent updates."
       />
 
-      <div className="bg-indigo-500/10 rounded-2xl p-6 md:p-8 border border-border/50 shadow-sm mb-8 backdrop-blur-xl">
+      <div className="bg-primary/10 rounded-2xl p-6 md:p-8 border border-border/50 shadow-sm mb-8 backdrop-blur-xl">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
             <div className="flex flex-wrap items-center gap-3 mb-3">
@@ -78,7 +78,7 @@ export default function ProfessorDashboard() {
               </h2>
               <Badge
                 variant="secondary"
-                className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/30"
+                className="bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900"
               >
                 {pendingReviewCount} Pending
               </Badge>
@@ -89,7 +89,7 @@ export default function ProfessorDashboard() {
             </p>
           </div>
           <Link href="/professor/project-management">
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white w-full sm:w-auto">
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
               <ClipboardList className="w-4 h-4 mr-2" />
               Open Review Queue
             </Button>
@@ -100,15 +100,15 @@ export default function ProfessorDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <ProfessorStatCard
           title="Assigned Teams"
-          value={String(totalSupervisedTeams)}
+          value={String(activeProjectCount + approvedCount)}
           subtitle="Across current graduation cycle"
           icon={Users}
           tone="primary"
         />
         <ProfessorStatCard
           title="Projects Supervised"
-          value={String(activeProjectCount + approvedCount + pendingReviewCount + rejectedCount)}
-          subtitle="Draft, active, and submitted projects"
+          value={String(activeProjectCount + approvedCount)}
+          subtitle="Active and approved projects"
           icon={FolderKanban}
           tone="info"
         />
@@ -128,7 +128,7 @@ export default function ProfessorDashboard() {
               <Link href="/professor/project-management?tab=inprogress">
                 <Button
                   variant="ghost"
-                  className="text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10"
+                  className="text-primary dark:text-primary hover:bg-primary/10"
                 >
                   View All
                 </Button>

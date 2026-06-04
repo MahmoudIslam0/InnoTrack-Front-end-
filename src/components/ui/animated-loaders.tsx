@@ -23,17 +23,17 @@ export function GlowingSpinner({ icon: Icon, text }: { icon: any; text: string }
     <div className="flex flex-col items-center justify-center py-12 gap-6 dashboard-surface bg-transparent shadow-none border-none">
       <div className="relative flex items-center justify-center w-20 h-20">
         <motion.div
-          className="absolute inset-0 rounded-full border-t-2 border-r-2 border-indigo-500/50 dark:border-indigo-400/50"
+          className="absolute inset-0 rounded-full border-t-2 border-r-2 border-primary/50 dark:border-primary/50"
           animate={{ rotate: 360 }}
           transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
         />
         <motion.div
-          className="absolute inset-2 rounded-full border-b-2 border-l-2 border-sky-500/50 dark:border-sky-400/50"
+          className="absolute inset-2 rounded-full border-b-2 border-l-2 border-blue-400/50 dark:border-blue-300/50"
           animate={{ rotate: -360 }}
           transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
         />
-        <div className="bg-indigo-500/10 dark:bg-indigo-400/10 p-4 rounded-full relative z-10 backdrop-blur-md">
-          <Icon className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+        <div className="bg-primary/10 dark:bg-primary/10 p-4 rounded-full relative z-10 backdrop-blur-md">
+          <Icon className="w-8 h-8 text-primary dark:text-primary" />
         </div>
       </div>
       <motion.p

@@ -124,7 +124,15 @@ export function ProjectDetailsDialog({
                     {project.team} - {project.domain}
                   </DialogDescription>
                 </div>
-                <StatusBadge status={project.status} />
+                <div className="flex items-center gap-4 shrink-0">
+                  {project.originalityScore !== undefined && (
+                    <div className="flex flex-col items-center justify-center w-20 h-20 rounded-2xl bg-primary/10 border border-primary/20 shrink-0">
+                      <span className="text-2xl font-bold text-primary leading-none">{Math.round((project.originalityScore || 0) * 100)}%</span>
+                      <span className="text-[10px] font-bold text-primary/70 uppercase tracking-widest mt-1.5">Score</span>
+                    </div>
+                  )}
+                  <StatusBadge status={project.status} />
+                </div>
               </div>
             </DialogHeader>
 
@@ -172,7 +180,7 @@ export function ProjectDetailsDialog({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {team.members.map((member) => (
                         <div key={member.id} className="flex items-center gap-3 p-3 bg-muted/30 border border-border/50 rounded-xl">
-                          <div className="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 flex items-center justify-center font-bold">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 text-primary/90 dark:text-primary flex items-center justify-center font-bold">
                             {member.name.split(" ").map(n => n[0]).join("")}
                           </div>
                           <div>
@@ -188,14 +196,12 @@ export function ProjectDetailsDialog({
               </div>
 
               <div className="space-y-5">
-                <div className="p-4 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
-                  <OriginalityMeter score={project.originalityScore} />
-                </div>
+
 
                 {/* Team Management */}
                 <div className="p-4 bg-card text-card-foreground rounded-xl border border-border/50 shadow-sm">
                   <div className="flex items-center gap-2 mb-3">
-                    <Users className="w-4 h-4 text-indigo-500" />
+                    <Users className="w-4 h-4 text-primary" />
                     <h3 className="text-sm font-semibold text-foreground">
                       Team Management
                     </h3>
@@ -215,7 +221,7 @@ export function ProjectDetailsDialog({
                         />
                         <Button 
                           size="sm" 
-                          className="h-9 bg-indigo-600 hover:bg-indigo-700 text-white"
+                          className="h-9 bg-primary hover:bg-primary/90 text-white"
                           onClick={() => {
                             toast.success(`Team size limit updated to ${teamSizeLimit} members.`);
                           }}
@@ -234,7 +240,7 @@ export function ProjectDetailsDialog({
                     </h3>
                     <div className="grid grid-cols-1 gap-2">
                       <Button
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                        className="bg-primary hover:bg-primary/90 text-white"
                         onClick={() => setDecisionMode("approve-proposal")}
                       >
                         <CheckCircle2 className="w-4 h-4 mr-2" />
@@ -259,7 +265,7 @@ export function ProjectDetailsDialog({
                     </h3>
                     <div className="grid grid-cols-1 gap-2">
                       <Button
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                        className="bg-primary hover:bg-primary/90 text-white"
                         onClick={() => setDecisionMode("accept-submission")}
                       >
                         <CheckCircle2 className="w-4 h-4 mr-2" />
@@ -292,7 +298,7 @@ export function ProjectDetailsDialog({
                     className="block p-4 bg-muted rounded-xl border border-border/50 hover:bg-muted/80 transition-colors group"
                   >
                     <div className="flex items-start justify-between gap-3 mb-2">
-                      <p className="text-sm font-medium text-foreground group-hover:text-indigo-500 transition-colors">
+                      <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
                         {similarProject.title}
                       </p>
                       <Badge variant="outline">
@@ -354,7 +360,7 @@ export function ProjectDetailsDialog({
                     Cancel
                   </Button>
                   <Button
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                    className="bg-primary hover:bg-primary/90 text-white"
                     onClick={completeDecision}
                     disabled={cannotConfirm}
                   >
