@@ -127,6 +127,7 @@ function ProjectSubmissionPage() {
     !formData.objectives.trim() ? "objectives" : "",
   ].filter(Boolean);
   const submitLockReason = (() => {
+    if (isDetailsOnly) return "";
     if (blocksNewSubmission) return "Your team already has an active or submitted project.";
     if (missingRequiredFields.length > 0) return `Complete ${missingRequiredFields.join(", ")} before sending to a supervisor.`;
     if (!hasRunSimilarityCheck) return "Run the similarity check before sending to a supervisor.";
@@ -400,11 +401,21 @@ function ProjectSubmissionPage() {
     }
     
     if (isDetailsOnly) {
-      // Simulate originality score changing slightly due to edits
-      const newScore = Math.min(100, originalityScore + Math.floor(Math.random() * 5) - 1);
-      setOriginalityScore(newScore);
-      toast.success(`Project Details Updated. New Originality Score: ${newScore}%`);
-      router.push("/project-management");
+      setIsSubmitting(true);
+      try {
+        const payload = await buildDraftPayload();
+        if (editId) {
+          await studentApi.updateProjectDetails(editId, payload);
+          toast.success("Project details updated successfully.");
+          router.push("/project-management");
+        } else {
+          toast.error("No project ID found to update.");
+        }
+      } catch (error: unknown) {
+        toast.error(getErrorMessage(error, "Could not update project details."));
+      } finally {
+        setIsSubmitting(false);
+      }
       return;
     }
     
@@ -630,7 +641,7 @@ function ProjectSubmissionPage() {
                   id="category"
                   value={formData.category}
                   onChange={(event) => handleInputChange("category", event.target.value)}
-                  disabled={lockAllFields}
+                  disabled={isDetailsOnly || lockAllFields}
                   className="h-12 w-full rounded-xl border border-border bg-background/50 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
                 >
                   <option value="">Select a domain</option>
