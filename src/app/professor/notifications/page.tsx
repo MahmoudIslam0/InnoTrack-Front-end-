@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, CheckCircle2, MessageSquare, UserPlus, FileText, AlertTriangle } from "lucide-react";
+import { Bell, CheckCircle2, MessageSquare, UserPlus, FileText, AlertTriangle, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { NotificationList } from "@/app/_components/DashboardUI";
@@ -72,6 +72,15 @@ export default function ProfessorNotifications() {
     }
   };
 
+  const clearAllNotifications = async () => {
+    setItems([]);
+    try {
+      await api.notifications.clearAll();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const markAsRead = async (id: string) => {
     const item = items.find(i => i.id === id);
     if (item && item.unread) {
@@ -106,14 +115,24 @@ export default function ProfessorNotifications() {
       <SectionCard
         title="System Notifications"
         action={
-          <Button
-            variant="outline"
-            className="border-primary text-primary/90 dark:text-primary hover:bg-primary/100/10"
-            onClick={markAllRead}
-          >
-            <CheckCircle2 className="w-4 h-4 mr-2" />
-            Mark All Read
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              className="border-primary text-primary hover:bg-primary/5"
+              onClick={markAllRead}
+            >
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Mark All Read
+            </Button>
+            <Button
+              variant="outline"
+              className="border-destructive text-destructive hover:bg-destructive/5"
+              onClick={clearAllNotifications}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Clear All
+            </Button>
+          </div>
         }
       >
         <div className="-m-6">

@@ -122,6 +122,17 @@ export function TopNav({
     }
   };
 
+  const clearAllNotifications = async () => {
+    setNotifications([]);
+    try {
+      await api.notifications.clearAll();
+      toast.success("Notifications cleared");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to clear notifications");
+    }
+  };
+
   const unreadCount = notifications.filter((n) => n.unread).length;
 
   const getNotificationHref = (title: string, isProf: boolean) => {
@@ -172,7 +183,8 @@ export function TopNav({
         ...prev,
       ]);
 
-      toast.info(`${titleVal}: ${messageVal}`, {
+      toast.info(titleVal, {
+        description: messageVal,
         action: {
           label: "View",
           onClick: () => {
@@ -180,6 +192,19 @@ export function TopNav({
             const href = getNotificationHref(titleVal, isProf);
             router.push(href);
           }
+        },
+        style: {
+          background: "rgba(30, 64, 175, 0.08)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          border: "1px solid rgba(59, 130, 246, 0.25)",
+          borderRadius: "12px",
+          boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)"
+        },
+        classNames: {
+          title: "text-blue-600 dark:text-blue-400 font-semibold text-sm",
+          description: "text-muted-foreground/90 dark:text-gray-300 text-xs mt-0.5 leading-relaxed",
+          actionButton: "!bg-blue-600 hover:!bg-blue-700 !text-white font-medium text-xs px-3 py-1.5 rounded-lg border-0 transition-colors"
         }
       });
     });
@@ -261,9 +286,11 @@ export function TopNav({
                         <span className="font-semibold text-foreground">
                           Notifications
                         </span>
-                        <div className="flex items-center gap-3">
-                          <button onClick={markAllAsRead} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Mark all as read</button>
-                          <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                        <div className="flex items-center gap-2">
+                          <button onClick={markAllAsRead} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Read all</button>
+                          <span className="text-muted-foreground/30 text-xs">|</span>
+                          <button onClick={clearAllNotifications} className="text-xs text-muted-foreground hover:text-destructive transition-colors">Clear all</button>
+                          <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full ml-1">
                             {unreadCount} new
                           </span>
                         </div>

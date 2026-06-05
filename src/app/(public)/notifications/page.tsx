@@ -8,7 +8,8 @@ import {
   MessageSquare,
   Sparkles,
   AlertTriangle,
-  Info
+  Info,
+  Trash2
 } from "lucide-react";
 
 import {
@@ -83,6 +84,15 @@ export default function StudentNotifications() {
     }
   };
 
+  const clearAllNotifications = async () => {
+    setItems([]);
+    try {
+      await api.notifications.clearAll();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const markAsRead = async (id: string) => {
     const item = items.find(i => i.id === id);
     if (item && item.unread) {
@@ -116,14 +126,24 @@ export default function StudentNotifications() {
       <SectionCard
         title="System Notifications"
         action={
-          <Button
-            variant="outline"
-            className="border-primary text-primary/90 hover:bg-indigo-50"
-            onClick={markAllRead}
-          >
-            <CheckCircle2 className="w-4 h-4 mr-2" />
-            Mark All Read
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              className="border-primary text-primary hover:bg-primary/5"
+              onClick={markAllRead}
+            >
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Mark All Read
+            </Button>
+            <Button
+              variant="outline"
+              className="border-destructive text-destructive hover:bg-destructive/5"
+              onClick={clearAllNotifications}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Clear All
+            </Button>
+          </div>
         }
       >
         <div className="-m-6">
