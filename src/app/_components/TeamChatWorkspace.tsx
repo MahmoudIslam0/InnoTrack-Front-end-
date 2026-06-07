@@ -3,10 +3,9 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import dynamic from 'next/dynamic';
 import { 
-  Download, FileText, ImageIcon, Paperclip, Send, ChevronDown, 
-  ChevronRight, Check, Clock, AlertCircle, MoreHorizontal, 
-  Pin, Edit2, Trash2, Copy, Reply, Smile, X, Loader2
+  Download, FileText, ChevronDown, Check, AlertCircle, Edit2, Copy, Pin, Reply, Trash2, Smile, ImageIcon, Paperclip, Send, ChevronRight, Clock, MoreHorizontal, X, Loader2
 } from "lucide-react";
+import { studentApi } from "@/lib/student-api";
 import { Theme } from 'emoji-picker-react';
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -35,6 +34,7 @@ export interface TeamChatMessage {
   status?: "sending" | "sent" | "error";
   file?: {
     name: string;
+    backendFileName: string;
     size: string;
     type: "pdf" | "image" | "document";
   };
@@ -92,44 +92,11 @@ export function TeamChatWorkspace({
   const [replyingTo, setReplyingTo] = useState<TeamChatMessage | null>(null);
   const [editingMessage, setEditingMessage] = useState<TeamChatMessage | null>(null);
   const [showEmojiPickerFor, setShowEmojiPickerFor] = useState<number | null>(null);
-  const [asideWidth, setAsideWidth] = useState(288);
-  const [isResizing, setIsResizing] = useState(false);
+  const [isAsideOpen, setIsAsideOpen] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!isResizing) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const container = document.getElementById("chat-workspace-container");
-      if (container) {
-        const rect = container.getBoundingClientRect();
-        const newWidth = rect.right - e.clientX;
-        if (newWidth >= 160 && newWidth <= 450) {
-          setAsideWidth(newWidth);
-        }
-      }
-    };
-
-    const handleMouseUp = () => {
-      setIsResizing(false);
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [isResizing]);
-
-  const startResize = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsResizing(true);
-  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -160,6 +127,25 @@ export function TeamChatWorkspace({
       await onUploadFile(file);
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleDownloadFile = async (backendFileName: string, originalName: string) => {
+    if (!backendFileName) return;
+    try {
+      toast.info(`Downloading ${originalName}...`);
+      const blob = await studentApi.downloadChatFile(backendFileName);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = originalName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error("Failed to download file:", err);
+      toast.error("Failed to download file");
     }
   };
 
@@ -223,11 +209,22 @@ export function TeamChatWorkspace({
           <h2 className="text-xl font-bold tracking-tight text-foreground">{title}</h2>
           <p className="text-sm text-muted-foreground mt-1 font-medium">{subtitle}</p>
         </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => setIsAsideOpen(!isAsideOpen)}
+          className="hidden lg:flex items-center gap-2"
+        >
+          <span className="text-muted-foreground">{isAsideOpen ? "Hide" : "Show"} Members</span>
+          <ChevronRight className={cn("w-4 h-4 transition-transform", isAsideOpen ? "rotate-0" : "rotate-180")} />
+        </Button>
       </div>
 
       <div 
-        className="grid flex-1 min-h-0 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_var(--aside-width,288px)]"
-        style={{ "--aside-width": `${asideWidth}px` } as React.CSSProperties}
+        className={cn(
+          "grid flex-1 min-h-0 grid-cols-1 transition-all duration-300",
+          isAsideOpen ? "lg:grid-cols-[minmax(0,1fr)_288px]" : "lg:grid-cols-1"
+        )}
       >
         <div className="flex min-h-0 flex-col border-r border-border/50 relative bg-gradient-to-b from-transparent to-muted/10">
           
@@ -380,7 +377,7 @@ export function TeamChatWorkspace({
                                   <p className="truncate text-sm font-medium">{message.file.name}</p>
                                   <p className={`text-[11px] font-medium mt-0.5 ${isOwnMessage ? 'text-white/70' : 'text-muted-foreground'}`}>{message.file.size}</p>
                                 </div>
-                                <Button variant="ghost" size="icon" className={`rounded-xl ${isOwnMessage ? "text-white hover:bg-white/20" : "text-muted-foreground hover:bg-muted/80"}`}>
+                                <Button variant="ghost" size="icon" onClick={() => handleDownloadFile(message.file!.backendFileName, message.file!.name)} className={`rounded-xl ${isOwnMessage ? "text-white hover:bg-white/20" : "text-muted-foreground hover:bg-muted/80"}`}>
                                   <Download className="h-4 w-4" />
                                 </Button>
                                 </div>
@@ -733,11 +730,14 @@ export function TeamChatWorkspace({
           </div>
         </div>
 
-        <aside className="bg-card/20 p-6 flex flex-col min-h-0 border-l border-border/50 hidden lg:flex relative">
-          <div 
-            className="absolute -left-[3px] top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary/50 active:bg-primary transition-colors z-30"
-            onMouseDown={startResize}
-          />
+        <AnimatePresence>
+        {isAsideOpen && (
+          <motion.aside 
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 50, transition: { duration: 0.2 } }}
+            className="bg-card/20 p-6 flex flex-col min-h-0 border-l border-border/50 hidden lg:flex relative"
+          >
           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-muted/5 pointer-events-none" />
           <div className="mb-6 flex items-center justify-between relative z-10">
             <div className="flex items-center gap-2">
@@ -808,7 +808,7 @@ export function TeamChatWorkspace({
                         <p className="truncate text-[13px] font-semibold text-foreground/90">{message.file?.name}</p>
                         <p className="text-[11px] text-muted-foreground mt-1 font-medium">{message.file?.size} • {message.author}</p>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-primary/10 hover:text-primary shrink-0 rounded-lg">
+                      <Button variant="ghost" size="icon" onClick={() => handleDownloadFile(message.file!.backendFileName, message.file!.name)} className="h-8 w-8 text-muted-foreground hover:bg-primary/10 hover:text-primary shrink-0 rounded-lg">
                         <Download className="h-4 w-4" />
                       </Button>
                     </motion.div>
@@ -823,7 +823,9 @@ export function TeamChatWorkspace({
               )}
             </AnimatePresence>
           </div>
-        </aside>
+        </motion.aside>
+        )}
+        </AnimatePresence>
       </div>
     </section>
   );

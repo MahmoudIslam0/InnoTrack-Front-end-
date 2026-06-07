@@ -20,6 +20,7 @@ export interface TeamChatMessage {
   reactions?: { userId: number; emoji: string }[];
   file?: {
     name: string;
+    backendFileName: string;
     size: string;
     type: "pdf" | "image" | "document";
   };
@@ -81,6 +82,12 @@ export function useTeamChat(teamId: number | null) {
               isPinned: msg.isPinned,
               parentMessageId: msg.parentMessageId,
               reactions: msg.reactions || [],
+              file: msg.attachment ? {
+                name: msg.attachment.originalName,
+                backendFileName: msg.attachment.fileName,
+                size: `${Math.round(msg.attachment.fileSize / 1024)} KB`,
+                type: msg.attachment.contentType.includes("image") ? "image" : msg.attachment.contentType.includes("pdf") ? "pdf" : "document",
+              } : undefined
             };
           });
           setMessages(formattedMessages);
@@ -144,6 +151,7 @@ export function useTeamChat(teamId: number | null) {
       const member = membersRef.current.find(m => m.id === senderId?.toString());
       
       const authorName = member?.name || data.authorName || data.AuthorName || "Unknown";
+      const attachment = data.attachment || data.Attachment;
       
       const newMsg: TeamChatMessage = {
         id: (data.id || `msg-${Date.now()}-${Math.random()}`).toString(),
@@ -156,6 +164,12 @@ export function useTeamChat(teamId: number | null) {
         timestamp: new Date(sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         status: "sent",
         parentMessageId: data.parentMessageId,
+        file: attachment ? {
+          name: attachment.originalName || attachment.OriginalName,
+          backendFileName: attachment.fileName || attachment.FileName,
+          size: `${Math.round((attachment.fileSize || attachment.FileSize || 0) / 1024)} KB`,
+          type: (attachment.contentType || attachment.ContentType || "").includes("image") ? "image" : (attachment.contentType || attachment.ContentType || "").includes("pdf") ? "pdf" : "document",
+        } : undefined
       };
       
       setMessages(prev => {
@@ -243,6 +257,11 @@ export function useTeamChat(teamId: number | null) {
       membersRef.current = membersRef.current.map(m => m.id === userId.toString() ? { ...m, online: false, lastOnlineAt: now } : m);
     });
 
+    connection.on("MemberRemoved", (userId: number) => {
+      setMembers(prev => prev.filter(m => m.id !== userId.toString()));
+      membersRef.current = membersRef.current.filter(m => m.id !== userId.toString());
+    });
+
     connection.onreconnecting(() => setIsConnected(false));
 
     return () => {
@@ -251,6 +270,9 @@ export function useTeamChat(teamId: number | null) {
       connection.off("MessageDeleted");
       connection.off("MessagePinned");
       connection.off("ReactionAdded");
+      connection.off("UserOnline");
+      connection.off("UserOffline");
+      connection.off("MemberRemoved");
     };
   }, [connection, teamId]);
 
@@ -384,7 +406,7 @@ export function useTeamChat(teamId: number | null) {
           content: result.fileUrl || result.content || "",
           timestamp: new Date(result.sentAt || Date.now()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
           status: "sent",
-          file: { name: file.name, size: sizeLabel, type: fileType },
+          file: { name: file.name, backendFileName: result.fileUrl?.split("/").pop() || "", size: sizeLabel, type: fileType },
         };
         setMessages(prev => [...prev, newMsg]);
       }

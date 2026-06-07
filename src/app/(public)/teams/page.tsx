@@ -28,6 +28,7 @@ import {
   TeamChatWorkspace,
 } from "@/app/_components/TeamChatWorkspace";
 import { useTeamChat } from "@/hooks/useTeamChat";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import MembersGrid from "@/components/Team/MembersGrid";
 import PendingRequestsList from "@/components/Team/PendingRequestsList";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -94,6 +95,19 @@ export default function TeamsPage() {
   const [copied, setCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [currentUserName, setCurrentUserName] = useState("Me");
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    variant: "default" | "destructive";
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    description: "",
+    variant: "default",
+    onConfirm: () => {},
+  });
 
   const { 
     messages: realChatMessages, 
@@ -323,25 +337,33 @@ export default function TeamsPage() {
       toast.error("The team leader cannot be removed.");
       return;
     }
-    if (!confirm(`Remove ${name} from team?`)) return;
+    
+    setConfirmDialog({
+      isOpen: true,
+      title: "Remove Member",
+      description: `Are you sure you want to remove ${name} from the team?`,
+      variant: "destructive",
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        try {
+          await studentApi.removeMember(memberId);
 
-    try {
-      await studentApi.removeMember(memberId);
+          const updated = teams.map((existingTeam) =>
+            existingTeam.id === team.id
+              ? {
+                ...existingTeam,
+                members: existingTeam.members.filter((member) => member.id !== memberId),
+              }
+              : existingTeam,
+          );
 
-      const updated = teams.map((existingTeam) =>
-        existingTeam.id === team.id
-          ? {
-            ...existingTeam,
-            members: existingTeam.members.filter((member) => member.id !== memberId),
-          }
-          : existingTeam,
-      );
-
-      saveTeams(updated, team.id);
-      toast.success(`${name} removed`);
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error, "Could not remove member."));
-    }
+          saveTeams(updated, team.id);
+          toast.success(`${name} removed`);
+        } catch (error: unknown) {
+          toast.error(getErrorMessage(error, "Could not remove member."));
+        }
+      }
+    });
   };
 
   const [isSendingInvite, setIsSendingInvite] = useState(false);
@@ -513,15 +535,22 @@ export default function TeamsPage() {
                                   </DropdownMenuItem>
                                   <DropdownMenuItem 
                                     className="text-red-600 focus:text-red-700 focus:bg-red-50 dark:focus:bg-red-950/50 cursor-pointer"
-                                    onClick={async () => {
-                                      if (window.confirm("Are you sure you want to delete this team? This action cannot be undone.")) {
-                                        try {
-                                          await api.delete("/api/Teams/me");
-                                          window.location.reload();
-                                        } catch (err: any) {
-                                          toast.error(err.message || "Failed to delete team.");
+                                    onClick={() => {
+                                      setConfirmDialog({
+                                        isOpen: true,
+                                        title: "Delete Team",
+                                        description: "Are you sure you want to delete this team? This action cannot be undone.",
+                                        variant: "destructive",
+                                        onConfirm: async () => {
+                                          setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                                          try {
+                                            await api.delete("/api/Teams/me");
+                                            window.location.reload();
+                                          } catch (err: any) {
+                                            toast.error(err.message || "Failed to delete team.");
+                                          }
                                         }
-                                      }
+                                      });
                                     }}
                                   >
                                     <Trash2 className="w-4 h-4 mr-2" />
@@ -531,15 +560,22 @@ export default function TeamsPage() {
                               ) : (
                                 <DropdownMenuItem 
                                   className="text-red-600 focus:text-red-700 focus:bg-red-50 dark:focus:bg-red-950/50 cursor-pointer"
-                                  onClick={async () => {
-                                    if (window.confirm("Are you sure you want to leave this team?")) {
-                                      try {
-                                        await studentApi.leaveTeam();
-                                        window.location.reload();
-                                      } catch (err: any) {
-                                        toast.error(err.message || "Failed to leave team.");
+                                  onClick={() => {
+                                    setConfirmDialog({
+                                      isOpen: true,
+                                      title: "Leave Team",
+                                      description: "Are you sure you want to leave this team?",
+                                      variant: "destructive",
+                                      onConfirm: async () => {
+                                        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                                        try {
+                                          await studentApi.leaveTeam();
+                                          window.location.reload();
+                                        } catch (err: any) {
+                                          toast.error(err.message || "Failed to leave team.");
+                                        }
                                       }
-                                    }
+                                    });
                                   }}
                                 >
                                   <Trash2 className="w-4 h-4 mr-2" />
@@ -749,6 +785,15 @@ export default function TeamsPage() {
           )}
         </>
       )}
+      
+      <ConfirmDialog 
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        variant={confirmDialog.variant}
+      />
     </div>
   );
 }

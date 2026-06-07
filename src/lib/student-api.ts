@@ -154,6 +154,12 @@ export type ChatMessageDetailDto = {
   isPinned?: boolean;
   parentMessageId?: number | null;
   reactions?: { userId: number; emoji: string }[];
+  attachment?: {
+    fileName: string;
+    originalName: string;
+    contentType: string;
+    fileSize: number;
+  };
 };
 
 export type TeamChatDto = {
@@ -408,6 +414,24 @@ export const studentApi = {
         throw new Error(text || `Upload failed (${res.status})`);
       }
       return res.json();
+    });
+  },
+
+  downloadChatFile: async (fileName: string) => {
+    return fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || "https://innotrack-aneshpdxd6habnd6.uaenorth-01.azurewebsites.net"}/api/teams/me/chat/files/${fileName}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${typeof window !== "undefined" ? localStorage.getItem("accessToken") || "" : ""}`,
+        },
+      }
+    ).then(async (res) => {
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(text || `Download failed (${res.status})`);
+      }
+      return res.blob();
     });
   },
 };
