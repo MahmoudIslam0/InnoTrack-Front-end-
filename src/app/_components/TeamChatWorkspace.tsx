@@ -393,9 +393,14 @@ export function TeamChatWorkspace({
                                         </DropdownMenuItem>
                                         {isOwnMessage && <DropdownMenuSeparator className="bg-border/40 my-1.5" />}
                                         {isOwnMessage && (
-                                          <DropdownMenuItem className="py-2.5 px-3 cursor-pointer rounded-xl font-medium text-red-500 focus:text-red-600 hover:bg-red-500/10 focus:bg-red-500/10 transition-colors" onClick={() => onDeleteMessage?.(message.backendId!, false)}>
-                                            <Trash2 className="w-4 h-4 mr-3 opacity-80" /> Delete for me
-                                          </DropdownMenuItem>
+                                          <>
+                                            <DropdownMenuItem className="py-2.5 px-3 cursor-pointer rounded-xl font-medium text-red-500 focus:text-red-600 hover:bg-red-500/10 focus:bg-red-500/10 transition-colors" onClick={() => onDeleteMessage?.(message.backendId!, false)}>
+                                              <Trash2 className="w-4 h-4 mr-3 opacity-80" /> Delete for me
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem className="py-2.5 px-3 cursor-pointer rounded-xl font-medium text-red-500 focus:text-red-600 hover:bg-red-500/10 focus:bg-red-500/10 transition-colors" onClick={() => onDeleteMessage?.(message.backendId!, true)}>
+                                              <Trash2 className="w-4 h-4 mr-3 opacity-80" /> Delete for everyone
+                                            </DropdownMenuItem>
+                                          </>
                                         )}
                                       </DropdownMenuContent>
                                     </DropdownMenu>

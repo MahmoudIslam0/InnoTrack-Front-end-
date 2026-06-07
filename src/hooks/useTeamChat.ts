@@ -431,34 +431,9 @@ export function useTeamChat(teamId: number | null, onTeamUpdated?: () => void) {
     if (!teamId) return;
     const toastId = toast.loading(`Uploading ${file.name}...`);
     try {
-      const result = await studentApi.uploadChatFile(teamId, file);
+      await studentApi.uploadChatFile(teamId, file);
       toast.success("File uploaded successfully", { id: toastId });
-      // Inject the returned message into local state so it appears immediately
-      if (result) {
-        const authorName = result.authorName || result.senderName || "Me";
-        const ext = file.name.split(".").pop()?.toLowerCase() || "";
-        const fileType: "image" | "pdf" | "document" =
-          ["png", "jpg", "jpeg", "gif", "webp", "svg"].includes(ext)
-            ? "image"
-            : ext === "pdf"
-            ? "pdf"
-            : "document";
-        const sizeKb = (file.size / 1024).toFixed(0);
-        const sizeLabel = file.size > 1024 * 1024 ? `${(file.size / 1048576).toFixed(1)} MB` : `${sizeKb} KB`;
-        const newMsg: TeamChatMessage = {
-          id: (result.id || `file-${Date.now()}`).toString(),
-          backendId: result.id,
-          authorId: result.senderId || 0,
-          author: authorName,
-          initials: authorName.substring(0, 2).toUpperCase(),
-          role: "Student",
-          content: result.fileUrl || result.content || "",
-          timestamp: new Date(result.sentAt || Date.now()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          status: "sent",
-          file: { name: file.name, backendFileName: result.fileUrl?.split("/").pop() || "", size: sizeLabel, type: fileType },
-        };
-        setMessages(prev => [...prev, newMsg]);
-      }
+      // The SignalR broadcast will deliver the message via ReceiveMessage handler
     } catch (err: any) {
       toast.error(err?.message || "Failed to upload file", { id: toastId });
     }
