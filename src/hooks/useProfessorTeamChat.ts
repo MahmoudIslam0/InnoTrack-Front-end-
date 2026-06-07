@@ -3,7 +3,7 @@ import * as signalR from "@microsoft/signalr";
 import { professorApi } from "@/lib/professor-api";
 import { toast } from "sonner";
 import { TeamChatMessage, TeamChatMember } from "@/app/_components/TeamChatWorkspace";
-
+import { studentApi } from "@/lib/student-api";
 export function useProfessorTeamChat(teamId: number | null) {
   const [messages, setMessages] = useState<TeamChatMessage[]>([]);
   const [members, setMembers] = useState<TeamChatMember[]>([]);
@@ -291,6 +291,17 @@ export function useProfessorTeamChat(teamId: number | null) {
     }
   };
 
+  const uploadFile = async (file: File) => {
+    if (!teamId) return;
+    const toastId = toast.loading(`Uploading ${file.name}...`);
+    try {
+      await studentApi.uploadChatFile(teamId, file);
+      toast.success("File uploaded successfully", { id: toastId });
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to upload file", { id: toastId });
+    }
+  };
+
   return {
     messages,
     members,
@@ -301,5 +312,6 @@ export function useProfessorTeamChat(teamId: number | null) {
     togglePin,
     reactToMessage,
     replyToMessage,
+    uploadFile,
   };
 }

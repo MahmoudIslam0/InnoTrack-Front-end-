@@ -35,6 +35,7 @@ export default function ProfessorTeamDetail() {
     togglePin,
     reactToMessage,
     replyToMessage,
+    uploadFile,
   } = useProfessorTeamChat(teamId);
 
   useEffect(() => {
@@ -89,7 +90,7 @@ export default function ProfessorTeamDetail() {
     : [];
 
   return (
-    <div className={`dashboard-page flex flex-col ${activeView === "chat" ? "h-[calc(100vh-5rem)] overflow-hidden space-y-3 md:pt-5 md:pb-4" : "space-y-6"}`}>
+    <div className={`dashboard-page flex flex-col ${activeView === "chat" ? "space-y-3 md:pt-5" : "space-y-6"}`}>
       <div className="flex items-center gap-4 shrink-0">
         <Button variant="ghost" size="icon" onClick={() => router.push("/professor/teams")}>
           <ArrowLeft className="w-5 h-5" />
@@ -193,8 +194,9 @@ export default function ProfessorTeamDetail() {
           onTogglePin={togglePin}
           onReactToMessage={reactToMessage}
           onReplyToMessage={replyToMessage}
+          onUploadFile={uploadFile}
           isLoading={isChatLoading}
-          className="flex-1 min-h-0 rounded-2xl border border-border/50 shadow-sm"
+          className="h-[calc(100vh-260px)] min-h-0 rounded-2xl border border-border/50 shadow-sm"
         />
       )}
     </div>
