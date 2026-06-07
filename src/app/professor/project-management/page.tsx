@@ -57,7 +57,7 @@ function ProjectCard({ project, onManage, onViewDetails }: { project: any; onMan
           </div>
           <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border ${scoreBg}`}>
             <Award className={`w-3.5 h-3.5 ${scoreColor}`} />
-            <span className={`text-sm font-bold ${scoreColor}`}>{Math.round((project.originalityScore || 0) * 100)}%</span>
+            <span className={`text-sm font-bold ${scoreColor}`}>{Math.round(project.originalityScore || 0)}%</span>
           </div>
         </div>
 

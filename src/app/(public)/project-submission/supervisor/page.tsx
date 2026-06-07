@@ -11,17 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SupervisorDto, studentApi } from "@/lib/student-api";
 
-interface SavedSubmissionState {
-  formData?: {
-    title?: string;
-    studentNames?: string;
-    category?: string;
-    technologies?: string;
-    abstract?: string;
-    description?: string;
-  };
-  originalityScore?: number;
-}
+
 
 const departments = [
   "Computer Science",
@@ -35,7 +25,6 @@ export default function SubmitToSupervisor() {
   const router = useRouter();
   const [supervisors, setSupervisors] = useState<SupervisorDto[]>([]);
   const [selectedSupervisorId, setSelectedSupervisorId] = useState<number | null>(null);
-  const [submissionState, setSubmissionState] = useState<SavedSubmissionState | null>(null);
   const [proposalData, setProposalData] = useState({
     department: "",
     message: "",
@@ -43,14 +32,6 @@ export default function SubmitToSupervisor() {
   const [returnUrl, setReturnUrl] = useState("/project-submission");
 
   useEffect(() => {
-    const savedState = sessionStorage.getItem("projectSubmissionDraft");
-    if (!savedState) return;
-    try {
-      const parsed = JSON.parse(savedState) as SavedSubmissionState;
-      setSubmissionState(parsed);
-    } catch {
-      setSubmissionState(null);
-    }
     // Restore the return URL so Back takes the user to the exact page they came from
     const storedReturnUrl = sessionStorage.getItem("supervisorReturnUrl");
     if (storedReturnUrl) setReturnUrl(storedReturnUrl);
@@ -129,16 +110,7 @@ export default function SubmitToSupervisor() {
         </p>
       </div>
 
-      {/* ─── Project context banner ─── */}
-      {submissionState?.formData?.title && (
-        <div className="mb-6 flex items-start gap-3 rounded-2xl border border-indigo-200 bg-indigo-50/60 dark:bg-indigo-950/20 dark:border-indigo-900/50 p-4">
-          <AlertCircle className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />
-          <div className="text-sm">
-            <span className="font-semibold text-foreground">Submitting: </span>
-            <span className="text-muted-foreground">{submissionState.formData.title}</span>
-          </div>
-        </div>
-      )}
+
 
       {/* ─── Main Grid ─── */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px] items-start">

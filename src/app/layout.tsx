@@ -1,5 +1,6 @@
 import { AuthProvider } from "@/contexts/AuthContext";
 import type { Metadata } from "next";
+import NextTopLoader from "nextjs-toploader";
 
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -30,6 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-background text-foreground font-sans antialiased" suppressHydrationWarning>
+        <NextTopLoader color="#3b82f6" showSpinner={false} height={3} shadow="0 0 10px #3b82f6,0 0 5px #3b82f6" />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

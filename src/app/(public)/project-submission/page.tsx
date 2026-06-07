@@ -156,31 +156,11 @@ function ProjectSubmissionPage() {
 
   // Restore state from sessionStorage on mount if no specific ID is provided
   useEffect(() => {
-    if (!editId && !draftId) {
-      const savedState = sessionStorage.getItem("projectSubmissionDraft");
-      if (savedState) {
-        try {
-          const parsed = JSON.parse(savedState);
-          queueMicrotask(() => {
-            setFormData(parsed.formData);
-            setOriginalityScore(parsed.originalityScore);
-            setHasRunSimilarityCheck(parsed.hasRunSimilarityCheck);
-          });
-        } catch {
-          console.error("Failed to parse saved draft state");
-        }
-      }
-    }
+    // Issue 1 & 4: Removed sessionStorage restoration so drafts are strictly tied to the backend.
   }, [editId, draftId]);
 
   // Save state to sessionStorage when it changes
-  useEffect(() => {
-    sessionStorage.setItem("projectSubmissionDraft", JSON.stringify({
-      formData,
-      originalityScore,
-      hasRunSimilarityCheck
-    }));
-  }, [formData, originalityScore, hasRunSimilarityCheck]);
+  // Issue 1 & 4: Removed sessionStorage saving so drafts are strictly tied to the backend.
 
 
   // Pre-fill form when editing an approved project or loading a draft
@@ -898,7 +878,7 @@ function ProjectSubmissionPage() {
                     strokeWidth="12"
                     fill="none"
                     strokeDasharray={`${2 * Math.PI * 72}`}
-                    strokeDashoffset={`${2 * Math.PI * 72 * (1 - (originalityScore || 100) / 100)}`}
+                    strokeDashoffset={`${2 * Math.PI * 72 * (1 - (originalityScore ?? 0) / 100)}`}
                     strokeLinecap="round"
                     className="transition-all duration-1000 ease-out"
                   />
@@ -949,7 +929,7 @@ function ProjectSubmissionPage() {
                       {project.title}
                     </p>
                     <Badge variant="secondary" className="text-xs font-semibold bg-accent">
-                      {formatPercent(project.similarity)}%
+                      {formatPercent(project.similarity, 0)}%
                     </Badge>
                   </div>
                   <Button

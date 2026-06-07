@@ -272,3 +272,9 @@
   scrollbar-width: thin !important;
   scrollbar-color: var(--scrollbar-thumb) transparent !important;
 }
+
+/* Disable native Edge password reveal icon */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none !important;
+}
