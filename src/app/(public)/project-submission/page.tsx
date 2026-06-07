@@ -354,6 +354,26 @@ function ProjectSubmissionPage() {
     return saved;
   };
 
+  const handleClearForm = () => {
+    setFormData({
+      title: "",
+      studentNames: myTeam ? myTeam.members.map((m) => m.fullName).join(", ") : "",
+      year: "2026",
+      category: "",
+      technologies: "",
+      abstract: "",
+      description: "",
+      problemStatement: "",
+      proposedSolution: "",
+      objectives: "",
+    });
+    setOriginalityScore(0);
+    setHasRunSimilarityCheck(false);
+    setSelectedDraftId(null);
+    setUploadedFile(null);
+    toast.success("Form cleared successfully.");
+  };
+
   const handleSaveDraft = async () => {
     if (blocksNewSubmission) {
       toast.error("Your team already has an active or submitted project.");
@@ -785,19 +805,30 @@ function ProjectSubmissionPage() {
             )}
             <div className="flex flex-col sm:flex-row gap-4">
               {!isDetailsOnly && (
-                <Button
-                  variant="outline"
-                  className="flex-1 h-12 rounded-xl"
-                  onClick={handleSaveDraft}
-                  disabled={isSaving || isSubmitting || isLoading}
-                >
-                  {isSaving ? (
-                    <Spinner className="mr-2 h-4 w-4" />
-                  ) : (
-                    <Save className="w-4 h-4 mr-2" />
-                  )}
-                  Save Draft
-                </Button>
+                <>
+                  <Button
+                    variant="outline"
+                    className="flex-1 h-12 rounded-xl"
+                    onClick={handleSaveDraft}
+                    disabled={isSaving || isSubmitting || isLoading}
+                  >
+                    {isSaving ? (
+                      <Spinner className="mr-2 h-4 w-4" />
+                    ) : (
+                      <Save className="w-4 h-4 mr-2" />
+                    )}
+                    Save Draft
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1 h-12 rounded-xl border-red-500/30 text-red-600 hover:bg-red-500/10 dark:text-red-400"
+                    onClick={handleClearForm}
+                    disabled={isSaving || isSubmitting || isLoading}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Clear Form
+                  </Button>
+                </>
               )}
               <Button
                 onClick={handleGetAIHelp}
