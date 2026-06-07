@@ -344,7 +344,7 @@ export function TeamChatWorkspace({
                           </div>
                         )}
 
-                        <div className="flex flex-col relative z-10 max-w-full">                          {message.file ? (
+                        <div className="flex flex-col relative z-10 max-w-full">                          {message.file && !message.isDeletedForAll ? (
                             <div className={`relative flex flex-col min-w-[280px] p-2 border shadow-sm backdrop-blur-md transition-all rounded-2xl
                               ${isOwnMessage ? "bg-primary border-primary/20 text-white rounded-br-sm" : "bg-card border-border/50 text-foreground rounded-bl-sm"}
                             `}>
@@ -795,32 +795,34 @@ export function TeamChatWorkspace({
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.4, ease: "easeInOut" }}
-                  className="space-y-3 overflow-hidden"
+                  className="overflow-hidden"
                 >
-                  {messages.filter((m) => m.file).map((message) => (
-                    <motion.div 
-                      whileHover={{ scale: 1.02 }}
-                      key={`file-${message.id}`} 
-                      className="flex items-start gap-3 p-3.5 rounded-2xl border border-border/50 bg-card/60 shadow-sm hover:shadow-md hover:bg-card transition-shadow transition-colors backdrop-blur-md cursor-pointer"
-                    >
-                      <div className="rounded-xl border border-border/50 bg-muted/50 p-2.5 text-muted-foreground shrink-0 shadow-sm">
-                        {message.file?.type === "image" ? <ImageIcon className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+                  <div className="max-h-[350px] overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+                    {messages.filter((m) => m.file && !m.isDeletedForAll).map((message) => (
+                      <motion.div 
+                        whileHover={{ scale: 1.02 }}
+                        key={`file-${message.id}`} 
+                        className="flex items-start gap-3 p-3.5 rounded-2xl border border-border/50 bg-card/60 shadow-sm hover:shadow-md hover:bg-card transition-shadow transition-colors backdrop-blur-md cursor-pointer"
+                      >
+                        <div className="rounded-xl border border-border/50 bg-muted/50 p-2.5 text-muted-foreground shrink-0 shadow-sm">
+                          {message.file?.type === "image" ? <ImageIcon className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[13px] font-semibold text-foreground/90">{message.file?.name}</p>
+                          <p className="text-[11px] text-muted-foreground mt-1 font-medium">{message.file?.size} • {message.author} • {message.timestamp}</p>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => handleDownloadFile(message.file!.backendFileName, message.file!.name)} className="h-8 w-8 text-muted-foreground hover:bg-primary/10 hover:text-primary shrink-0 rounded-lg">
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </motion.div>
+                    ))}
+                    {messages.filter((m) => m.file && !m.isDeletedForAll).length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-6 px-4 text-center border border-dashed border-border/60 rounded-2xl bg-muted/20">
+                        <FileText className="w-6 h-6 text-muted-foreground/50 mb-2" />
+                        <p className="text-xs text-muted-foreground font-medium">No files shared yet</p>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] font-semibold text-foreground/90">{message.file?.name}</p>
-                        <p className="text-[11px] text-muted-foreground mt-1 font-medium">{message.file?.size} • {message.author}</p>
-                      </div>
-                      <Button variant="ghost" size="icon" onClick={() => handleDownloadFile(message.file!.backendFileName, message.file!.name)} className="h-8 w-8 text-muted-foreground hover:bg-primary/10 hover:text-primary shrink-0 rounded-lg">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </motion.div>
-                  ))}
-                  {messages.filter((m) => m.file).length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-6 px-4 text-center border border-dashed border-border/60 rounded-2xl bg-muted/20">
-                      <FileText className="w-6 h-6 text-muted-foreground/50 mb-2" />
-                      <p className="text-xs text-muted-foreground font-medium">No files shared yet</p>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
