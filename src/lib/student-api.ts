@@ -140,6 +140,7 @@ export type ChatMemberDto = {
   fullName: string;
   role: string;
   initials: string;
+  lastOnlineAt?: string | null;
 };
 
 export type ChatMessageDetailDto = {
@@ -388,4 +389,25 @@ export const studentApi = {
       content: string;
       sentAt: string;
     }>,
+
+  uploadChatFile: (teamId: number, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || "https://innotrack-aneshpdxd6habnd6.uaenorth-01.azurewebsites.net"}/api/teams/me/chat/teams/${teamId}/chat/upload`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${typeof window !== "undefined" ? localStorage.getItem("accessToken") || "" : ""}`,
+        },
+        body: formData,
+      }
+    ).then(async (res) => {
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(text || `Upload failed (${res.status})`);
+      }
+      return res.json();
+    });
+  },
 };

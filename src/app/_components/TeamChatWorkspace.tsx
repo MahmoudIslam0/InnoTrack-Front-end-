@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import dynamic from 'next/dynamic';
 import { 
   Download, FileText, ImageIcon, Paperclip, Send, ChevronDown, 
@@ -51,6 +51,7 @@ export interface TeamChatMember {
   initials: string;
   role: "Professor" | "Student" | string;
   online?: boolean;
+  lastOnlineAt?: string | null;
 }
 
 export function TeamChatWorkspace({
@@ -66,6 +67,7 @@ export function TeamChatWorkspace({
   onTogglePin,
   onReactToMessage,
   onReplyToMessage,
+  onUploadFile,
   isLoading = false,
   className,
 }: {
@@ -81,6 +83,7 @@ export function TeamChatWorkspace({
   onTogglePin?: (messageId: number) => void;
   onReactToMessage?: (messageId: number, emoji: string) => void;
   onReplyToMessage?: (parentMessageId: number, content: string) => void;
+  onUploadFile?: (file: File) => Promise<void>;
   isLoading?: boolean;
   className?: string;
 }) {
@@ -89,8 +92,44 @@ export function TeamChatWorkspace({
   const [replyingTo, setReplyingTo] = useState<TeamChatMessage | null>(null);
   const [editingMessage, setEditingMessage] = useState<TeamChatMessage | null>(null);
   const [showEmojiPickerFor, setShowEmojiPickerFor] = useState<number | null>(null);
+  const [asideWidth, setAsideWidth] = useState(288);
+  const [isResizing, setIsResizing] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const container = document.getElementById("chat-workspace-container");
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        const newWidth = rect.right - e.clientX;
+        if (newWidth >= 160 && newWidth <= 450) {
+          setAsideWidth(newWidth);
+        }
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizing]);
+
+  const startResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -99,6 +138,30 @@ export function TeamChatWorkspace({
   useEffect(() => {
     scrollToBottom();
   }, [messages.length]);
+
+  // Compute last message timestamp per member
+  const lastActivityByMember = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const msg of messages) {
+      if (!msg.isDeletedForAll && msg.timestamp) {
+        map[msg.author] = msg.timestamp;
+      }
+    }
+    return map;
+  }, [messages]);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !onUploadFile) return;
+    // Reset so same file can be re-selected
+    e.target.value = "";
+    setIsUploading(true);
+    try {
+      await onUploadFile(file);
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -151,7 +214,10 @@ export function TeamChatWorkspace({
   const pinnedMessages = messages.filter(m => m.isPinned);
 
   return (
-    <section className={cn("dashboard-surface flex h-[calc(100vh-154px)] min-h-[700px] flex-col overflow-hidden bg-background/50", className)}>
+    <section 
+      id="chat-workspace-container"
+      className={cn("dashboard-surface flex h-[calc(100vh-154px)] min-h-[700px] flex-col overflow-hidden bg-background/50", className)}
+    >
       <div className="bg-card/40 backdrop-blur-xl border-b border-border/50 px-6 py-5 flex items-center justify-between z-10 shadow-sm">
         <div>
           <h2 className="text-xl font-bold tracking-tight text-foreground">{title}</h2>
@@ -159,7 +225,10 @@ export function TeamChatWorkspace({
         </div>
       </div>
 
-      <div className="grid flex-1 min-h-0 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_288px]">
+      <div 
+        className="grid flex-1 min-h-0 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_var(--aside-width,288px)]"
+        style={{ "--aside-width": `${asideWidth}px` } as React.CSSProperties}
+      >
         <div className="flex min-h-0 flex-col border-r border-border/50 relative bg-gradient-to-b from-transparent to-muted/10">
           
           <AnimatePresence>
@@ -623,8 +692,27 @@ export function TeamChatWorkspace({
             </AnimatePresence>
 
             <div className="flex items-center gap-3 relative">
-              <Button variant="ghost" size="icon" className="h-12 w-12 shrink-0 text-muted-foreground hover:bg-muted/80 rounded-2xl hover:shadow-sm transition-all">
-                <Paperclip className="h-5 w-5" />
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip"
+                onChange={handleFileChange}
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-12 w-12 shrink-0 text-muted-foreground hover:bg-muted/80 rounded-2xl hover:shadow-sm transition-all"
+                disabled={isUploading || !onUploadFile}
+                onClick={() => fileInputRef.current?.click()}
+                title="Attach a file"
+              >
+                {isUploading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Paperclip className="h-5 w-5" />
+                )}
               </Button>
               <Input
                 ref={inputRef}
@@ -646,6 +734,10 @@ export function TeamChatWorkspace({
         </div>
 
         <aside className="bg-card/20 p-6 flex flex-col min-h-0 border-l border-border/50 hidden lg:flex relative">
+          <div 
+            className="absolute -left-[3px] top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary/50 active:bg-primary transition-colors z-30"
+            onMouseDown={startResize}
+          />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-muted/5 pointer-events-none" />
           <div className="mb-6 flex items-center justify-between relative z-10">
             <div className="flex items-center gap-2">
@@ -671,6 +763,13 @@ export function TeamChatWorkspace({
                   <div>
                     <p className="text-[14px] font-semibold text-foreground/90">{member.name}</p>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold mt-0.5">{member.role}</p>
+                    <p className="text-[10px] text-muted-foreground/70 mt-0.5">
+                      {member.online 
+                        ? "Online"
+                        : member.lastOnlineAt
+                          ? `Last online at ${new Date(member.lastOnlineAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                          : "Offline"}
+                    </p>
                   </div>
                 </motion.div>
               ))}

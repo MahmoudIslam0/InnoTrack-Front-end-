@@ -220,7 +220,7 @@ export function TopNav({
       if (lower.includes("feedback")) return "/professor/feedback";
       return "/professor/notifications";
     } else {
-      if (lower.includes("team") || lower.includes("message")) return "/team-chat";
+      if (lower.includes("team") || lower.includes("message")) return "/teams";
       if (lower.includes("project") || lower.includes("draft") || lower.includes("submission") || lower.includes("similarity") || lower.includes("response")) return "/project-management";
       return "/notifications";
     }

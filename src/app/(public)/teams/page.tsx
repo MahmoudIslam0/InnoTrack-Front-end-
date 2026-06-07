@@ -81,13 +81,7 @@ export default function TeamsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [team, setTeam] = useState<Team | null>(null);
   const [requests, setRequests] = useState<JoinRequest[]>([]);
-  const [activeView, setActiveView] = useState<"overview" | "chat">(() => {
-    if (typeof window !== "undefined") {
-      const stored = sessionStorage.getItem("teamsActiveView");
-      return stored === "overview" || stored === "chat" ? stored : "overview";
-    }
-    return "overview";
-  });
+  const [activeView, setActiveView] = useState<"overview" | "chat">("overview");
   const [showHint, setShowHint] = useState(false);
   const [joinCodeInput, setJoinCodeInput] = useState("");
   const [newTeamName, setNewTeamName] = useState("");
@@ -110,6 +104,7 @@ export default function TeamsPage() {
     togglePin: realTogglePin,
     reactToMessage: realReactToMessage,
     replyToMessage: realReplyToMessage,
+    uploadFile: realUploadFile,
     isLoading: isChatLoading
   } = useTeamChat(team ? Number(team.id) : null);
 
@@ -183,9 +178,6 @@ export default function TeamsPage() {
 
   const handleActiveViewChange = (view: "overview" | "chat") => {
     setActiveView(view);
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem("teamsActiveView", view);
-    }
   };
 
   useEffect(() => {
@@ -468,7 +460,7 @@ export default function TeamsPage() {
 
           {activeView === "overview" ? (
             <section className="dashboard-surface overflow-hidden">
-              <div className="p-5 md:p-6 border-b border-white/20 dark:border-white/10 dashboard-surface">
+              <div className="p-5 md:p-6 border-b border-border/50">
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex min-w-0 flex-col gap-1.5">
                     {isEditingTeamName ? (
@@ -750,6 +742,7 @@ export default function TeamsPage() {
               onTogglePin={realTogglePin}
               onReactToMessage={realReactToMessage}
               onReplyToMessage={realReplyToMessage}
+              onUploadFile={realUploadFile}
               isLoading={isChatLoading}
               className="h-[calc(100vh-260px)] min-h-0"
             />
@@ -874,7 +867,7 @@ function MetricCard({
   valueColorClass?: string;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-white/20 dark:border-white/10 dashboard-surface py-5 min-w-[110px] shadow-sm">
+    <div className="flex flex-col items-center justify-center rounded-xl border border-border/50 bg-background/50 py-5 min-w-[110px] shadow-sm">
       <p className={`text-[40px] leading-none font-bold ${valueColorClass}`}>{value}</p>
       <p className="mt-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">{label}</p>
     </div>

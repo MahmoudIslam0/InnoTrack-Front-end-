@@ -18,6 +18,11 @@ export interface TeamChatMessage {
   isPinned?: boolean;
   parentMessageId?: number | null;
   reactions?: { userId: number; emoji: string }[];
+  file?: {
+    name: string;
+    size: string;
+    type: "pdf" | "image" | "document";
+  };
 }
 
 export interface TeamChatMember {
@@ -52,7 +57,8 @@ export function useTeamChat(teamId: number | null) {
             name: m.fullName,
             initials: m.initials,
             role: (m.role as "Professor" | "Student") || "Student",
-            online: true, // we could manage online presence with SignalR later
+            online: false, 
+            lastOnlineAt: m.lastOnlineAt
           }));
           setMembers(formattedMembers);
           membersRef.current = formattedMembers;
@@ -232,8 +238,9 @@ export function useTeamChat(teamId: number | null) {
     });
 
     connection.on("UserOffline", (userId: number) => {
-      setMembers(prev => prev.map(m => m.id === userId.toString() ? { ...m, online: false } : m));
-      membersRef.current = membersRef.current.map(m => m.id === userId.toString() ? { ...m, online: false } : m);
+      const now = new Date().toISOString();
+      setMembers(prev => prev.map(m => m.id === userId.toString() ? { ...m, online: false, lastOnlineAt: now } : m));
+      membersRef.current = membersRef.current.map(m => m.id === userId.toString() ? { ...m, online: false, lastOnlineAt: now } : m);
     });
 
     connection.onreconnecting(() => setIsConnected(false));
@@ -349,6 +356,43 @@ export function useTeamChat(teamId: number | null) {
     }
   }, [connection, isConnected, teamId]);
 
+  const uploadFile = useCallback(async (file: File) => {
+    if (!teamId) return;
+    const toastId = toast.loading(`Uploading ${file.name}...`);
+    try {
+      const result = await studentApi.uploadChatFile(teamId, file);
+      toast.success("File uploaded successfully", { id: toastId });
+      // Inject the returned message into local state so it appears immediately
+      if (result) {
+        const authorName = result.authorName || result.senderName || "Me";
+        const ext = file.name.split(".").pop()?.toLowerCase() || "";
+        const fileType: "image" | "pdf" | "document" =
+          ["png", "jpg", "jpeg", "gif", "webp", "svg"].includes(ext)
+            ? "image"
+            : ext === "pdf"
+            ? "pdf"
+            : "document";
+        const sizeKb = (file.size / 1024).toFixed(0);
+        const sizeLabel = file.size > 1024 * 1024 ? `${(file.size / 1048576).toFixed(1)} MB` : `${sizeKb} KB`;
+        const newMsg: TeamChatMessage = {
+          id: (result.id || `file-${Date.now()}`).toString(),
+          backendId: result.id,
+          authorId: result.senderId || 0,
+          author: authorName,
+          initials: authorName.substring(0, 2).toUpperCase(),
+          role: "Student",
+          content: result.fileUrl || result.content || "",
+          timestamp: new Date(result.sentAt || Date.now()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          status: "sent",
+          file: { name: file.name, size: sizeLabel, type: fileType },
+        };
+        setMessages(prev => [...prev, newMsg]);
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to upload file", { id: toastId });
+    }
+  }, [teamId]);
+
   return {
     messages,
     members,
@@ -361,5 +405,6 @@ export function useTeamChat(teamId: number | null) {
     togglePin,
     reactToMessage,
     replyToMessage,
+    uploadFile,
   };
 }

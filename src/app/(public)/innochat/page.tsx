@@ -13,7 +13,10 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+
+const AI_CHAT_URL = process.env.NEXT_PUBLIC_AI_CHAT_URL;
 
 interface Message {
   id: string;
@@ -33,57 +36,136 @@ interface ProjectContext {
   objectives?: string;
 }
 
-const suggestedPrompts = [
+const getSuggestedPrompts = (projectTitle?: string) => [
   {
     icon: Lightbulb,
-    text: "Help me improve my project idea",
+    text: "Explore AI Project Ideas",
     color: "text-yellow-600 dark:text-yellow-400",
     bg: "bg-yellow-500/10",
     border: "border-yellow-500/20",
   },
   {
-    icon: FileText,
-    text: "Suggest similar existing projects",
-    color: "text-blue-600 dark:text-blue-400",
-    bg: "bg-blue-500/10",
-    border: "border-blue-500/20",
+    icon: Sparkles,
+    text: `Generate Features For "${projectTitle || "My Project"}"`,
+    color: "text-purple-600 dark:text-purple-400",
+    bg: "bg-purple-500/10",
+    border: "border-purple-500/20",
   },
   {
     icon: TrendingUp,
-    text: "How can I increase originality?",
+    text: "Enhance My Graduation Project",
     color: "text-green-600 dark:text-green-400",
     bg: "bg-green-500/10",
     border: "border-green-500/20",
   },
   {
-    icon: Sparkles,
-    text: "Review my problem statement",
-    color: "text-purple-600 dark:text-purple-400",
-    bg: "bg-purple-500/10",
-    border: "border-purple-500/20",
+    icon: FileText,
+    text: "Recommend a FinTech Tech Stack",
+    color: "text-blue-600 dark:text-blue-400",
+    bg: "bg-blue-500/10",
+    border: "border-blue-500/20",
   },
 ];
 
+// Detects lines that are numbered options the AI wants the user to choose from.
+// Matches: "1️⃣ Generate Features", "1. Generate Features", "1) Generate Features", "[1] Generate Features"
+const OPTION_LINE_RE = /^(?:\d️⃣|\d[.):\]]|\[\d\])\s+(.+)$/u;
+
+function MessageContent({
+  content,
+  onOptionClick,
+}: {
+  content: string;
+  onOptionClick: (text: string) => void;
+}) {
+  const lines = content.split("\n");
+  const elements: React.ReactNode[] = [];
+  let textBuffer: string[] = [];
+  let optionCount = 0;
+
+  const flushText = (key: string) => {
+    if (textBuffer.length > 0) {
+      // Trim trailing empty lines from text block
+      while (textBuffer.length > 0 && textBuffer[textBuffer.length - 1].trim() === "") {
+        textBuffer.pop();
+      }
+      if (textBuffer.length > 0) {
+        elements.push(
+          <p key={key} className="text-sm whitespace-pre-wrap leading-relaxed">
+            {textBuffer.join("\n")}
+          </p>
+        );
+      }
+      textBuffer = [];
+    }
+  };
+
+  lines.forEach((line, idx) => {
+    const match = line.match(OPTION_LINE_RE);
+    if (match) {
+      flushText(`text-${idx}`);
+      optionCount++;
+      const num = optionCount;
+      const label = match[1].trim();
+      elements.push(
+        <button
+          key={`opt-${idx}`}
+          onClick={() => onOptionClick(label)}
+          className="flex items-center gap-2.5 w-full text-left mt-1.5 px-3.5 py-2.5 rounded-xl border border-indigo-400/40 bg-indigo-50/60 dark:bg-indigo-950/30 hover:bg-indigo-100/80 dark:hover:bg-indigo-900/40 hover:border-indigo-500/60 transition-all duration-150 group shadow-sm hover:shadow-md"
+        >
+          <span className="w-6 h-6 rounded-lg bg-indigo-600 text-white text-[11px] font-bold flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform">
+            {num}
+          </span>
+          <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">{label}</span>
+        </button>
+      );
+    } else {
+      textBuffer.push(line);
+    }
+  });
+
+  flushText("text-end");
+
+  return <div className="space-y-0.5">{elements}</div>;
+}
+
 function InnoChatContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { user: authUser } = useAuth();
+  const [userId, setUserId] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("accessToken");
+      if (token) {
+        try {
+          const base64Url = token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+              return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          }).join(''));
+          const payload = JSON.parse(jsonPayload);
+          const id = payload.nameid || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || payload.sub;
+          if (id) {
+            setUserId(id.toString());
+          }
+        } catch (e) {
+          console.error("Failed to parse token payload:", e);
+        }
+      }
+    }
+  }, []);
 
   const projectContextRaw = searchParams.get("context");
   const projectContext = projectContextRaw
     ? JSON.parse(projectContextRaw)
     : null;
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      role: "assistant",
-      content: projectContext?.title
-        ? `Hello! I'm InnoChat, your AI assistant for graduation projects. I can see you're working on "${projectContext.title}". How can I help you today? I can:\n\n• Provide feedback on your project idea\n• Suggest improvements to increase originality\n• Help refine your problem statement and objectives\n• Recommend relevant technologies\n• Check for similar existing projects\n\nWhat would you like to discuss?`
-        : "Hello! I'm InnoChat, your AI assistant for graduation projects. I can help you brainstorm ideas, refine your proposal, check originality, and provide guidance throughout your project journey. How can I assist you today?",
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [isTypingGreeting, setIsTypingGreeting] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -93,66 +175,53 @@ function InnoChatContent() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isTyping]);
 
-  const generateAIResponse = (userMessage: string): string => {
-    const lowerMessage = userMessage.toLowerCase();
+  useEffect(() => {
+    const greetingText = projectContext?.title
+      ? `Hello! I'm InnoChat, your AI assistant for graduation projects. I can see you're working on "${projectContext.title}". How can I help you today? I can:\n\n• Provide feedback on your project idea\n• Suggest improvements to increase originality\n• Help refine your problem statement and objectives\n• Recommend relevant technologies\n• Check for similar existing projects\n\nWhat would you like to discuss?`
+      : "Hello! I'm InnoChat, your AI assistant for graduation projects. I can help you brainstorm ideas, refine your proposal, check originality, and provide guidance throughout your project journey. How can I assist you today?";
 
-    // Context-aware responses based on project data
-    if (
-      projectContext?.title &&
-      (lowerMessage.includes("project") || lowerMessage.includes("idea"))
-    ) {
-      return `Based on your project "${projectContext.title}" in the ${projectContext.category || "selected"} category, here are my thoughts:\n\n✓ Your project addresses an important need in this domain\n✓ The use of ${projectContext.technologies || "modern technologies"} is appropriate\n✓ Consider adding more specific metrics to measure success\n\nWould you like me to suggest ways to make your project more original or help you refine specific sections?`;
-    }
+    // Show initial typing indicator
+    setIsTyping(true);
 
-    if (
-      lowerMessage.includes("originality") ||
-      lowerMessage.includes("original")
-    ) {
-      return `To increase your project's originality score:\n\n1. **Add Unique Features**: Look for gaps in existing solutions and fill them with innovative features\n2. **Novel Technology Combinations**: Try combining technologies in new ways\n3. **Specific Target Audience**: Focus on an underserved or niche user group\n4. **Measurable Innovation**: Define clear metrics that show improvement over existing solutions\n5. **Implementation Approach**: Use a unique methodology or framework\n\nWould you like me to analyze any specific aspect of your project?`;
-    }
+    const timer = setTimeout(() => {
+      setIsTyping(false);
+      
+      const greetingId = "1";
+      setMessages([
+        {
+          id: greetingId,
+          role: "assistant",
+          content: "",
+          timestamp: new Date(),
+        },
+      ]);
 
-    if (
-      lowerMessage.includes("problem") ||
-      lowerMessage.includes("statement")
-    ) {
-      return `A strong problem statement should:\n\n✓ Clearly define the issue you're addressing\n✓ Explain why current solutions are inadequate\n✓ Show the impact of the problem with data/statistics\n✓ Identify who is affected by this problem\n✓ Be specific and measurable\n\n${projectContext?.problemStatement ? `Looking at your current problem statement, consider making it more specific by adding concrete examples or statistics.` : "Would you like help drafting your problem statement?"}`;
-    }
+      let charIndex = 0;
+      const interval = setInterval(() => {
+        setMessages((prev) => {
+          if (prev.length === 0) return prev;
+          const copy = [...prev];
+          const greetingMsg = copy.find((m) => m.id === greetingId);
+          if (greetingMsg) {
+            greetingMsg.content = greetingText.slice(0, charIndex + 1);
+          }
+          return copy;
+        });
 
-    if (lowerMessage.includes("similar") || lowerMessage.includes("existing")) {
-      return `I can help you find similar projects and differentiate yours. Here's what to focus on:\n\n1. **Search Strategy**: Look for projects in academic databases, GitHub, and research papers\n2. **Key Differences**: Document what makes your approach unique\n3. **Technology Stack**: Modern/different tech can increase originality\n4. **Scope & Scale**: Different target users or use cases\n5. **Innovation Points**: Novel algorithms, methods, or integrations\n\nWould you like specific suggestions for your project category?`;
-    }
+        charIndex++;
+        if (charIndex >= greetingText.length) {
+          clearInterval(interval);
+          setIsTypingGreeting(false);
+        }
+      }, 10);
 
-    if (lowerMessage.includes("improve") || lowerMessage.includes("better")) {
-      return `Here are some ways to improve your project:\n\n��� **Scope Enhancement**: Add advanced features like analytics, AI integration, or real-time capabilities\n🎯 **User Experience**: Focus on intuitive design and accessibility\n🔧 **Technical Depth**: Implement complex algorithms or architectures\n📱 **Platform Expansion**: Consider web + mobile, or cross-platform solutions\n🔐 **Security & Privacy**: Add robust security features\n⚡ **Performance**: Optimize for speed and scalability\n\nWhich area would you like to focus on?`;
-    }
+      return () => clearInterval(interval);
+    }, 1000);
 
-    if (
-      lowerMessage.includes("supervisor") ||
-      lowerMessage.includes("professor")
-    ) {
-      return `When choosing a supervisor:\n\n1. **Match Expertise**: Look for professors specializing in your project domain\n2. **Review Their Work**: Check their recent publications and projects\n3. **Availability**: Ensure they have slots available\n4. **Communication Style**: Consider their mentoring approach\n5. **Project Alignment**: Their research interests should align with your goals\n\nIn your proposal, clearly explain why their expertise is valuable for your project. Would you like help drafting your supervisor proposal?`;
-    }
-
-    if (
-      lowerMessage.includes("technologies") ||
-      lowerMessage.includes("tech stack")
-    ) {
-      return `Choosing the right technologies:\n\n**Frontend**: React, Vue, Angular (web) | React Native, Flutter (mobile)\n**Backend**: Node.js, Python (Django/Flask), Java (Spring)\n**Database**: PostgreSQL, MongoDB, Firebase\n**AI/ML**: TensorFlow, PyTorch, scikit-learn\n**Cloud**: AWS, Google Cloud, Azure\n**DevOps**: Docker, Kubernetes, CI/CD pipelines\n\n${projectContext?.technologies ? `Your current stack (${projectContext.technologies}) is solid.` : ""} Consider adding technologies that differentiate your project or solve specific challenges. What's your project focus?`;
-    }
-
-    // Default responses
-    const defaultResponses = [
-      "That's a great question! Could you provide more details about which aspect of your project you'd like to focus on?",
-      "I'd be happy to help with that. Let me know more about your specific needs or concerns.",
-      "Interesting point! To give you the best advice, could you share more context about your project requirements?",
-    ];
-
-    return defaultResponses[
-      Math.floor(Math.random() * defaultResponses.length)
-    ];
-  };
+    return () => clearTimeout(timer);
+  }, [projectContext?.title]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -169,21 +238,62 @@ function InnoChatContent() {
     setInput("");
     setIsTyping(true);
 
-    // Simulate AI thinking time
-    setTimeout(
-      () => {
-        const aiResponse: Message = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: generateAIResponse(input),
-          timestamp: new Date(),
-        };
+    const isFirstUserMessage = !messages.some((m) => m.role === "user");
+    let apiMessage = input;
+    if (isFirstUserMessage && projectContext?.title) {
+      apiMessage = `[System Context: The student is working on a project titled "${projectContext.title}". Category: "${projectContext.category || ""}". Technologies: "${projectContext.technologies || ""}". Description: "${projectContext.description || ""}". Problem Statement: "${projectContext.problemStatement || ""}". Objectives: "${projectContext.objectives || ""}". Please keep this project details in mind.]\n\nQuestion: ${input}`;
+    }
 
-        setMessages((prev) => [...prev, aiResponse]);
-        setIsTyping(false);
-      },
-      1000 + Math.random() * 1000,
-    );
+    if (!AI_CHAT_URL) {
+      setIsTyping(false);
+      const aiResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "Error: AI Chat URL is not configured. Please define NEXT_PUBLIC_AI_CHAT_URL in your environment.",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, aiResponse]);
+      return;
+    }
+
+    try {
+      const response = await fetch(AI_CHAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: userId || authUser?.name || "anonymous",
+          message: apiMessage,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to get response from AI");
+      }
+
+      const data = await response.json();
+      const aiResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: data.response || "Sorry, I couldn't generate a response.",
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, aiResponse]);
+    } catch (err) {
+      console.error("InnoChat API Error:", err);
+      
+      const aiResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "Sorry, I am having trouble connecting to InnoChat right now. Please check your connection or try again later.",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, aiResponse]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleSuggestedPrompt = (promptText: string) => {
@@ -215,7 +325,7 @@ function InnoChatContent() {
           <Button
             variant="ghost"
             size="sm"
-            // onClick={() => router(-1)}
+            onClick={() => router.back()}
             className="mr-2 hover:bg-muted/40 dark:bg-muted/20"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -285,9 +395,19 @@ function InnoChatContent() {
                         : "bg-card/80 dark:bg-card/60 text-foreground rounded-2xl rounded-tl-md border border-border/50 shadow-md"
                     } px-5 py-3.5`}
                   >
-                    <p className="text-sm whitespace-pre-wrap leading-relaxed">
-                      {message.content}
-                    </p>
+                    {message.role === "assistant" ? (
+                      <MessageContent
+                        content={message.content}
+                        onOptionClick={(text) => {
+                          setInput(text);
+                          textareaRef.current?.focus();
+                        }}
+                      />
+                    ) : (
+                      <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                        {message.content}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -319,19 +439,20 @@ function InnoChatContent() {
             )}
 
             {/* Suggested Prompts (shown when no user messages yet) */}
-            {messages.length === 1 && messages[0].role === "assistant" && (
+            {messages.length === 1 && messages[0].role === "assistant" && !isTypingGreeting && (
               <div className="mt-8">
-                <p className="text-sm font-medium text-muted-foreground mb-4 text-center">
+                <p className="text-sm font-medium text-muted-foreground mb-4 text-center animate-in fade-in duration-700">
                   Suggested prompts:
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {suggestedPrompts.map((prompt, index) => {
+                  {getSuggestedPrompts(projectContext?.title).map((prompt, index) => {
                     const Icon = prompt.icon;
                     return (
                       <button
                         key={index}
                         onClick={() => handleSuggestedPrompt(prompt.text)}
-                        className="backdrop-blur-sm bg-card/60 dark:bg-card/40 hover:bg-card/80 dark:bg-card/60 border border-border/50 rounded-xl p-4 text-left hover:shadow-lg transition-all"
+                        className="backdrop-blur-sm bg-card/60 dark:bg-card/40 hover:bg-card/80 dark:bg-card/60 border border-border/50 rounded-xl p-4 text-left hover:shadow-lg transition-all animate-in fade-in slide-in-from-bottom-3 duration-500 fill-mode-both"
+                        style={{ animationDelay: `${index * 120}ms` }}
                       >
                         <div className="flex items-center gap-3">
                           <div
@@ -364,9 +485,10 @@ function InnoChatContent() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Ask me anything about your graduation project..."
+                  placeholder={isTypingGreeting ? "Please wait while InnoChat initializes..." : "Ask me anything about your graduation project..."}
                   className="min-h-15 max-h-50 resize-none pr-24 backdrop-blur-sm bg-card/80 dark:bg-card/60 border-border/50 shadow-md"
                   rows={1}
+                  disabled={isTypingGreeting}
                 />
                 <div className="absolute bottom-3 right-3 text-xs text-muted-foreground bg-card/60 dark:bg-card/40 px-2 py-1 rounded">
                   Press Enter to send
@@ -374,7 +496,7 @@ function InnoChatContent() {
               </div>
               <Button
                 onClick={handleSend}
-                disabled={!input.trim() || isTyping}
+                disabled={!input.trim() || isTyping || isTypingGreeting}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white h-[60px] px-6 shadow-lg"
               >
                 <Send className="w-5 h-5" />
