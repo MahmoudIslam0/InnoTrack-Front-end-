@@ -43,6 +43,12 @@ export function useProfessorTeamChat(teamId: number | null) {
           isPinned: msg.isPinned,
           parentMessageId: msg.parentMessageId,
           reactions: msg.reactions || [],
+          file: msg.attachment ? {
+            name: msg.attachment.originalName || msg.attachment.OriginalName,
+            backendFileName: msg.attachment.fileName || msg.attachment.FileName,
+            size: `${Math.round((msg.attachment.fileSize || msg.attachment.FileSize || 0) / 1024)} KB`,
+            type: (msg.attachment.contentType || msg.attachment.ContentType || "").includes("image") ? "image" : (msg.attachment.contentType || msg.attachment.ContentType || "").includes("pdf") ? "pdf" : "document",
+          } : undefined
         };
       });
       setMessages(formattedMessages);
@@ -93,6 +99,7 @@ export function useProfessorTeamChat(teamId: number | null) {
       const member = membersRef.current.find(m => m.id === senderId?.toString());
 
       const authorName = member?.name || data.authorName || data.AuthorName || "Unknown";
+      const attachment = data.attachment || data.Attachment;
 
       const newMsg: TeamChatMessage = {
         id: (data.id || `msg-${Date.now()}-${Math.random()}`).toString(),
@@ -108,6 +115,12 @@ export function useProfessorTeamChat(teamId: number | null) {
         isPinned: data.isPinned,
         parentMessageId: data.parentMessageId,
         reactions: data.reactions || [],
+        file: attachment ? {
+          name: attachment.originalName || attachment.OriginalName,
+          backendFileName: attachment.fileName || attachment.FileName,
+          size: `${Math.round((attachment.fileSize || attachment.FileSize || 0) / 1024)} KB`,
+          type: (attachment.contentType || attachment.ContentType || "").includes("image") ? "image" : (attachment.contentType || attachment.ContentType || "").includes("pdf") ? "pdf" : "document",
+        } : undefined
       };
 
       setMessages((prev) => {
