@@ -36,7 +36,7 @@ export interface TeamChatMember {
   online?: boolean;
 }
 
-export function useTeamChat(teamId: number | null) {
+export function useTeamChat(teamId: number | null, onTeamUpdated?: () => void) {
   const { user } = useAuth();
   const router = useRouter();
   const [messages, setMessages] = useState<TeamChatMessage[]>([]);
@@ -273,15 +273,18 @@ export function useTeamChat(teamId: number | null) {
       } else {
         setMembers(prev => prev.filter(m => m.id !== removedMemberId.toString()));
         membersRef.current = membersRef.current.filter(m => m.id !== removedMemberId.toString());
+        if (onTeamUpdated) onTeamUpdated();
       }
     });
 
     connection.on("TeamUpdated", () => {
       fetchTeamData(true);
+      if (onTeamUpdated) onTeamUpdated();
     });
 
     connection.on("TeamRenamed", (newName: string) => {
       setProjectTitle(newName);
+      if (onTeamUpdated) onTeamUpdated();
     });
 
     connection.on("TeamDeleted", () => {

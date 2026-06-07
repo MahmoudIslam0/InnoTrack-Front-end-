@@ -109,6 +109,26 @@ export default function TeamsPage() {
     onConfirm: () => {},
   });
 
+  // Periodic refresh of team data to detect new members joining
+  const refreshTeamData = useCallback(async () => {
+    try {
+      const [teamResult, requestsResult] = await Promise.allSettled([
+        studentApi.getMyTeam(),
+        studentApi.getPendingJoinRequests(),
+      ]);
+
+      if (teamResult.status === "fulfilled" && teamResult.value) {
+        const mappedTeam = mapTeam(teamResult.value);
+        setTeams([mappedTeam]);
+        setTeam(mappedTeam);
+      }
+
+      if (requestsResult.status === "fulfilled") {
+        setRequests(requestsResult.value.map(mapRequest));
+      }
+    } catch {}
+  }, []);
+
   const { 
     messages: realChatMessages, 
     members: realChatMembers, 
@@ -120,7 +140,7 @@ export default function TeamsPage() {
     replyToMessage: realReplyToMessage,
     uploadFile: realUploadFile,
     isLoading: isChatLoading
-  } = useTeamChat(team ? Number(team.id) : null);
+  } = useTeamChat(team ? Number(team.id) : null, refreshTeamData);
 
   useEffect(() => {
     const userStr = localStorage.getItem("user");
@@ -164,25 +184,7 @@ export default function TeamsPage() {
     };
   }, []);
 
-  // Periodic refresh of team data to detect new members joining
-  const refreshTeamData = useCallback(async () => {
-    try {
-      const [teamResult, requestsResult] = await Promise.allSettled([
-        studentApi.getMyTeam(),
-        studentApi.getPendingJoinRequests(),
-      ]);
 
-      if (teamResult.status === "fulfilled" && teamResult.value) {
-        const mappedTeam = mapTeam(teamResult.value);
-        setTeams([mappedTeam]);
-        setTeam(mappedTeam);
-      }
-
-      if (requestsResult.status === "fulfilled") {
-        setRequests(requestsResult.value.map(mapRequest));
-      }
-    } catch {}
-  }, []);
 
   useEffect(() => {
     if (!team) return;
