@@ -18,7 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-const AI_CHAT_URL = process.env.NEXT_PUBLIC_AI_CHAT_URL;
+const AI_CHAT_URL = process.env.NEXT_PUBLIC_AI_CHAT_URL || "https://bat-6-graduation-project-v1-2.hf.space/chat";
 
 interface Message {
   id: string;
