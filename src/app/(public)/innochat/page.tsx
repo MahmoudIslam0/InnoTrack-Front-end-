@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const AI_CHAT_URL = process.env.NEXT_PUBLIC_AI_CHAT_URL;
 
@@ -67,9 +69,26 @@ const getSuggestedPrompts = (projectTitle?: string) => [
   },
 ];
 
-// Detects lines that are numbered options the AI wants the user to choose from.
-// Matches: "1️⃣ Generate Features", "1. Generate Features", "1) Generate Features", "[1] Generate Features"
-const OPTION_LINE_RE = /^(?:\d️⃣|\d[.):\]]|\[\d\])\s+(.+)$/u;
+function StaggeredTextFade({ text }: { text: string }) {
+  const tokens = text.split(/(\s+)/);
+  let wordCount = 0;
+  return (
+    <span className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground/90 block">
+      {tokens.map((token, i) => {
+        if (token.trim() !== "") wordCount++;
+        return (
+          <span
+            key={i}
+            className="animate-in fade-in fill-mode-backwards"
+            style={{ animationDuration: "500ms", animationDelay: `${wordCount * 30}ms` }}
+          >
+            {token}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
 
 function MessageContent({
   content,
@@ -82,18 +101,44 @@ function MessageContent({
   const elements: React.ReactNode[] = [];
   let textBuffer: string[] = [];
   let optionCount = 0;
+  let isInteractiveSection = false;
 
   const flushText = (key: string) => {
     if (textBuffer.length > 0) {
-      // Trim trailing empty lines from text block
-      while (textBuffer.length > 0 && textBuffer[textBuffer.length - 1].trim() === "") {
-        textBuffer.pop();
+      // Filter out garbage lines like "_____________________" or "None"
+      const cleanedBuffer = textBuffer.filter(line => !line.match(/^_{3,}$/) && line.trim() !== "None");
+
+      while (cleanedBuffer.length > 0 && cleanedBuffer[cleanedBuffer.length - 1].trim() === "") {
+        cleanedBuffer.pop();
       }
-      if (textBuffer.length > 0) {
+
+      if (cleanedBuffer.length > 0) {
+        const markdownText = cleanedBuffer.join("\n");
         elements.push(
-          <p key={key} className="text-sm whitespace-pre-wrap leading-relaxed">
-            {textBuffer.join("\n")}
-          </p>
+          <div key={key} className="space-y-1 animate-in fade-in duration-700 fill-mode-backwards">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                p: ({ node, ...props }) => <p className="text-[15px] leading-relaxed mb-3 last:mb-0 text-foreground/90 whitespace-pre-wrap" {...props} />,
+                ul: ({ node, ...props }) => <ul className="list-disc list-outside ml-5 mb-3 space-y-1.5 marker:text-primary" {...props} />,
+                ol: ({ node, ...props }) => <ol className="list-decimal list-outside ml-5 mb-3 space-y-1.5 marker:text-primary" {...props} />,
+                li: ({ node, ...props }) => <li className="text-[15px] leading-relaxed text-foreground/90" {...props} />,
+                h1: ({ node, ...props }) => <h1 className="text-xl font-bold mt-5 mb-2 text-foreground" {...props} />,
+                h2: ({ node, ...props }) => <h2 className="text-lg font-semibold mt-4 mb-2 text-foreground" {...props} />,
+                h3: ({ node, ...props }) => <h3 className="text-[15px] font-semibold mt-3 mb-1 text-foreground" {...props} />,
+                strong: ({ node, ...props }) => <strong className="font-semibold text-foreground" {...props} />,
+                a: ({ node, ...props }) => <a className="text-primary hover:underline" {...props} />,
+                code: ({ node, inline, ...props }: any) => 
+                  inline ? (
+                    <code className="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-sm font-mono" {...props} />
+                  ) : (
+                    <pre className="bg-muted text-foreground p-3 rounded-xl overflow-x-auto text-sm font-mono border border-border/50 mb-3" {...props} />
+                  ),
+              }}
+            >
+              {markdownText}
+            </ReactMarkdown>
+          </div>
         );
       }
       textBuffer = [];
@@ -101,7 +146,19 @@ function MessageContent({
   };
 
   lines.forEach((line, idx) => {
-    const match = line.match(OPTION_LINE_RE);
+    const lowerLine = line.toLowerCase();
+    if (lowerLine.includes("project idea") || lowerLine.includes("choose what you want") || lowerLine.includes("you can also type")) {
+      isInteractiveSection = true;
+    } else if (lowerLine.includes("feature") || lowerLine.includes("requirement") || lowerLine.includes("step")) {
+      isInteractiveSection = false;
+    }
+
+    const emojiMatch = line.match(/^(?:\d️⃣)\s+(.+)$/u);
+    const bulletMatch = isInteractiveSection ? line.match(/^[-*•]\s+(.+)$/u) : null;
+    const numberMatch = isInteractiveSection ? line.match(/^(?:\d[.):\]]|\[\d\])\s+(.+)$/u) : null;
+    
+    const match = emojiMatch || bulletMatch || numberMatch;
+
     if (match) {
       flushText(`text-${idx}`);
       optionCount++;
@@ -111,12 +168,12 @@ function MessageContent({
         <button
           key={`opt-${idx}`}
           onClick={() => onOptionClick(label)}
-          className="flex items-center gap-2.5 w-full text-left mt-1.5 px-3.5 py-2.5 rounded-xl border border-indigo-400/40 bg-indigo-50/60 dark:bg-indigo-950/30 hover:bg-indigo-100/80 dark:hover:bg-indigo-900/40 hover:border-indigo-500/60 transition-all duration-150 group shadow-sm hover:shadow-md"
+          className="flex items-center gap-2.5 w-full text-left mt-1.5 px-3.5 py-2.5 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 hover:border-primary/40 transition-all duration-150 group shadow-sm hover:shadow-md"
         >
-          <span className="w-6 h-6 rounded-lg bg-indigo-600 text-white text-[11px] font-bold flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform">
+          <span className="w-6 h-6 rounded-lg bg-primary text-primary-foreground text-[12px] font-bold flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform">
             {num}
           </span>
-          <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">{label}</span>
+          <span className="text-[15px] font-semibold text-foreground/90">{label}</span>
         </button>
       );
     } else {
@@ -193,31 +250,12 @@ function InnoChatContent() {
         {
           id: greetingId,
           role: "assistant",
-          content: "",
+          content: greetingText,
           timestamp: new Date(),
         },
       ]);
-
-      let charIndex = 0;
-      const interval = setInterval(() => {
-        setMessages((prev) => {
-          if (prev.length === 0) return prev;
-          const copy = [...prev];
-          const greetingMsg = copy.find((m) => m.id === greetingId);
-          if (greetingMsg) {
-            greetingMsg.content = greetingText.slice(0, charIndex + 1);
-          }
-          return copy;
-        });
-
-        charIndex++;
-        if (charIndex >= greetingText.length) {
-          clearInterval(interval);
-          setIsTypingGreeting(false);
-        }
-      }, 10);
-
-      return () => clearInterval(interval);
+      
+      setIsTypingGreeting(false);
     }, 1000);
 
     return () => clearTimeout(timer);
@@ -273,10 +311,24 @@ function InnoChatContent() {
       }
 
       const data = await response.json();
+      let rawContent = data.response || "Sorry, I couldn't generate a response.";
+      
+      const typeIndex = rawContent.toLowerCase().indexOf("you can also type");
+      if (typeIndex !== -1) {
+        const beforeType = rawContent.substring(0, typeIndex);
+        const lastNewline = beforeType.lastIndexOf("\n");
+        if (lastNewline !== -1) {
+           rawContent = rawContent.substring(0, lastNewline).trim();
+        } else {
+           rawContent = beforeType.trim();
+        }
+        rawContent = rawContent.replace(/👉\s*$/, "").trim();
+      }
+
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: data.response || "Sorry, I couldn't generate a response.",
+        content: rawContent,
         timestamp: new Date(),
       };
 
@@ -373,7 +425,7 @@ function InnoChatContent() {
                 <div
                   className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg ${
                     message.role === "assistant"
-                      ? "bg-indigo-600"
+                      ? "bg-primary"
                       : "bg-gray-800"
                   }`}
                 >
@@ -391,20 +443,24 @@ function InnoChatContent() {
                   <div
                     className={`inline-block max-w-[85%] backdrop-blur-sm ${
                       message.role === "user"
-                        ? "bg-indigo-600 text-primary-foreground rounded-2xl rounded-tr-md shadow-lg"
+                        ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-md shadow-lg"
                         : "bg-card/80 dark:bg-card/60 text-foreground rounded-2xl rounded-tl-md border border-border/50 shadow-md"
                     } px-5 py-3.5`}
                   >
                     {message.role === "assistant" ? (
-                      <MessageContent
-                        content={message.content}
-                        onOptionClick={(text) => {
-                          setInput(text);
-                          textareaRef.current?.focus();
-                        }}
-                      />
+                      message.id === "1" ? (
+                        <StaggeredTextFade text={message.content} />
+                      ) : (
+                        <MessageContent
+                          content={message.content}
+                          onOptionClick={(text) => {
+                            setInput(text);
+                            textareaRef.current?.focus();
+                          }}
+                        />
+                      )
                     ) : (
-                      <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                      <p className="text-[15px] whitespace-pre-wrap leading-relaxed">
                         {message.content}
                       </p>
                     )}
@@ -416,21 +472,21 @@ function InnoChatContent() {
             {/* Typing Indicator */}
             {isTyping && (
               <div className="flex gap-4">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-indigo-600 shadow-lg">
-                  <Bot className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-primary shadow-lg">
+                  <Bot className="w-5 h-5 text-primary-foreground" />
                 </div>
                 <div className="bg-card/80 dark:bg-card/60 backdrop-blur-sm rounded-2xl rounded-tl-md px-5 py-3.5 border border-border/50 shadow-md">
                   <div className="flex gap-1.5">
                     <div
-                      className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce"
+                      className="w-2 h-2 bg-primary rounded-full animate-bounce"
                       style={{ animationDelay: "0ms" }}
                     ></div>
                     <div
-                      className="w-2 h-2 bg-purple-500/100 rounded-full animate-bounce"
+                      className="w-2 h-2 bg-primary/70 rounded-full animate-bounce"
                       style={{ animationDelay: "150ms" }}
                     ></div>
                     <div
-                      className="w-2 h-2 bg-pink-500 rounded-full animate-bounce"
+                      className="w-2 h-2 bg-primary/40 rounded-full animate-bounce"
                       style={{ animationDelay: "300ms" }}
                     ></div>
                   </div>

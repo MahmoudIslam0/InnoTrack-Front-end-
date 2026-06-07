@@ -220,13 +220,8 @@ export function TeamChatWorkspace({
         </Button>
       </div>
 
-      <div 
-        className={cn(
-          "grid flex-1 min-h-0 grid-cols-1 transition-all duration-300",
-          isAsideOpen ? "lg:grid-cols-[minmax(0,1fr)_288px]" : "lg:grid-cols-1"
-        )}
-      >
-        <div className="flex min-h-0 flex-col border-r border-border/50 relative bg-gradient-to-b from-transparent to-muted/10">
+      <div className="flex flex-1 min-h-0 w-full overflow-hidden">
+        <div className="flex flex-1 min-w-0 flex-col border-r border-border/50 relative bg-gradient-to-b from-transparent to-muted/10">
           
           <AnimatePresence>
             {pinnedMessages.length > 0 && (
@@ -730,15 +725,17 @@ export function TeamChatWorkspace({
           </div>
         </div>
 
-        <AnimatePresence>
+        <AnimatePresence initial={false}>
         {isAsideOpen && (
           <motion.aside 
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 50, transition: { duration: 0.2 } }}
-            className="bg-card/20 p-6 flex flex-col min-h-0 border-l border-border/50 hidden lg:flex relative"
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 288, opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="bg-card/20 flex flex-col min-h-0 border-l border-border/50 hidden lg:flex relative overflow-hidden shrink-0"
           >
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-muted/5 pointer-events-none" />
+            <div className="w-[288px] p-6 flex flex-col h-full">
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-muted/5 pointer-events-none" />
           <div className="mb-6 flex items-center justify-between relative z-10">
             <div className="flex items-center gap-2">
               <h3 className="text-[13px] font-bold text-foreground uppercase tracking-widest">Team Members</h3>
@@ -823,7 +820,8 @@ export function TeamChatWorkspace({
               )}
             </AnimatePresence>
           </div>
-        </motion.aside>
+            </div>
+          </motion.aside>
         )}
         </AnimatePresence>
       </div>

@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import * as signalR from "@microsoft/signalr";
 import { studentApi, ChatMessageDetailDto, ChatMemberDto } from "@/lib/student-api";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 export interface TeamChatMessage {
   id: string;
@@ -35,6 +37,8 @@ export interface TeamChatMember {
 }
 
 export function useTeamChat(teamId: number | null) {
+  const { user } = useAuth();
+  const router = useRouter();
   const [messages, setMessages] = useState<TeamChatMessage[]>([]);
   const [members, setMembers] = useState<TeamChatMember[]>([]);
   const [projectTitle, setProjectTitle] = useState<string>("");
@@ -44,64 +48,63 @@ export function useTeamChat(teamId: number | null) {
   
   const membersRef = useRef<TeamChatMember[]>([]);
 
+  const fetchTeamData = useCallback(async (isMounted: boolean = true) => {
+    try {
+      setIsLoading(true);
+      const data = await studentApi.getTeamChat();
+      if (isMounted) {
+        const formattedMembers: TeamChatMember[] = data.members.map(m => ({
+          id: m.id.toString(),
+          name: m.fullName,
+          initials: m.initials,
+          role: (m.role as "Professor" | "Student") || "Student",
+          online: false, 
+          lastOnlineAt: m.lastOnlineAt
+        }));
+        setMembers(formattedMembers);
+        membersRef.current = formattedMembers;
+        setProjectTitle(data.projectTitle || "");
+        
+        const formattedMessages: TeamChatMessage[] = data.messages.map(msg => {
+          const member = data.members.find(m => m.id === msg.authorId);
+          return {
+            id: msg.id.toString(),
+            backendId: msg.id,
+            authorId: msg.authorId,
+            author: msg.authorName,
+            initials: member?.initials || msg.authorName.substring(0, 2).toUpperCase(),
+            role: (member?.role as "Professor" | "Student") || "Student",
+            content: msg.content,
+            timestamp: new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            status: "sent",
+            isEdited: msg.isEdited,
+            isDeletedForAll: msg.isDeletedForAll,
+            isPinned: msg.isPinned,
+            parentMessageId: msg.parentMessageId,
+            reactions: msg.reactions || [],
+            file: msg.attachment ? {
+              name: msg.attachment.originalName,
+              backendFileName: msg.attachment.fileName,
+              size: `${Math.round(msg.attachment.fileSize / 1024)} KB`,
+              type: msg.attachment.contentType.includes("image") ? "image" : msg.attachment.contentType.includes("pdf") ? "pdf" : "document",
+            } : undefined
+          };
+        });
+        setMessages(formattedMessages);
+      }
+    } catch (err) {
+      console.error("Failed to load chat history", err);
+      toast.error("Failed to load chat history");
+    } finally {
+      if (isMounted) setIsLoading(false);
+    }
+  }, []);
+
   // Load initial history
   useEffect(() => {
     let isMounted = true;
-    
-    async function fetchHistory() {
-      try {
-        setIsLoading(true);
-        const data = await studentApi.getTeamChat();
-        if (isMounted) {
-          const formattedMembers: TeamChatMember[] = data.members.map(m => ({
-            id: m.id.toString(),
-            name: m.fullName,
-            initials: m.initials,
-            role: (m.role as "Professor" | "Student") || "Student",
-            online: false, 
-            lastOnlineAt: m.lastOnlineAt
-          }));
-          setMembers(formattedMembers);
-          membersRef.current = formattedMembers;
-          setProjectTitle(data.projectTitle || "");
-          
-          const formattedMessages: TeamChatMessage[] = data.messages.map(msg => {
-            const member = data.members.find(m => m.id === msg.authorId);
-            return {
-              id: msg.id.toString(),
-              backendId: msg.id,
-              authorId: msg.authorId,
-              author: msg.authorName,
-              initials: member?.initials || msg.authorName.substring(0, 2).toUpperCase(),
-              role: (member?.role as "Professor" | "Student") || "Student",
-              content: msg.content,
-              timestamp: new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              status: "sent",
-              isEdited: msg.isEdited,
-              isDeletedForAll: msg.isDeletedForAll,
-              isPinned: msg.isPinned,
-              parentMessageId: msg.parentMessageId,
-              reactions: msg.reactions || [],
-              file: msg.attachment ? {
-                name: msg.attachment.originalName,
-                backendFileName: msg.attachment.fileName,
-                size: `${Math.round(msg.attachment.fileSize / 1024)} KB`,
-                type: msg.attachment.contentType.includes("image") ? "image" : msg.attachment.contentType.includes("pdf") ? "pdf" : "document",
-              } : undefined
-            };
-          });
-          setMessages(formattedMessages);
-        }
-      } catch (err) {
-        console.error("Failed to load chat history", err);
-        toast.error("Failed to load chat history");
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    }
-
     if (teamId) {
-      fetchHistory();
+      fetchTeamData(isMounted);
     } else {
       setIsLoading(false);
     }
@@ -257,9 +260,33 @@ export function useTeamChat(teamId: number | null) {
       membersRef.current = membersRef.current.map(m => m.id === userId.toString() ? { ...m, online: false, lastOnlineAt: now } : m);
     });
 
-    connection.on("MemberRemoved", (userId: number) => {
-      setMembers(prev => prev.filter(m => m.id !== userId.toString()));
-      membersRef.current = membersRef.current.filter(m => m.id !== userId.toString());
+    connection.on("MemberRemoved", (removedMemberId: number) => {
+      let currentUserId = 0;
+      try {
+        const u = JSON.parse(localStorage.getItem("user") || "{}");
+        currentUserId = u.id || 0;
+      } catch (e) {}
+
+      if (currentUserId === removedMemberId) {
+        toast.error("You have been removed from the team.");
+        router.push("/dashboard");
+      } else {
+        setMembers(prev => prev.filter(m => m.id !== removedMemberId.toString()));
+        membersRef.current = membersRef.current.filter(m => m.id !== removedMemberId.toString());
+      }
+    });
+
+    connection.on("TeamUpdated", () => {
+      fetchTeamData(true);
+    });
+
+    connection.on("TeamRenamed", (newName: string) => {
+      setProjectTitle(newName);
+    });
+
+    connection.on("TeamDeleted", () => {
+      toast.error("The team has been deleted by the leader.");
+      router.push("/dashboard");
     });
 
     connection.onreconnecting(() => setIsConnected(false));
@@ -273,8 +300,11 @@ export function useTeamChat(teamId: number | null) {
       connection.off("UserOnline");
       connection.off("UserOffline");
       connection.off("MemberRemoved");
+      connection.off("TeamUpdated");
+      connection.off("TeamRenamed");
+      connection.off("TeamDeleted");
     };
-  }, [connection, teamId]);
+  }, [connection, teamId, fetchTeamData, router]);
 
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim()) return;
