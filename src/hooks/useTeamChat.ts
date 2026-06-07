@@ -53,14 +53,24 @@ export function useTeamChat(teamId: number | null, onTeamUpdated?: () => void) {
       setIsLoading(true);
       const data = await studentApi.getTeamChat();
       if (isMounted) {
-        const formattedMembers: TeamChatMember[] = data.members.map(m => ({
-          id: m.id.toString(),
-          name: m.fullName,
-          initials: m.initials,
-          role: (m.role as "Professor" | "Student") || "Student",
-          online: false, 
-          lastOnlineAt: m.lastOnlineAt
-        }));
+        let currentUserId = 0;
+        try {
+          const u = JSON.parse(localStorage.getItem("user") || "{}");
+          currentUserId = u.id || 0;
+        } catch (e) {}
+
+        const formattedMembers: TeamChatMember[] = data.members.map(m => {
+          const existing = membersRef.current.find(ref => ref.id === m.id.toString());
+          const isCurrentUser = m.id === currentUserId;
+          return {
+            id: m.id.toString(),
+            name: m.fullName,
+            initials: m.initials,
+            role: (m.role as "Professor" | "Student") || "Student",
+            online: isCurrentUser ? true : (existing?.online || false), 
+            lastOnlineAt: m.lastOnlineAt
+          };
+        });
         setMembers(formattedMembers);
         membersRef.current = formattedMembers;
         setProjectTitle(data.projectTitle || "");
@@ -217,16 +227,22 @@ export function useTeamChat(teamId: number | null, onTeamUpdated?: () => void) {
 
     const joinTeamChat = async () => {
       try {
+        let currentUserId = 0;
+        try {
+          const u = JSON.parse(localStorage.getItem("user") || "{}");
+          currentUserId = u.id || 0;
+        } catch (e) {}
+
         const onlineUserIds = (await connection.invoke<number[]>("JoinTeamChat", teamId)) || [];
         
         // Update members with actual online status
         setMembers(prev => prev.map(m => ({ 
           ...m, 
-          online: onlineUserIds.includes(parseInt(m.id))
+          online: m.id === currentUserId.toString() || onlineUserIds.includes(parseInt(m.id))
         })));
         membersRef.current = membersRef.current.map(m => ({ 
           ...m, 
-          online: onlineUserIds.includes(parseInt(m.id))
+          online: m.id === currentUserId.toString() || onlineUserIds.includes(parseInt(m.id))
         }));
 
         setIsConnected(true);
