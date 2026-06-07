@@ -6,6 +6,7 @@ import {
   Search, Award, Users, Clock, CheckCircle2,
   FileText, AlertTriangle, ChevronRight, Layers, ExternalLink, Loader2, BellOff, Bell, History
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -232,13 +233,7 @@ export default function ProfessorProjectManagement() {
     { key: "underreview", label: "Under Review" },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+
 
   const handleCancelSupervision = async (projectId: string, reason: string) => {
     try {
@@ -276,18 +271,30 @@ export default function ProfessorProjectManagement() {
 
       {/* Stats row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-        {[
-          { label: "Awaiting Review", value: counts["underreview"], icon: AlertTriangle, color: "bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400" },
-          { label: "In Progress", value: counts["in-progress"], icon: Clock, color: "bg-primary/10 border-primary/20 text-blue-700 dark:text-blue-400" },
-        ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className={`flex items-center gap-3 p-4 rounded-xl border ${color} bg-opacity-50`}>
-            <Icon className="w-5 h-5 shrink-0" />
-            <div>
-              <p className="text-2xl font-bold">{value}</p>
-              <p className="text-xs font-medium">{label}</p>
+        {isLoading ? (
+          [1, 2].map((idx) => (
+            <div key={idx} className="flex items-center gap-3 p-4 rounded-xl border border-border bg-card/40">
+              <Skeleton className="w-5 h-5 shrink-0 rounded-full" />
+              <div className="space-y-1.5 flex-1">
+                <Skeleton className="h-6 w-12 rounded-md" />
+                <Skeleton className="h-3.5 w-24 rounded-md" />
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          [
+            { label: "Awaiting Review", value: counts["underreview"], icon: AlertTriangle, color: "bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400" },
+            { label: "In Progress", value: counts["in-progress"], icon: Clock, color: "bg-primary/10 border-primary/20 text-blue-700 dark:text-blue-400" },
+          ].map(({ label, value, icon: Icon, color }) => (
+            <div key={label} className={`flex items-center gap-3 p-4 rounded-xl border ${color} bg-opacity-50`}>
+              <Icon className="w-5 h-5 shrink-0" />
+              <div>
+                <p className="text-2xl font-bold">{value}</p>
+                <p className="text-xs font-medium">{label}</p>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Search + filters */}
@@ -323,7 +330,40 @@ export default function ProfessorProjectManagement() {
       </div>
 
       {/* Projects grid */}
-      {filtered.length === 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-5">
+          {[1, 2, 3, 4].map((idx) => (
+            <div key={idx} className="bg-card text-card-foreground rounded-2xl border border-border/50 p-6 flex flex-col justify-between space-y-6">
+              <div className="space-y-4">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <Skeleton className="h-5 w-3/4 rounded-md" />
+                    <Skeleton className="h-4 w-1/2 rounded-md" />
+                  </div>
+                  <Skeleton className="h-8 w-16 rounded-lg" />
+                </div>
+                {/* Description */}
+                <Skeleton className="h-10 w-full rounded-md" />
+                {/* Tech chips */}
+                <div className="flex gap-1.5">
+                  <Skeleton className="h-5 w-12 rounded-md" />
+                  <Skeleton className="h-5 w-16 rounded-md" />
+                  <Skeleton className="h-5 w-14 rounded-md" />
+                </div>
+              </div>
+              {/* Footer */}
+              <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                <Skeleton className="h-4 w-28 rounded-md" />
+                <div className="flex gap-2">
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                  <Skeleton className="h-8 w-24 rounded-lg" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="bg-card rounded-2xl border border-border/50 p-12 text-center">
           <FileText className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
           <p className="text-muted-foreground">No projects match your search.</p>

@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
-import { Users, MessageSquare, ArrowLeft, Loader2 } from "lucide-react";
+import { Users, MessageSquare, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { professorApi } from "@/lib/professor-api";
 import { useProfessorTeamChat } from "@/hooks/useProfessorTeamChat";
 import { TeamChatWorkspace } from "@/app/_components/TeamChatWorkspace";
 import MembersGrid from "@/components/Team/MembersGrid";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProfessorTeamDetail() {
   const params = useParams();
@@ -66,15 +67,7 @@ export default function ProfessorTeamDetail() {
     router.replace(`/professor/teams/${teamId}?view=${view}`, { scroll: false });
   };
 
-  if (isLoadingTeam) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
-      </div>
-    );
-  }
-
-  if (!team) {
+  if (!isLoadingTeam && !team) {
     return (
       <div className="dashboard-page flex flex-col items-center justify-center min-h-[50vh]">
         <h2 className="text-xl font-bold mb-2">Team Not Found</h2>
@@ -84,14 +77,16 @@ export default function ProfessorTeamDetail() {
     );
   }
 
-  const visibleTeamMembers = (team.members || []).map((m: any) => ({
-    id: m.id,
-    name: m.fullName,
-    role: m.role,
-    email: m.email,
-    gpa: m.gpa,
-    skills: m.skills || []
-  }));
+  const visibleTeamMembers = team
+    ? (team.members || []).map((m: any) => ({
+        id: m.id,
+        name: m.fullName,
+        role: m.role,
+        email: m.email,
+        gpa: m.gpa,
+        skills: m.skills || []
+      }))
+    : [];
 
   return (
     <div className={`dashboard-page flex flex-col ${activeView === "chat" ? "h-[calc(100vh-5rem)] overflow-hidden space-y-3 md:pt-5 md:pb-4" : "space-y-6"}`}>
@@ -100,8 +95,17 @@ export default function ProfessorTeamDetail() {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{team.name}</h1>
-          <p className="text-muted-foreground">{team.projectTitle || "No Project"}</p>
+          {isLoadingTeam ? (
+            <div className="space-y-2">
+              <Skeleton className="h-7 w-48 rounded-md" />
+              <Skeleton className="h-4 w-36 rounded-md" />
+            </div>
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold text-foreground">{team.name}</h1>
+              <p className="text-muted-foreground">{team.projectTitle || "No Project"}</p>
+            </>
+          )}
         </div>
       </div>
 
@@ -134,7 +138,36 @@ export default function ProfessorTeamDetail() {
         </div>
       </div>
 
-      {activeView === "overview" ? (
+      {isLoadingTeam ? (
+        <section className="dashboard-surface p-6 flex-1 overflow-auto">
+          <div className="mb-4 space-y-2">
+            <Skeleton className="h-6 w-32 rounded-md" />
+            <Skeleton className="h-4 w-64 rounded-md" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+            {[1, 2, 3].map((idx) => (
+              <div
+                key={idx}
+                className="bg-card text-card-foreground rounded-2xl border border-border/50 p-6 flex flex-col justify-between"
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="h-12 w-12 rounded-full" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-5 w-24 rounded-md" />
+                      <Skeleton className="h-4 w-32 rounded-md" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-full rounded-md" />
+                    <Skeleton className="h-4 w-2/3 rounded-md" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : activeView === "overview" ? (
         <section className="dashboard-surface p-6 flex-1 overflow-auto">
           <div className="mb-4">
             <h2 className="text-lg font-semibold text-foreground">Team Roster</h2>
@@ -149,7 +182,7 @@ export default function ProfessorTeamDetail() {
       ) : (
         <TeamChatWorkspace
           title="Team Chat"
-          subtitle={`${team.projectTitle || "No project yet"} - ${team.name}`}
+          subtitle={`${team?.projectTitle || "No project yet"} - ${team?.name || ""}`}
           members={chatMembers as any}
           messages={messages as any}
           currentUserName={currentUserName}

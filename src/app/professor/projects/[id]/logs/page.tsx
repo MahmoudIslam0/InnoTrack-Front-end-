@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { History, ArrowLeft, Loader2, GitCommit, FileText, Activity } from "lucide-react";
+import { History, ArrowLeft, GitCommit, FileText, Activity } from "lucide-react";
 import { PageHeader } from "@/app/professor/_components";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { professorApi } from "@/lib/professor-api";
 import * as signalR from "@microsoft/signalr";
@@ -101,14 +102,6 @@ export default function ProjectLogsPage() {
     };
   }, [id]);
 
-  if (isLoading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
     <div className="dashboard-page max-w-4xl mx-auto">
       <div className="mb-6 flex items-center gap-4">
@@ -122,48 +115,68 @@ export default function ProjectLogsPage() {
         </Button>
         <PageHeader
           title="Project Activity Logs"
-          description={`Viewing history and changes for: ${projectTitle || "Project"}`}
+          description={isLoading ? "Viewing history and changes for project activity logs..." : `Viewing history and changes for: ${projectTitle || "Project"}`}
         />
       </div>
 
       <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm p-6 md:p-10 mt-6">
         <div className="relative border-l-2 border-border/60 ml-4 space-y-10">
-          {logs.length === 0 && (
-            <div className="text-center text-muted-foreground py-10">
-              No activity logs found for this project.
-            </div>
-          )}
-          {logs.map((log) => {
-            // Determine icon dynamically or fallback
-            let Icon = Activity;
-            if (log.iconName === 'FileText') Icon = FileText;
-            if (log.iconName === 'GitCommit') Icon = GitCommit;
-            if (log.iconName === 'History') Icon = History;
-
-            const iconColor = log.colorClass || "text-blue-500";
-            const iconBg = log.bgClass || "bg-blue-500/10";
-
-            return (
-              <div key={log.id} className="relative pl-8">
+          {isLoading ? (
+            [1, 2, 3].map((idx) => (
+              <div key={idx} className="relative pl-8">
                 {/* Timeline Node */}
-                <div className={`absolute -left-[17px] top-1 w-8 h-8 rounded-full ${iconBg} flex items-center justify-center ring-4 ring-card`}>
-                  <Icon className={`w-4 h-4 ${iconColor}`} />
+                <div className="absolute -left-[17px] top-1 w-8 h-8 rounded-full bg-muted/65 flex items-center justify-center ring-4 ring-card">
+                  <Skeleton className="w-4 h-4 rounded-full" />
                 </div>
                 
                 {/* Log Content */}
-                <div className="bg-muted/30 border border-border/50 rounded-xl p-5 hover:border-primary/20 hover:bg-muted/50 transition-colors">
-                  <p className="text-[15px] font-medium text-foreground leading-relaxed">
-                    {log.message}
-                  </p>
-                  <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground font-medium">
-                    <span>{new Date(log.timestamp).toLocaleString()}</span>
-                    <span className="w-1 h-1 rounded-full bg-border"></span>
-                    <span>By {log.actorName || log.actor || "System"}</span>
+                <div className="bg-muted/30 border border-border/50 rounded-xl p-5 space-y-3">
+                  <Skeleton className="h-5 w-3/4 rounded-md" />
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <Skeleton className="h-4 w-28 rounded-md" />
+                    <span className="w-1 h-1 rounded-full bg-border/40"></span>
+                    <Skeleton className="h-4 w-20 rounded-md" />
                   </div>
                 </div>
               </div>
-            );
-          })}
+            ))
+          ) : logs.length === 0 ? (
+            <div className="text-center text-muted-foreground py-10">
+              No activity logs found for this project.
+            </div>
+          ) : (
+            logs.map((log) => {
+              // Determine icon dynamically or fallback
+              let Icon = Activity;
+              if (log.iconName === 'FileText') Icon = FileText;
+              if (log.iconName === 'GitCommit') Icon = GitCommit;
+              if (log.iconName === 'History') Icon = History;
+
+              const iconColor = log.colorClass || "text-blue-500";
+              const iconBg = log.bgClass || "bg-blue-500/10";
+
+              return (
+                <div key={log.id} className="relative pl-8">
+                  {/* Timeline Node */}
+                  <div className={`absolute -left-[17px] top-1 w-8 h-8 rounded-full ${iconBg} flex items-center justify-center ring-4 ring-card`}>
+                    <Icon className={`w-4 h-4 ${iconColor}`} />
+                  </div>
+                  
+                  {/* Log Content */}
+                  <div className="bg-muted/30 border border-border/50 rounded-xl p-5 hover:border-primary/20 hover:bg-muted/50 transition-colors">
+                    <p className="text-[15px] font-medium text-foreground leading-relaxed">
+                      {log.message}
+                    </p>
+                    <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground font-medium">
+                      <span>{new Date(log.timestamp).toLocaleString()}</span>
+                      <span className="w-1 h-1 rounded-full bg-border"></span>
+                      <span>By {log.actorName || log.actor || "System"}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </div>

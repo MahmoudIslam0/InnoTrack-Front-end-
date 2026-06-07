@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Bell, User, Menu, LogOut, PanelLeftClose, PanelLeft } from "lucide-react";
+import { Search, Bell, User, Menu, LogOut, PanelLeftClose, PanelLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { Avatar, AvatarFallback } from "../../components/ui/avatar";
 import {
   DropdownMenu,
@@ -61,8 +61,79 @@ export function TopNav({
   const router = useRouter();
   const pathname = usePathname();
   const { isSidebarCollapsed, toggleSidebar } = useSidebar();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user: authUser, logout } = useAuth();
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const isProf = pathname.startsWith("/professor");
+      const endpoint = isProf ? "/api/Professor/me" : "/api/Students/me";
+      api.get(endpoint)
+        .then((data) => {
+          setProfile(data);
+        })
+        .catch((err) => {
+          console.error("Failed to load header profile details:", err);
+        });
+    }
+  }, [isAuthenticated, pathname]);
+
+  const finalName = profile
+    ? `${profile.firstName} ${profile.lastName}`
+    : authUser?.name || profileName;
+
+  const finalSubtitle = profile
+    ? profile.departmentName || (pathname.startsWith("/professor") ? "Faculty Member" : "Student")
+    : profileSubtitle;
+
+  const finalInitials = profile
+    ? `${profile.firstName ? profile.firstName[0] : ""}${profile.lastName ? profile.lastName[0] : ""}`.toUpperCase()
+    : (finalName ? finalName.split(" ").map((n: any) => n[0]).join("").slice(0, 2).toUpperCase() : "U");
+
+  const finalProfileHref = pathname.startsWith("/professor") ? "/professor/profile" : "/profile";
+
+  const getBreadcrumbs = () => {
+    const isProf = pathname.startsWith("/professor");
+    const segments = pathname.split("/").filter(Boolean);
+    const breadcrumbs: { label: string; href: string }[] = [];
+
+    let currentPath = "";
+    segments.forEach((segment, idx) => {
+      // Build the actual URL path correctly segment by segment
+      currentPath += isProf && idx === 0 ? `/professor` : `/${segment}`;
+
+      // Skip "professor" segment from visual breadcrumbs
+      if (segment === "professor") return;
+
+      // Format label
+      let label = segment.charAt(0).toUpperCase() + segment.slice(1);
+      if (segment === "project-management") label = "Project Management";
+      if (segment === "innochat") label = "InnoChat";
+      if (segment === "dashboard") label = "Dashboard";
+      
+      // Dynamic IDs
+      const isId = !isNaN(Number(segment));
+      if (isId) {
+        if (segments[idx - 1] === "teams") {
+          label = "Team Details";
+        } else if (segments[idx - 1] === "projects") {
+          label = "Project Details";
+        } else {
+          label = "Details";
+        }
+      }
+
+      if (segment === "logs") label = "Activity Logs";
+
+      breadcrumbs.push({
+        label,
+        href: currentPath,
+      });
+    });
+
+    return breadcrumbs;
+  };
 
   useEffect(() => {
     if (showNotifications) {
@@ -97,8 +168,14 @@ export function TopNav({
     : "/notifications";
   const shouldShowSearch = showSearch && pathname !== "/professor/dashboard";
 
-  const handleLogout = () => {
-    router.push("/login");
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Logged out successfully");
+      router.push("/login");
+    } catch {
+      router.push("/login");
+    }
   };
 
   const markAsRead = async (id: number) => {
@@ -241,11 +318,28 @@ export function TopNav({
             {isSidebarCollapsed ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
           </button>
           
-          <div>
-            <h2 className="text-lg font-semibold text-foreground tracking-tight">
-              {displayTitle}
-            </h2>
-          </div>
+          <nav className="flex items-center gap-1.5 text-sm font-medium" aria-label="Breadcrumb">
+            {getBreadcrumbs().map((crumb, idx, arr) => {
+              const isLast = idx === arr.length - 1;
+              return (
+                <div key={crumb.href} className="flex items-center gap-1.5 font-semibold">
+                  {idx > 0 && <span className="text-muted-foreground/40 text-[10px] select-none font-normal">/</span>}
+                  {isLast ? (
+                    <span className="text-foreground truncate max-w-[120px] sm:max-w-none">
+                      {crumb.label}
+                    </span>
+                  ) : (
+                    <Link
+                      href={crumb.href}
+                      className="text-muted-foreground hover:text-foreground transition-colors truncate max-w-[100px] sm:max-w-none font-medium"
+                    >
+                      {crumb.label}
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
+          </nav>
         </div>
 
         {shouldShowSearch && (
@@ -268,7 +362,7 @@ export function TopNav({
           {isAuthenticated ? (
             <>
               {showNotifications && (
-                <DropdownMenu>
+                <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
                     <button
                       className="relative p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground rounded-xl transition-colors"
@@ -340,13 +434,66 @@ export function TopNav({
                 </DropdownMenu>
               )}
 
-              <Link href={profileHref} className="flex items-center gap-2 rounded-xl p-1 hover:bg-accent transition-all duration-300 ">
-                <Avatar className="w-8 h-8 border border-border/50 shadow-sm">
-                  <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-              </Link>
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 rounded-xl py-2.5 px-4 hover:bg-accent transition-all duration-200 cursor-pointer focus:outline-none">
+                    <Avatar className="w-8 h-8 border border-border/50 shadow-sm shrink-0">
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
+                        {finalInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="hidden sm:flex flex-col items-start text-left ml-1 shrink-0">
+                      <span className="text-sm font-semibold text-foreground leading-none">{finalName}</span>
+                      <span className="text-xs text-muted-foreground leading-none mt-1">{finalSubtitle}</span>
+                    </div>
+                    <ChevronDown className="hidden sm:block w-3.5 h-3.5 text-muted-foreground/75 ml-1 shrink-0" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-72 p-0 pb-3 border border-border/40 bg-background/95 backdrop-blur-xl shadow-xl rounded-2xl overflow-hidden">
+                  {/* User Profile Header */}
+                  <div className="p-4 flex items-center gap-3 bg-gradient-to-b from-accent/40 to-transparent border-b border-border/40">
+                    <Avatar className="w-12 h-12 border-2 border-background shadow-md shrink-0">
+                      <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
+                        {finalInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col items-start text-left min-w-0">
+                      <span className="text-base font-bold text-foreground leading-tight truncate w-full">{finalName}</span>
+                      <span className="text-xs text-muted-foreground leading-tight mt-0.5 truncate w-full">{finalSubtitle}</span>
+                      <span className="mt-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold bg-primary/10 text-primary uppercase tracking-wider">
+                        {pathname.startsWith("/professor") ? "Professor" : "Student"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="px-4 pt-3 pb-2">
+                    <span className="text-[10px] font-bold text-muted-foreground/80 uppercase tracking-widest">
+                      Account
+                    </span>
+                  </div>
+                  
+                  <DropdownMenuItem asChild className="cursor-pointer rounded-xl bg-accent/30 hover:bg-accent/60 focus:bg-accent/60 border border-border/20 px-4 py-3 mx-3 transition-all duration-200 text-foreground hover:text-foreground focus:text-foreground">
+                    <Link href={finalProfileHref} className="flex items-center w-full">
+                      <User className="w-4.5 h-4.5 text-primary shrink-0 mr-3" />
+                      <span className="font-semibold text-sm">View Profile</span>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground/60 ml-auto shrink-0" />
+                    </Link>
+                  </DropdownMenuItem>
+                  
+                  <div className="my-2 mx-3 border-t border-border/50" />
+                  
+                  <DropdownMenuItem 
+                    onClick={handleLogout} 
+                    variant="destructive"
+                    className="cursor-pointer rounded-xl text-destructive hover:text-destructive focus:text-destructive hover:bg-destructive/10 focus:bg-destructive/10 border border-transparent px-4 py-3 mx-3 transition-all duration-200"
+                  >
+                    <div className="flex items-center w-full">
+                      <LogOut className="w-4.5 h-4.5 shrink-0 mr-3 text-destructive" />
+                      <span className="font-semibold text-sm">Sign Out</span>
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           ) : (
             <div className="flex items-center gap-2">

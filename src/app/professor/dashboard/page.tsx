@@ -1,8 +1,9 @@
 "use client";
 
-import { CheckCircle2, ClipboardList, FolderKanban, Users, Loader2 } from "lucide-react";
+import { CheckCircle2, ClipboardList, FolderKanban, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { professorApi } from "@/lib/professor-api";
 import { studentApi, normalizeStatusTone } from "@/lib/student-api";
 import { Badge } from "@/components/ui/badge";
@@ -35,23 +36,15 @@ export default function ProfessorDashboard() {
     fetchData();
   }, []);
 
-  if (isLoading || !dashboardData) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   const {
-    totalSupervisedTeams,
-    pendingReviewCount,
-    activeProjectCount,
-    approvedCount,
-    rejectedCount,
-    averageOriginalityScore,
-    recentTeams,
-  } = dashboardData;
+    totalSupervisedTeams = 0,
+    pendingReviewCount = 0,
+    activeProjectCount = 0,
+    approvedCount = 0,
+    rejectedCount = 0,
+    averageOriginalityScore = 0,
+    recentTeams = [],
+  } = dashboardData || {};
 
   const projectRows = recentTeams.map((team: any) => ({
     id: team.projectId || team.id?.toString(),
@@ -76,12 +69,16 @@ export default function ProfessorDashboard() {
               <h2 className="text-xl md:text-2xl font-semibold text-foreground">
                 Review professor approvals
               </h2>
-              <Badge
-                variant="secondary"
-                className="bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900"
-              >
-                {pendingReviewCount} Pending
-              </Badge>
+              {isLoading ? (
+                <Skeleton className="h-6 w-20 rounded-md" />
+              ) : (
+                <Badge
+                  variant="secondary"
+                  className="bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900"
+                >
+                  {pendingReviewCount} Pending
+                </Badge>
+              )}
             </div>
             <p className="text-sm md:text-base text-muted-foreground max-w-2xl">
               Approve proposals when originality and scope are ready, or send
@@ -104,6 +101,7 @@ export default function ProfessorDashboard() {
           subtitle="Across current graduation cycle"
           icon={Users}
           tone="primary"
+          isLoading={isLoading}
         />
         <ProfessorStatCard
           title="Projects Supervised"
@@ -111,6 +109,7 @@ export default function ProfessorDashboard() {
           subtitle="Active and approved projects"
           icon={FolderKanban}
           tone="info"
+          isLoading={isLoading}
         />
         <ProfessorStatCard
           title="Pending Approvals"
@@ -118,6 +117,7 @@ export default function ProfessorDashboard() {
           subtitle="Draft proposals need decision"
           icon={CheckCircle2}
           tone="warning"
+          isLoading={isLoading}
         />
       </div>
 
@@ -135,7 +135,33 @@ export default function ProfessorDashboard() {
               </Link>
             }
           >
-            <ProjectTable rows={projectRows} />
+            {isLoading ? (
+              <div className="flex flex-col gap-3">
+                {[1, 2, 3].map((idx) => (
+                  <div
+                    key={idx}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border/40 bg-card/40"
+                  >
+                    <div className="flex items-center gap-4 mb-3 sm:mb-0">
+                      <div className="flex flex-col space-y-2">
+                        <Skeleton className="h-5 w-48 rounded-md" />
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1.5">
+                            <Skeleton className="h-3.5 w-3.5 rounded-full animate-pulse" />
+                            <Skeleton className="h-3.5 w-24 rounded-md" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 self-end sm:self-auto">
+                      <Skeleton className="h-6 w-16 rounded-md" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <ProjectTable rows={projectRows} />
+            )}
           </SectionCard>
 
           <PopularProjects
