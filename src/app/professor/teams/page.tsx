@@ -256,16 +256,29 @@ export default function ProfessorTeams() {
                       <span>Team</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Link href={`/professor/teams/${team.id}?view=chat`}>
+                      {team.projectStatus !== "UnderReview" ? (
+                        <Link href={`/professor/teams/${team.id}?view=chat`}>
+                          <Button 
+                            variant="outline"
+                            size="default"
+                            className="h-10 text-muted-foreground hover:text-primary hover:border-primary/30 border-border/50 rounded-xl px-4 text-xs font-semibold shadow-sm transition-all"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5 mr-2" />
+                            Chat
+                          </Button>
+                        </Link>
+                      ) : (
                         <Button 
                           variant="outline"
                           size="default"
-                          className="h-10 text-muted-foreground hover:text-primary hover:border-primary/30 border-border/50 rounded-xl px-4 text-xs font-semibold shadow-sm transition-all"
+                          disabled
+                          className="h-10 text-muted-foreground/50 border-border/50 rounded-xl px-4 text-xs font-semibold shadow-sm"
+                          title="Chat is disabled until project is approved"
                         >
                           <MessageSquare className="w-3.5 h-3.5 mr-2" />
                           Chat
                         </Button>
-                      </Link>
+                      )}
                       <Link href={`/professor/teams/${team.id}`}>
                         <Button 
                           size="default"

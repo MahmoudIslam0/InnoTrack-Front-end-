@@ -20,6 +20,7 @@ export type ProjectCatalogItemDto = {
   domain: string;
   status: string;
   year: number;
+  teamId: number | null;
   supervisor?: string | null;
   students: string[];
   technologies: string[];

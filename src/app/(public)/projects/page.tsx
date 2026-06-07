@@ -22,6 +22,7 @@ import {
 
 interface Project {
   id: string;
+  teamId: number | null;
   title: string;
   year: number;
   category: string;
@@ -200,10 +201,13 @@ export default function Projects() {
       toast.error("Please provide a brief message for your request.");
       return;
     }
-    if (!requestDialogProject) return;
+    if (!requestDialogProject || requestDialogProject.teamId === null) {
+      toast.error("This project does not have an active team you can join.");
+      return;
+    }
 
     try {
-      await studentApi.requestToJoin(Number(requestDialogProject.id), requestMessage);
+      await studentApi.requestToJoin(requestDialogProject.teamId, requestMessage);
       toast.success(`Request sent to ${requestDialogProject.title}`);
       setRequestDialogProject(null);
       setRequestMessage("");
@@ -524,6 +528,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 function mapProject(project: ProjectCatalogItemDto): Project {
   return {
     id: String(project.id),
+    teamId: project.teamId,
     title: project.title,
     year: project.year,
     category: project.domain,

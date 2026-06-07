@@ -14,7 +14,7 @@ import { PageHeader, StatusBadge } from "../_components";
 import { ManageProjectDialog } from "./ManageProjectDialog";
 import { professorApi } from "@/lib/professor-api";
 import { toast } from "sonner";
-import { normalizeStatusTone } from "@/lib/student-api";
+import { normalizeStatusTone, normalizeOriginalityPercent } from "@/lib/student-api";
 
 function ProjectCard({ project, onManage, onViewDetails }: { project: any; onManage: () => void; onViewDetails: () => void }) {
   const scoreColor = "text-primary dark:text-primary";
@@ -57,7 +57,7 @@ function ProjectCard({ project, onManage, onViewDetails }: { project: any; onMan
           </div>
           <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border ${scoreBg}`}>
             <Award className={`w-3.5 h-3.5 ${scoreColor}`} />
-            <span className={`text-sm font-bold ${scoreColor}`}>{Math.round(project.originalityScore || 0)}%</span>
+            <span className={`text-sm font-bold ${scoreColor}`}>{normalizeOriginalityPercent(project.originalityScore)}%</span>
           </div>
         </div>
 
