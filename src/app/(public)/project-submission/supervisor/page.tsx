@@ -78,7 +78,7 @@ export default function SubmitToSupervisor() {
       await studentApi.submitProject(projectId, {
         supervisorId: selectedSupervisor.id,
         department: proposalData.department,
-        teamMembers: submissionState?.formData?.studentNames ?? "",
+        teamMembers: "",
         message: proposalData.message,
       });
       toast.success(`Proposal submitted to ${selectedSupervisor.fullName}`);
