@@ -747,7 +747,7 @@ export function TeamChatWorkspace({
               <Badge className="bg-muted/60 text-muted-foreground border-none shadow-sm">{members.length}</Badge>
             </div>
           </div>
-          <div className="space-y-4 overflow-y-auto min-h-0 flex-1 pr-2 relative z-10 scroll-smooth">
+          <div className="space-y-4 overflow-y-auto min-h-[150px] flex-1 pr-2 relative z-10 scroll-smooth custom-scrollbar">
             <AnimatePresence>
               {members.map((member) => (
                 <motion.div 
@@ -778,8 +778,8 @@ export function TeamChatWorkspace({
             </AnimatePresence>
           </div>
 
-          <div className="mt-8 mb-4 relative z-10">
-            <button className="flex items-center gap-2 w-full text-left focus:outline-none group mb-4 p-2 rounded-xl hover:bg-muted/40 transition-colors" onClick={() => setIsSharedFilesOpen(!isSharedFilesOpen)}>
+          <div className="pt-6 mt-auto border-t border-border/50 relative z-10 flex flex-col shrink-0 max-h-[50%]">
+            <button className="flex items-center gap-2 w-full text-left focus:outline-none group mb-2 p-2 rounded-xl hover:bg-muted/40 transition-colors shrink-0" onClick={() => setIsSharedFilesOpen(!isSharedFilesOpen)}>
               <h3 className="text-[13px] font-bold text-foreground uppercase tracking-widest flex-1">Shared Files</h3>
               <div className="text-muted-foreground group-hover:text-foreground transition-colors bg-muted/50 p-1 rounded-lg">
                 <motion.div animate={{ rotate: isSharedFilesOpen ? 0 : -90 }}>
@@ -795,9 +795,9 @@ export function TeamChatWorkspace({
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.4, ease: "easeInOut" }}
-                  className="overflow-hidden"
+                  className="overflow-hidden flex flex-col min-h-0"
                 >
-                  <div className="max-h-[350px] overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+                  <div className="overflow-y-auto pr-1 pb-4 space-y-3 custom-scrollbar flex-1">
                     {messages.filter((m) => m.file && !m.isDeletedForAll).map((message) => (
                       <motion.div 
                         whileHover={{ scale: 1.02 }}
@@ -817,7 +817,7 @@ export function TeamChatWorkspace({
                       </motion.div>
                     ))}
                     {messages.filter((m) => m.file && !m.isDeletedForAll).length === 0 && (
-                      <div className="flex flex-col items-center justify-center py-6 px-4 text-center border border-dashed border-border/60 rounded-2xl bg-muted/20">
+                      <div className="flex flex-col items-center justify-center py-6 px-4 text-center border border-dashed border-border/60 rounded-2xl bg-muted/20 mt-2">
                         <FileText className="w-6 h-6 text-muted-foreground/50 mb-2" />
                         <p className="text-xs text-muted-foreground font-medium">No files shared yet</p>
                       </div>
