@@ -44,7 +44,7 @@ function getToneForType(type: string) {
 export default function ProfessorNotifications() {
   const [items, setItems] = useState<any[]>([]);
 
-  useEffect(() => {
+  const fetchNotifications = () => {
     api.notifications.getAll()
       .then((data) => {
         setItems(data.map((n: any) => ({
@@ -59,6 +59,12 @@ export default function ProfessorNotifications() {
         })));
       })
       .catch(console.error);
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    window.addEventListener("notificationsUpdated", fetchNotifications);
+    return () => window.removeEventListener("notificationsUpdated", fetchNotifications);
   }, []);
 
   const markAllRead = async () => {
@@ -67,6 +73,7 @@ export default function ProfessorNotifications() {
     );
     try {
       await api.notifications.markAllAsRead();
+      window.dispatchEvent(new Event("notificationsUpdated"));
     } catch (err) {
       console.error(err);
     }
@@ -76,6 +83,7 @@ export default function ProfessorNotifications() {
     setItems([]);
     try {
       await api.notifications.clearAll();
+      window.dispatchEvent(new Event("notificationsUpdated"));
     } catch (err) {
       console.error(err);
     }
@@ -91,6 +99,7 @@ export default function ProfessorNotifications() {
       );
       try {
         await api.notifications.markAsRead(id);
+        window.dispatchEvent(new Event("notificationsUpdated"));
       } catch (err) {
         console.error(err);
       }

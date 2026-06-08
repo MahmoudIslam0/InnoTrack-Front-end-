@@ -135,7 +135,7 @@ export function TopNav({
     return breadcrumbs;
   };
 
-  useEffect(() => {
+  const fetchNotifications = () => {
     if (showNotifications) {
       api.notifications.getAll()
         .then((data) => {
@@ -149,6 +149,12 @@ export function TopNav({
         })
         .catch(console.error);
     }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    window.addEventListener("notificationsUpdated", fetchNotifications);
+    return () => window.removeEventListener("notificationsUpdated", fetchNotifications);
   }, [showNotifications]);
 
   const professorTitles: Record<string, string> = {
@@ -184,6 +190,7 @@ export function TopNav({
       setNotifications(notifications.map((n) => (n.id === id ? { ...n, unread: false } : n)));
       try {
         await api.notifications.markAsRead(id);
+        window.dispatchEvent(new Event("notificationsUpdated"));
       } catch (err) {
         console.error(err);
       }
@@ -194,6 +201,7 @@ export function TopNav({
     setNotifications(notifications.map((n) => ({ ...n, unread: false })));
     try {
       await api.notifications.markAllAsRead();
+      window.dispatchEvent(new Event("notificationsUpdated"));
     } catch (err) {
       console.error(err);
     }
@@ -204,6 +212,7 @@ export function TopNav({
     try {
       await api.notifications.clearAll();
       toast.success("Notifications cleared");
+      window.dispatchEvent(new Event("notificationsUpdated"));
     } catch (err) {
       console.error(err);
       toast.error("Failed to clear notifications");

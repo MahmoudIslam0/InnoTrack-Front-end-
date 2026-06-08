@@ -486,13 +486,15 @@ export function NotificationList({
                     {notification.message}
                   </p>
                 </div>
-                {notification.unread && (
-                  <span className="h-2.5 w-2.5 rounded-full bg-primary dark:bg-primary mt-1.5 shrink-0 " />
-                )}
+                <div className="flex flex-col items-end gap-2 shrink-0">
+                  {notification.unread && (
+                    <span className="h-2.5 w-2.5 rounded-full bg-primary dark:bg-primary shrink-0" />
+                  )}
+                  <p className="text-xs text-muted-foreground whitespace-nowrap">
+                    {notification.timestamp}
+                  </p>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                {notification.timestamp}
-              </p>
             </div>
           </div>
         );

@@ -42,12 +42,12 @@ function ProjectCard({ project, onManage, onViewDetails }: { project: any; onMan
   };
 
   return (
-    <div className="bg-card text-card-foreground rounded-2xl border border-border/50 shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-200 overflow-hidden group">
+    <div className="bg-card text-card-foreground rounded-2xl border border-border/50 shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-200 overflow-hidden group flex flex-col h-full">
       {/* Top accent bar */}
-      <div className="h-1 w-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-      <div className="p-6">
+      <div className="h-1 w-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+      <div className="p-6 flex flex-col flex-1">
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 mb-4">
+        <div className="flex items-start justify-between gap-3 mb-4 shrink-0">
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <h3 className="text-base font-semibold text-foreground truncate">{project.title}</h3>
@@ -55,17 +55,17 @@ function ProjectCard({ project, onManage, onViewDetails }: { project: any; onMan
             </div>
             <p className="text-sm text-muted-foreground">{project.teamName || "No team"} · {project.domain}</p>
           </div>
-          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border ${scoreBg}`}>
+          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border shrink-0 ${scoreBg}`}>
             <Award className={`w-3.5 h-3.5 ${scoreColor}`} />
             <span className={`text-sm font-bold ${scoreColor}`}>{normalizeOriginalityPercent(project.originalityScore)}%</span>
           </div>
         </div>
 
         {/* Description */}
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{project.description}</p>
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">{project.description}</p>
 
         {/* Technologies */}
-        <div className="flex flex-wrap gap-1.5 mb-4">
+        <div className="flex flex-wrap gap-1.5 mb-4 shrink-0 min-h-[24px]">
           {(project.technologies || []).slice(0, 3).map((tech: string) => (
             <span key={tech} className="px-2 py-0.5 bg-muted text-foreground text-xs rounded-md font-medium">
               {tech}
@@ -79,7 +79,7 @@ function ProjectCard({ project, onManage, onViewDetails }: { project: any; onMan
         </div>
 
         {/* Footer */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-4 border-t border-border/50">
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-4 border-t border-border/50 mt-auto shrink-0">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Users className="w-3.5 h-3.5" />
             <span>Team Project</span>
