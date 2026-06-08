@@ -422,7 +422,9 @@ export default function TeamsPage() {
   };
 
   return (
-    <div className={`dashboard-page flex flex-col ${hasTeam && activeView === "chat" ? "h-[calc(100vh-80px)] overflow-hidden space-y-4 pt-4 pb-4 md:pt-6" : "space-y-6"}`}>
+    <div className={hasTeam && activeView === "chat" 
+      ? "flex flex-col h-[calc(100vh-64px)] w-full overflow-hidden px-4 md:px-6 py-4 space-y-4" 
+      : "dashboard-page flex flex-col space-y-6"}>
       {isLoading ? (
         <div className="flex flex-col gap-6">
           <div className="flex justify-center mb-4">
