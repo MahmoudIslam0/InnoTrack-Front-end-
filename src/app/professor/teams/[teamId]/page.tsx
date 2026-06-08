@@ -90,52 +90,54 @@ export default function ProfessorTeamDetail() {
     : [];
 
   return (
-    <div className={`dashboard-page flex flex-col ${activeView === "chat" ? "space-y-3 md:pt-5" : "space-y-6"}`}>
-      <div className="flex items-center gap-4 shrink-0">
-        <Button variant="ghost" size="icon" onClick={() => router.push("/professor/teams")}>
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <div>
-          {isLoadingTeam ? (
-            <div className="space-y-2">
-              <Skeleton className="h-7 w-48 rounded-md" />
-              <Skeleton className="h-4 w-36 rounded-md" />
-            </div>
-          ) : (
-            <>
-              <h1 className="text-2xl font-bold text-foreground">{team.name}</h1>
-              <p className="text-muted-foreground">{team.projectTitle || "No Project"}</p>
-            </>
-          )}
+    <div className={`dashboard-page flex flex-col ${activeView === "chat" ? "h-[calc(100vh-80px)] overflow-hidden space-y-4 pt-4 pb-4 md:pt-6" : "space-y-6"}`}>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => router.push("/professor/teams")}>
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div>
+            {isLoadingTeam ? (
+              <div className="space-y-2">
+                <Skeleton className="h-7 w-48 rounded-md" />
+                <Skeleton className="h-4 w-36 rounded-md" />
+              </div>
+            ) : (
+              <>
+                <h1 className="text-2xl font-bold text-foreground">{team.name}</h1>
+                <p className="text-muted-foreground">{team.projectTitle || "No Project"}</p>
+              </>
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className={`flex justify-center shrink-0 ${activeView === "chat" ? "mb-2" : "mb-8"}`}>
-        <div className="grid w-full max-w-[440px] grid-cols-2 rounded-xl border border-border bg-muted/40 p-1">
-          <button
-            type="button"
-            onClick={() => handleActiveViewChange("overview")}
-            className={`flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition ${
-              activeView === "overview"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Users className="h-4 w-4" />
-            Overview
-          </button>
-          <button
-            type="button"
-            onClick={() => handleActiveViewChange("chat")}
-            className={`flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition ${
-              activeView === "chat"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <MessageSquare className="h-4 w-4" />
-            Team Chat
-          </button>
+        <div className="flex justify-center shrink-0">
+          <div className="grid w-[300px] md:w-[400px] grid-cols-2 rounded-xl border border-border bg-muted/40 p-1">
+            <button
+              type="button"
+              onClick={() => handleActiveViewChange("overview")}
+              className={`flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition ${
+                activeView === "overview"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Users className="h-4 w-4" />
+              Overview
+            </button>
+            <button
+              type="button"
+              onClick={() => handleActiveViewChange("chat")}
+              className={`flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition ${
+                activeView === "chat"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <MessageSquare className="h-4 w-4" />
+              Team Chat
+            </button>
+          </div>
         </div>
       </div>
 
@@ -196,7 +198,7 @@ export default function ProfessorTeamDetail() {
           onReplyToMessage={replyToMessage}
           onUploadFile={uploadFile}
           isLoading={isChatLoading}
-          className="h-[calc(100vh-260px)] min-h-0 rounded-2xl border border-border/50 shadow-sm"
+          className="flex-1 min-h-0 rounded-2xl border border-border/50 shadow-sm"
         />
       )}
     </div>
