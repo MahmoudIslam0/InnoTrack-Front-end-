@@ -142,7 +142,7 @@ export default function ProfessorTeamDetail() {
       </div>
 
       {isLoadingTeam ? (
-        <section className="dashboard-surface p-6 flex-1 overflow-auto">
+        <section className="dashboard-surface p-6 flex-1 overflow-hidden">
           <div className="mb-4 space-y-2">
             <Skeleton className="h-6 w-32 rounded-md" />
             <Skeleton className="h-4 w-64 rounded-md" />
@@ -171,7 +171,7 @@ export default function ProfessorTeamDetail() {
           </div>
         </section>
       ) : activeView === "overview" ? (
-        <section className="dashboard-surface p-6 flex-1 overflow-auto">
+        <section className="dashboard-surface p-6 flex-1 overflow-hidden">
           <div className="mb-4">
             <h2 className="text-lg font-semibold text-foreground">Team Roster</h2>
             <p className="text-sm text-muted-foreground">View the current members of this team.</p>
