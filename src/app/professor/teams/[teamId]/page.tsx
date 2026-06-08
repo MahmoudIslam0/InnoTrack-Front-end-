@@ -90,11 +90,9 @@ export default function ProfessorTeamDetail() {
     : [];
 
   return (
-    <div className={activeView === "chat" 
-      ? "flex flex-col h-[calc(100vh-64px)] w-full overflow-hidden px-4 md:px-6 py-4 space-y-4" 
-      : "dashboard-page flex flex-col space-y-6"}>
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
-        <div className="flex items-center gap-4">
+    <div className="flex flex-col h-[calc(100vh-65px)] w-full overflow-hidden px-4 md:px-6 py-4 space-y-4">
+      <div className="relative flex flex-col md:flex-row md:items-center justify-center shrink-0 w-full min-h-[44px]">
+        <div className="md:absolute md:left-0 flex items-center gap-4 mb-4 md:mb-0">
           <Button variant="ghost" size="icon" onClick={() => router.push("/professor/teams")}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
@@ -106,8 +104,8 @@ export default function ProfessorTeamDetail() {
               </div>
             ) : (
               <>
-                <h1 className="text-2xl font-bold text-foreground">{team.name}</h1>
-                <p className="text-muted-foreground">{team.projectTitle || "No Project"}</p>
+                <h1 className="text-xl md:text-2xl font-bold text-foreground truncate max-w-[200px] md:max-w-[300px]">{team.name}</h1>
+                <p className="text-sm text-muted-foreground truncate max-w-[200px] md:max-w-[300px]">{team.projectTitle || "No Project"}</p>
               </>
             )}
           </div>
@@ -118,7 +116,7 @@ export default function ProfessorTeamDetail() {
             <button
               type="button"
               onClick={() => handleActiveViewChange("overview")}
-              className={`flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition ${
+              className={`flex h-10 md:h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition ${
                 activeView === "overview"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -130,7 +128,7 @@ export default function ProfessorTeamDetail() {
             <button
               type="button"
               onClick={() => handleActiveViewChange("chat")}
-              className={`flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition ${
+              className={`flex h-10 md:h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition ${
                 activeView === "chat"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"

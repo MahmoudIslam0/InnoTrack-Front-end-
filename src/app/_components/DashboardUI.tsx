@@ -486,11 +486,13 @@ export function NotificationList({
                     {notification.message}
                   </p>
                 </div>
-                <div className="flex flex-col items-end gap-2 shrink-0">
-                  {notification.unread && (
-                    <span className="h-2.5 w-2.5 rounded-full bg-primary dark:bg-primary shrink-0" />
+                <div className="flex flex-col items-end justify-between shrink-0 self-stretch min-h-[40px]">
+                  {notification.unread ? (
+                    <span className="h-2.5 w-2.5 rounded-full bg-primary dark:bg-primary shrink-0 mt-1" />
+                  ) : (
+                    <div />
                   )}
-                  <p className="text-xs text-muted-foreground whitespace-nowrap">
+                  <p className="text-xs text-muted-foreground whitespace-nowrap mt-auto">
                     {notification.timestamp}
                   </p>
                 </div>
