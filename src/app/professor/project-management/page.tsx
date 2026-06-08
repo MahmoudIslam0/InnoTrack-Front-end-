@@ -49,9 +49,11 @@ function ProjectCard({ project, onManage, onViewDetails }: { project: any; onMan
         {/* Header */}
         <div className="flex items-start justify-between gap-3 mb-4 shrink-0">
           <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1">
               <h3 className="text-base font-semibold text-foreground truncate">{project.title}</h3>
-              <StatusBadge status={normalizeStatusTone(project.status) as any} />
+              <div className="shrink-0">
+                <StatusBadge status={normalizeStatusTone(project.status) as any} />
+              </div>
             </div>
             <p className="text-sm text-muted-foreground">{project.teamName || "No team"} · {project.domain}</p>
           </div>
