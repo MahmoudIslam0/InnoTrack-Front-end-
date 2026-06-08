@@ -62,7 +62,7 @@ function ProjectCard({ project, onManage, onViewDetails }: { project: any; onMan
         </div>
 
         {/* Description */}
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">{project.description}</p>
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{project.description}</p>
 
         {/* Technologies */}
         <div className="flex flex-wrap gap-1.5 mb-4 shrink-0 min-h-[24px]">
