@@ -421,17 +421,11 @@ export function TopNav({
                                 <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                                   {notification.message}
                                 </p>
-                              </div>
-                              <div className="flex flex-col items-end justify-between shrink-0 self-stretch min-h-[40px]">
-                                {notification.unread ? (
-                                  <span className="h-2 w-2 rounded-full bg-primary shrink-0 mt-1" />
-                                ) : (
-                                  <div />
-                                )}
-                                <p className="text-xs text-muted-foreground/60 whitespace-nowrap mt-auto">
+                                <p className="text-xs text-muted-foreground/60 mt-2 font-medium">
                                   {notification.time}
                                 </p>
                               </div>
+                              {notification.unread && <span className="h-2 w-2 rounded-full bg-primary mt-1.5 shrink-0" />}
                             </div>
                           </Link>
                         ))

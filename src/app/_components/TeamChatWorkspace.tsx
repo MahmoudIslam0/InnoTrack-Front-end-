@@ -202,11 +202,11 @@ export function TeamChatWorkspace({
   return (
     <section 
       id="chat-workspace-container"
-      className={cn("dashboard-surface flex h-[calc(100vh-154px)] min-h-[700px] flex-col overflow-hidden bg-background/50", className)}
+      className={cn("dashboard-surface flex h-[calc(100vh-148px)] flex-col overflow-hidden bg-background/50", className)}
     >
-      <div className="bg-card/40 backdrop-blur-xl border-b border-border/50 px-6 py-5 flex items-center justify-between z-10 shadow-sm">
+      <div className="bg-card/40 backdrop-blur-xl border-b border-border/50 px-5 py-3 flex items-center justify-between z-10 shadow-sm">
         <div>
-          <h2 className="text-xl font-bold tracking-tight text-foreground">{title}</h2>
+          <h2 className="text-lg font-bold tracking-tight text-foreground">{title}</h2>
           <p className="text-sm text-muted-foreground mt-1 font-medium">{subtitle}</p>
         </div>
         <Button 
@@ -232,7 +232,7 @@ export function TeamChatWorkspace({
                 className="overflow-hidden"
               >
                 <div 
-                  className="bg-primary/10 backdrop-blur-md border-b border-primary/20 px-4 py-3 text-sm flex items-center gap-3 shadow-sm cursor-pointer hover:bg-primary/20 transition-colors"
+                  className="bg-primary/10 backdrop-blur-md border-b border-primary/20 px-3 py-2 text-xs flex items-center gap-2 shadow-sm cursor-pointer hover:bg-primary/20 transition-colors"
                   onClick={() => {
                     const targetId = `message-${pinnedMessages[pinnedMessages.length - 1].backendId}`;
                     const el = document.getElementById(targetId);
@@ -259,7 +259,7 @@ export function TeamChatWorkspace({
             )}
           </AnimatePresence>
 
-          <div className="flex-1 min-h-0 space-y-6 overflow-y-auto p-5 scroll-smooth" onClick={() => setShowEmojiPickerFor(null)}>
+          <div className="flex-1 min-h-0 space-y-1 overflow-y-auto p-3 scroll-smooth" onClick={() => setShowEmojiPickerFor(null)}>
             {isLoading ? (
               <div className="h-full flex flex-col items-center justify-center text-primary/70">
                 <Loader2 className="w-8 h-8 animate-spin mb-3" />
@@ -289,10 +289,10 @@ export function TeamChatWorkspace({
                     layout="position"
                     key={message.id} 
                     id={`message-${message.backendId}`}
-                    className={`flex items-end gap-3 group p-1.5 ${isOwnMessage ? "justify-end" : ""}`}
+                    className={`flex items-end gap-1 group p-1 ${isOwnMessage ? "justify-end" : ""}`}
                   >
                     {!isOwnMessage && (
-                      <Avatar className="h-9 w-9 shrink-0 shadow-sm border border-border/50 mb-1">
+                      <Avatar className="h-8 w-8 shrink-0 shadow-sm border border-border/50 mb-1\">
                         <AvatarFallback className="bg-muted/80 text-foreground font-semibold text-xs">
                           {message.initials}
                         </AvatarFallback>
@@ -638,7 +638,7 @@ export function TeamChatWorkspace({
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="border-t border-border/50 bg-card/40 backdrop-blur-xl p-4 shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.1)] z-10 relative">
+          <div className="border-t border-border/50 bg-card/40 backdrop-blur-xl p-2 shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.1)] z-10 relative">
             <AnimatePresence>
               {replyingTo && (
                 <motion.div 
@@ -700,15 +700,15 @@ export function TeamChatWorkspace({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-12 w-12 shrink-0 text-muted-foreground hover:bg-muted/80 rounded-2xl hover:shadow-sm transition-all"
+                className="h-14 w-14 shrink-0 text-muted-foreground hover:bg-muted/80 rounded-2xl hover:shadow-sm transition-all"
                 disabled={isUploading || !onUploadFile}
                 onClick={() => fileInputRef.current?.click()}
                 title="Attach a file"
               >
                 {isUploading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <Loader2 className="h-6 w-6 animate-spin" />
                 ) : (
-                  <Paperclip className="h-5 w-5" />
+                  <Paperclip className="h-6 w-6" />
                 )}
               </Button>
               <Input
@@ -721,10 +721,10 @@ export function TeamChatWorkspace({
               />
               <Button
                 size="icon"
-                className="h-14 w-14 shrink-0 rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all group"
+                className="h-14 w-14 shrink-0 rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all group flex items-center justify-center"
                 onClick={sendMessage}
               >
-                <Send className="h-5 w-5 ml-0.5 group-hover:scale-110 transition-transform" />
+                <Send className="h-6 w-6 group-hover:scale-110 transition-transform" />
               </Button>
             </div>
           </div>
@@ -739,15 +739,15 @@ export function TeamChatWorkspace({
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="bg-card/20 flex flex-col min-h-0 border-l border-border/50 hidden lg:flex relative overflow-hidden shrink-0"
           >
-            <div className="w-[288px] p-6 flex flex-col h-full">
+            <div className="w-[288px] p-4 flex flex-col h-full">
               <div className="absolute inset-0 bg-gradient-to-b from-transparent to-muted/5 pointer-events-none" />
-          <div className="mb-6 flex items-center justify-between relative z-10">
+          <div className="mb-4 flex items-center justify-between relative z-10">
             <div className="flex items-center gap-2">
               <h3 className="text-[13px] font-bold text-foreground uppercase tracking-widest">Team Members</h3>
               <Badge className="bg-muted/60 text-muted-foreground border-none shadow-sm">{members.length}</Badge>
             </div>
           </div>
-          <div className="space-y-4 overflow-y-auto min-h-[150px] flex-1 pr-2 relative z-10 scroll-smooth custom-scrollbar">
+          <div className="space-y-2 overflow-y-auto min-h-[80px] flex-1 pr-2 relative z-10 scroll-smooth custom-scrollbar">
             <AnimatePresence>
               {members.map((member) => (
                 <motion.div 
@@ -778,7 +778,7 @@ export function TeamChatWorkspace({
             </AnimatePresence>
           </div>
 
-          <div className="pt-6 mt-auto border-t border-border/50 relative z-10 flex flex-col shrink-0 max-h-[50%]">
+          <div className="pt-3 mt-auto border-t border-border/50 relative z-10 flex flex-col shrink-0 max-h-[50%]">
             <button className="flex items-center gap-2 w-full text-left focus:outline-none group mb-2 p-2 rounded-xl hover:bg-muted/40 transition-colors shrink-0" onClick={() => setIsSharedFilesOpen(!isSharedFilesOpen)}>
               <h3 className="text-[13px] font-bold text-foreground uppercase tracking-widest flex-1">Shared Files</h3>
               <div className="text-muted-foreground group-hover:text-foreground transition-colors bg-muted/50 p-1 rounded-lg">

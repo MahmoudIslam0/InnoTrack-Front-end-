@@ -422,9 +422,7 @@ export default function TeamsPage() {
   };
 
   return (
-    <div className={hasTeam 
-      ? "flex flex-col h-[calc(100vh-65px)] w-full overflow-hidden px-4 md:px-6 py-4 space-y-4" 
-      : "dashboard-page flex flex-col space-y-6"}>
+    <div className={`dashboard-page ${hasTeam && activeView === "chat" ? "space-y-4 md:pt-5 md:pb-4 !max-w-[95%]" : "space-y-6"}`}>
       {isLoading ? (
         <div className="flex flex-col gap-6">
           <div className="flex justify-center mb-4">
@@ -485,7 +483,7 @@ export default function TeamsPage() {
           </div>
 
           {activeView === "overview" ? (
-            <section className="dashboard-surface flex-1 overflow-y-auto">
+            <section className="dashboard-surface overflow-hidden">
               <div className="p-5 md:p-6 border-b border-border/50">
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex min-w-0 flex-col gap-1.5">
@@ -784,7 +782,7 @@ export default function TeamsPage() {
               onReplyToMessage={realReplyToMessage}
               onUploadFile={realUploadFile}
               isLoading={isChatLoading}
-              className="flex-1 min-h-0 rounded-2xl border border-border/50 shadow-sm"
+              className="h-[calc(100vh-240px)] min-h-[500px] rounded-2xl border border-border/50 shadow-sm"
             />
           )}
         </>

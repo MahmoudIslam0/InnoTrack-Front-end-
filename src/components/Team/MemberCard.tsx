@@ -17,12 +17,12 @@ interface Member {
 
 export default function MemberCard({ member, isLeaderView, onRemove }: { member: Member; isLeaderView?: boolean; onRemove?: (name: string, id?: number)=>void }) {
   return (
-    <div className="bg-card p-4 rounded-xl border border-border/50 flex items-center justify-between gap-3">
+    <div className="bg-card p-2 rounded-xl border border-border/50 flex items-center justify-between gap-2">
       <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-primary/90">{member.name.split(" ").map(n=>n[0]).join("")}</div>
+        <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-primary/90 text-sm">{member.name.split(" ").map(n=>n[0]).join("")}</div>
         <div>
-          <div className="font-semibold">{member.name}</div>
-          <div className="text-sm text-muted-foreground">{member.role || 'Member'}</div>
+          <div className="font-semibold text-sm">{member.name}</div>
+          <div className="text-xs text-muted-foreground">{member.role || 'Member'}</div>
         </div>
       </div>
       {isLeaderView && member.role !== "Leader" && (

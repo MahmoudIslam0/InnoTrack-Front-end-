@@ -90,13 +90,13 @@ export default function ProfessorTeamDetail() {
     : [];
 
   return (
-    <div className="flex flex-col h-[calc(100vh-65px)] w-full overflow-hidden px-4 md:px-6 py-4 space-y-4">
-      <div className="relative flex flex-col md:flex-row md:items-center justify-center shrink-0 w-full min-h-[44px]">
-        <div className="md:absolute md:left-0 flex items-center gap-4 mb-4 md:mb-0">
-          <Button variant="ghost" size="icon" onClick={() => router.push("/professor/teams")}>
+    <div className={`dashboard-page flex flex-col ${activeView === "chat" ? "space-y-3 md:pt-5 !max-w-[95%]" : "space-y-6"}`}>
+      <div className={`relative flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0 ${activeView === "chat" ? "mb-2" : "mb-8"}`}>
+        <div className="flex items-center gap-4 w-full md:w-[calc(50%-230px)] shrink-0 min-w-0">
+          <Button variant="ghost" size="icon" className="shrink-0" onClick={() => router.push("/professor/teams")}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <div>
+          <div className="min-w-0">
             {isLoadingTeam ? (
               <div className="space-y-2">
                 <Skeleton className="h-7 w-48 rounded-md" />
@@ -104,19 +104,19 @@ export default function ProfessorTeamDetail() {
               </div>
             ) : (
               <>
-                <h1 className="text-xl md:text-2xl font-bold text-foreground truncate max-w-[200px] md:max-w-[300px]">{team.name}</h1>
-                <p className="text-sm text-muted-foreground truncate max-w-[200px] md:max-w-[300px]">{team.projectTitle || "No Project"}</p>
+                <h1 className="text-2xl font-bold text-foreground truncate">{team.name}</h1>
+                <p className="text-sm text-muted-foreground truncate">{team.projectTitle || "No Project"}</p>
               </>
             )}
           </div>
         </div>
 
-        <div className="flex justify-center shrink-0">
-          <div className="grid w-[300px] md:w-[400px] grid-cols-2 rounded-xl border border-border bg-muted/40 p-1">
+        <div className="flex w-full md:w-auto justify-center md:absolute md:left-1/2 md:-translate-x-1/2">
+          <div className="grid w-full md:w-[440px] grid-cols-2 rounded-xl border border-border bg-muted/40 p-1 shadow-sm">
             <button
               type="button"
               onClick={() => handleActiveViewChange("overview")}
-              className={`flex h-10 md:h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition ${
+              className={`flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition ${
                 activeView === "overview"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -128,7 +128,7 @@ export default function ProfessorTeamDetail() {
             <button
               type="button"
               onClick={() => handleActiveViewChange("chat")}
-              className={`flex h-10 md:h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition ${
+              className={`flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition ${
                 activeView === "chat"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -142,7 +142,7 @@ export default function ProfessorTeamDetail() {
       </div>
 
       {isLoadingTeam ? (
-        <section className="dashboard-surface p-6 flex-1 overflow-hidden">
+        <section className="dashboard-surface p-6 flex-1 overflow-auto">
           <div className="mb-4 space-y-2">
             <Skeleton className="h-6 w-32 rounded-md" />
             <Skeleton className="h-4 w-64 rounded-md" />
@@ -171,7 +171,7 @@ export default function ProfessorTeamDetail() {
           </div>
         </section>
       ) : activeView === "overview" ? (
-        <section className="dashboard-surface p-6 flex-1 overflow-hidden">
+        <section className="dashboard-surface p-6 flex-1 overflow-auto">
           <div className="mb-4">
             <h2 className="text-lg font-semibold text-foreground">Team Roster</h2>
             <p className="text-sm text-muted-foreground">View the current members of this team.</p>
@@ -198,7 +198,7 @@ export default function ProfessorTeamDetail() {
           onReplyToMessage={replyToMessage}
           onUploadFile={uploadFile}
           isLoading={isChatLoading}
-          className="flex-1 min-h-0 rounded-2xl border border-border/50 shadow-sm"
+          className="h-[calc(100vh-240px)] min-h-[500px] rounded-2xl border border-border/50 shadow-sm"
         />
       )}
     </div>
