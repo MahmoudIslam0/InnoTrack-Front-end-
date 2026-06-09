@@ -458,7 +458,7 @@ export default function TeamsPage() {
       ) : (
         <Tabs value={activeView} onValueChange={(val) => handleActiveViewChange(val as any)} className="w-full">
           <div className="flex justify-center mb-8">
-            <TabsList className="grid w-full max-w-[440px] grid-cols-2 rounded-xl border border-border bg-muted/40 p-1 h-auto">
+            <TabsList className="grid !h-auto items-stretch w-full max-w-[440px] grid-cols-2 gap-1 rounded-xl border border-border bg-muted/40 !p-1">
               <TabsTrigger
                 value="overview"
                 className="flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground"
