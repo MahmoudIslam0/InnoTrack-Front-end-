@@ -7,6 +7,8 @@ import {
   ClipboardList,
   Users,
   MessageSquare,
+  ShieldAlert,
+  Calendar,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -15,7 +17,7 @@ import { useSidebar } from "@/contexts/SidebarContext";
 
 interface SidebarProps {
   activeItem?: string;
-  variant?: "student" | "professor";
+  variant?: "student" | "professor" | "admin";
 }
 
 const studentMenuItems = [
@@ -33,11 +35,21 @@ const professorMenuItems = [
   { id: "teams", label: "Teams", icon: Users, path: "/professor/teams" },
 ];
 
+const adminMenuItems = [
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" },
+  { id: "students", label: "Students", icon: Users, path: "/admin/students" },
+  { id: "professors", label: "Professors", icon: ClipboardList, path: "/admin/professors" },
+  { id: "teams", label: "Teams", icon: Users, path: "/admin/teams" },
+  { id: "projects", label: "Projects", icon: FolderKanban, path: "/admin/projects" },
+  { id: "academic-years", label: "Academic Years", icon: Calendar, path: "/admin/academic-years" },
+  { id: "audit-logs", label: "Audit Logs", icon: ShieldAlert, path: "/admin/audit-logs" },
+];
+
 export function SidebarContent({ activeItem, variant = "student" }: SidebarProps) {
   const pathname = usePathname();
   const { isSidebarCollapsed } = useSidebar();
-  const menuItems = variant === "professor" ? professorMenuItems : studentMenuItems;
-  const subtitle = variant === "professor" ? "Professor Workspace" : "Student Workspace";
+  const menuItems = variant === "admin" ? adminMenuItems : variant === "professor" ? professorMenuItems : studentMenuItems;
+  const subtitle = variant === "admin" ? "System Administration" : variant === "professor" ? "Professor Workspace" : "Student Workspace";
 
   return (
     <div className="flex h-full flex-col">

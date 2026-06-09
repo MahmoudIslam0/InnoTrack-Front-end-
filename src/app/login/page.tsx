@@ -32,7 +32,9 @@ export default function Login() {
 
     try {
       const response = await login(email, password);
-      if (response.role === "Professor") {
+      if (response.role?.toLowerCase() === "admin") {
+        router.push("/admin/dashboard");
+      } else if (response.role === "Professor") {
         router.push("/professor/dashboard");
       } else {
         router.push("/dashboard");

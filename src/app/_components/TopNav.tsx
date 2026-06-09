@@ -45,7 +45,7 @@ interface TopNavProps {
   showSearch?: boolean;
   showNotifications?: boolean;
   profileHref?: string;
-  variant?: "student" | "professor";
+  variant?: "student" | "professor" | "admin";
 }
 
 export function TopNav({
@@ -65,8 +65,10 @@ export function TopNav({
   const [notifications, setNotifications] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
 
+  const isAdmin = pathname.startsWith("/admin");
+
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !isAdmin) {
       const isProf = pathname.startsWith("/professor");
       const endpoint = isProf ? "/api/Professor/me" : "/api/Students/me";
       api.get(endpoint)
@@ -77,21 +79,31 @@ export function TopNav({
           console.error("Failed to load header profile details:", err);
         });
     }
-  }, [isAuthenticated, pathname]);
+  }, [isAuthenticated, pathname, isAdmin]);
 
-  const finalName = profile
-    ? `${profile.firstName} ${profile.lastName}`
-    : authUser?.name || profileName;
+  const finalName = isAdmin 
+    ? authUser?.name || "Administrator" 
+    : profile
+      ? `${profile.firstName} ${profile.lastName}`
+      : authUser?.name || profileName;
 
-  const finalSubtitle = profile
-    ? profile.departmentName || (pathname.startsWith("/professor") ? "Faculty Member" : "Student")
-    : profileSubtitle;
+  const finalSubtitle = isAdmin
+    ? "System Administrator"
+    : profile
+      ? profile.departmentName || (pathname.startsWith("/professor") ? "Faculty Member" : "Student")
+      : profileSubtitle;
 
-  const finalInitials = profile
-    ? `${profile.firstName ? profile.firstName[0] : ""}${profile.lastName ? profile.lastName[0] : ""}`.toUpperCase()
-    : (finalName ? finalName.split(" ").map((n: any) => n[0]).join("").slice(0, 2).toUpperCase() : "U");
+  const finalInitials = isAdmin
+    ? "A"
+    : profile
+      ? `${profile.firstName ? profile.firstName[0] : ""}${profile.lastName ? profile.lastName[0] : ""}`.toUpperCase()
+      : (finalName ? finalName.split(" ").map((n: any) => n[0]).join("").slice(0, 2).toUpperCase() : "U");
 
-  const finalProfileHref = pathname.startsWith("/professor") ? "/professor/profile" : "/profile";
+  const finalProfileHref = isAdmin 
+    ? "#" 
+    : pathname.startsWith("/professor") 
+      ? "/professor/profile" 
+      : "/profile";
 
   const getBreadcrumbs = () => {
     const isProf = pathname.startsWith("/professor");

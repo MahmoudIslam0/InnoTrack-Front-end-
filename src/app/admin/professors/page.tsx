@@ -1,0 +1,235 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { ColumnDef } from "@tanstack/react-table";
+import { toast } from "sonner";
+import { adminApi, AdminProfessorDto } from "@/lib/admin-api";
+import { DataTable } from "@/app/_components/DataTable";
+import { PageHeader } from "@/app/_components/DashboardUI";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { MoreHorizontal, ShieldOff, KeyRound, Plus, Users, LayoutDashboard } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+
+export default function AdminProfessors() {
+  const [data, setData] = useState<AdminProfessorDto[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isProvisionOpen, setIsProvisionOpen] = useState(false);
+  const [provisionData, setProvisionData] = useState({
+    fullName: "",
+    email: "",
+    departmentId: 1,
+    capacity: 5,
+    password: "",
+  });
+
+  const fetchProfessors = async () => {
+    setIsLoading(true);
+    try {
+      const result = await adminApi.getProfessors();
+      setData(result);
+    } catch (error: any) {
+      toast.error("Failed to fetch professors", { description: error.message });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfessors();
+  }, []);
+
+  const handleToggleStatus = async (prof: AdminProfessorDto) => {
+    try {
+      await adminApi.updateProfessorStatus(prof.id, !prof.isActive);
+      toast.success(`Professor ${!prof.isActive ? 'activated' : 'deactivated'} successfully`);
+      fetchProfessors();
+    } catch (error: any) {
+      toast.error("Failed to update status", { description: error.message });
+    }
+  };
+
+  const handleResetPassword = async (id: string) => {
+    const newPassword = prompt("Enter new password (leave blank for random generation):");
+    if (newPassword === null) return; // cancelled
+    try {
+      await adminApi.resetProfessorPassword(id, newPassword || undefined);
+      toast.success("Password reset successfully. Active sessions invalidated.");
+    } catch (error: any) {
+      toast.error("Password reset failed", { description: error.message });
+    }
+  };
+
+  const handleProvision = async () => {
+    try {
+      await adminApi.provisionProfessor({
+        ...provisionData,
+        password: provisionData.password || undefined,
+      });
+      toast.success("Professor provisioned successfully");
+      setIsProvisionOpen(false);
+      fetchProfessors();
+    } catch (error: any) {
+      toast.error("Failed to provision professor", { description: error.message });
+    }
+  };
+
+  const columns: ColumnDef<AdminProfessorDto>[] = [
+    {
+      accessorKey: "fullName",
+      header: "Full Name",
+      cell: ({ row }) => <div className="font-medium text-foreground">{row.getValue("fullName")}</div>,
+    },
+    {
+      accessorKey: "email",
+      header: "Email",
+      cell: ({ row }) => <div className="text-muted-foreground">{row.getValue("email")}</div>,
+    },
+    {
+      accessorKey: "departmentName",
+      header: "Department",
+    },
+    {
+      accessorKey: "capacity",
+      header: "Load Capacity",
+      cell: ({ row }) => {
+        const capacity = row.getValue("capacity") as number;
+        const current = row.original.currentSupervisedTeams;
+        const isFull = current >= capacity;
+        return (
+          <div className="flex items-center gap-2">
+            <span className={isFull ? "text-destructive font-medium" : ""}>
+              {current} / {capacity}
+            </span>
+            {isFull && <Badge variant="destructive" className="text-[10px] uppercase">Full</Badge>}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "isActive",
+      header: "Status",
+      cell: ({ row }) => {
+        const isActive = row.getValue("isActive") as boolean;
+        return isActive ? (
+          <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20">Active</Badge>
+        ) : (
+          <Badge variant="secondary" className="bg-amber-500/10 text-amber-700 dark:text-amber-400">Inactive</Badge>
+        );
+      },
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const prof = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => navigator.clipboard.writeText(prof.id)}>
+                Copy ID
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleToggleStatus(prof)}>
+                <ShieldOff className="w-4 h-4 mr-2" />
+                {prof.isActive ? 'Deactivate Account' : 'Activate Account'}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleResetPassword(prof.id)}>
+                <KeyRound className="w-4 h-4 mr-2" />
+                Reset Password
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+
+  return (
+    <div className="dashboard-page">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+        <PageHeader
+          title="Professor Management"
+          description="View professors, manage capacities, and provision new supervisor accounts."
+        />
+        
+        <Dialog open={isProvisionOpen} onOpenChange={setIsProvisionOpen}>
+          <DialogTrigger asChild>
+            <Button className="mt-2 sm:mt-0 bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Plus className="w-4 h-4 mr-2" />
+              Provision Professor
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px] border-border/50 bg-background/95 backdrop-blur-xl">
+            <DialogHeader>
+              <DialogTitle>Provision New Professor</DialogTitle>
+              <DialogDescription>
+                Professor accounts cannot be self-registered. Create one here.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input id="name" value={provisionData.fullName} onChange={e => setProvisionData({...provisionData, fullName: e.target.value})} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input id="email" type="email" value={provisionData.email} onChange={e => setProvisionData({...provisionData, email: e.target.value})} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="dept">Department ID</Label>
+                  <Input id="dept" type="number" value={provisionData.departmentId} onChange={e => setProvisionData({...provisionData, departmentId: parseInt(e.target.value) || 1})} />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="capacity">Capacity</Label>
+                  <Input id="capacity" type="number" value={provisionData.capacity} onChange={e => setProvisionData({...provisionData, capacity: parseInt(e.target.value) || 5})} />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="pass">Initial Password (Optional)</Label>
+                <Input id="pass" type="password" placeholder="Auto-generated if blank" value={provisionData.password} onChange={e => setProvisionData({...provisionData, password: e.target.value})} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsProvisionOpen(false)}>Cancel</Button>
+              <Button type="submit" onClick={handleProvision}>Create Account</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <div className="mt-8">
+        <DataTable
+          columns={columns}
+          data={data}
+          isLoading={isLoading}
+        />
+      </div>
+    </div>
+  );
+}

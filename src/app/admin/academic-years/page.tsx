@@ -1,0 +1,218 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { ColumnDef } from "@tanstack/react-table";
+import { toast } from "sonner";
+import { adminApi, AcademicYearDto } from "@/lib/admin-api";
+import { DataTable } from "@/app/_components/DataTable";
+import { PageHeader } from "@/app/_components/DashboardUI";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { MoreHorizontal, Plus, CheckCircle } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+
+export default function AdminAcademicYears() {
+  const [data, setData] = useState<AcademicYearDto[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Create Modal State
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createData, setCreateData] = useState({
+    name: "",
+    startDate: "",
+    endDate: "",
+  });
+
+  const fetchAcademicYears = async () => {
+    setIsLoading(true);
+    try {
+      const result = await adminApi.getAcademicYears();
+      setData(result);
+    } catch (error: any) {
+      toast.error("Failed to fetch academic years", { description: error.message });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAcademicYears();
+  }, []);
+
+  const handleActivate = async (id: number) => {
+    if (!confirm("Are you sure you want to set this as the active academic year? Other years will be deactivated.")) return;
+    try {
+      await adminApi.activateAcademicYear(id);
+      toast.success("Academic year activated successfully");
+      fetchAcademicYears();
+    } catch (error: any) {
+      toast.error("Failed to activate academic year", { description: error.message });
+    }
+  };
+
+  const handleCreate = async () => {
+    try {
+      await adminApi.createAcademicYear({
+        name: createData.name,
+        startDate: new Date(createData.startDate).toISOString(),
+        endDate: new Date(createData.endDate).toISOString(),
+      });
+      toast.success("Academic year created successfully");
+      setIsCreateOpen(false);
+      setCreateData({ name: "", startDate: "", endDate: "" });
+      fetchAcademicYears();
+    } catch (error: any) {
+      toast.error("Failed to create academic year", { description: error.message });
+    }
+  };
+
+  const columns: ColumnDef<AcademicYearDto>[] = [
+    {
+      accessorKey: "name",
+      header: "Year Name",
+      cell: ({ row }) => <div className="font-medium text-foreground">{row.getValue("name")}</div>,
+    },
+    {
+      accessorKey: "startDate",
+      header: "Start Date",
+      cell: ({ row }) => <div>{new Date(row.getValue("startDate")).toLocaleDateString()}</div>,
+    },
+    {
+      accessorKey: "endDate",
+      header: "End Date",
+      cell: ({ row }) => <div>{new Date(row.getValue("endDate")).toLocaleDateString()}</div>,
+    },
+    {
+      accessorKey: "isActive",
+      header: "Status",
+      cell: ({ row }) => {
+        const isActive = row.getValue("isActive") as boolean;
+        return isActive ? (
+          <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">Active Current</Badge>
+        ) : (
+          <Badge variant="outline">Inactive</Badge>
+        );
+      },
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const year = row.original;
+        if (year.isActive) return null; // No actions needed if it's already active (unless editing)
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleActivate(year.id)}>
+                <CheckCircle className="w-4 h-4 mr-2 text-emerald-500" />
+                Set as Active
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+
+  return (
+    <div className="dashboard-page">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+        <PageHeader
+          title="Academic Years"
+          description="Manage graduation cycles. Only one year can be active at a time."
+        />
+        
+        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+          <DialogTrigger asChild>
+            <Button className="mt-2 sm:mt-0 bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Plus className="w-4 h-4 mr-2" />
+              New Academic Year
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px] border-border/50 bg-background/95 backdrop-blur-xl">
+            <DialogHeader>
+              <DialogTitle>Create Academic Year</DialogTitle>
+              <DialogDescription>
+                Define a new cycle. New years are inactive by default until explicitly activated.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Cycle Name</Label>
+                <Input 
+                  id="name" 
+                  placeholder="e.g. 2024-2025" 
+                  value={createData.name} 
+                  onChange={e => setCreateData({...createData, name: e.target.value})} 
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="start">Start Date</Label>
+                  <Input 
+                    id="start" 
+                    type="date" 
+                    value={createData.startDate} 
+                    onChange={e => setCreateData({...createData, startDate: e.target.value})} 
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="end">End Date</Label>
+                  <Input 
+                    id="end" 
+                    type="date" 
+                    value={createData.endDate} 
+                    onChange={e => setCreateData({...createData, endDate: e.target.value})} 
+                  />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
+              <Button 
+                type="submit" 
+                onClick={handleCreate}
+                disabled={!createData.name || !createData.startDate || !createData.endDate}
+              >
+                Create Year
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <div className="mt-8">
+        <DataTable
+          columns={columns}
+          data={data}
+          isLoading={isLoading}
+        />
+      </div>
+    </div>
+  );
+}
