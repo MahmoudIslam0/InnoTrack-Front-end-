@@ -242,7 +242,17 @@ export default function ProfessorProjectManagement() {
     { key: "underreview", label: "Under Review" },
   ];
 
-
+  const handleRejectProposal = async (projectId: string, feedback: string) => {
+    try {
+      await professorApi.requestRevision(projectId, feedback);
+      setProjects(prev => prev.map(p => p.id === projectId ? { ...p, status: "Draft" } : p));
+      setSelectedProject((prev: any) => prev?.id === projectId ? { ...prev, status: "Draft" } : prev);
+      toast.success("Project rejected and returned to draft.");
+    } catch (e) {
+      toast.error("Failed to reject project.");
+      console.error(e);
+    }
+  };
 
   const handleCancelSupervision = async (projectId: string, reason: string) => {
     try {
@@ -396,7 +406,7 @@ export default function ProfessorProjectManagement() {
         defaultTab={dialogTab}
         onOpenChange={open => !open && setSelectedProject(null)}
         onApproveProposal={(id, feedback) => setSystemStatus(id, "InProgress", true, feedback)}
-        onRejectProposal={(id, feedback) => setSystemStatus(id, "Rejected", true, feedback)}
+        onRejectProposal={handleRejectProposal}
         onAcceptSubmission={(id, feedback) => setSystemStatus(id, "Completed", false, feedback)}
         onRejectSubmission={(id, feedback) => setSystemStatus(id, "InProgress", false, feedback)}
         onCancelSupervision={handleCancelSupervision}
