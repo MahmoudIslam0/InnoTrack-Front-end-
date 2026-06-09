@@ -456,45 +456,28 @@ export default function TeamsPage() {
           createTeam={createTeam}
         />
       ) : (
-        <>
+        <Tabs value={activeView} onValueChange={(val) => handleActiveViewChange(val as any)} className="w-full">
           <div className="flex justify-center mb-8">
-            <div className="grid w-full max-w-[440px] grid-cols-2 rounded-xl border border-border bg-muted/40 p-1">
-              <button
-                type="button"
-                onClick={() => handleActiveViewChange("overview")}
-                className={`flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition ${activeView === "overview"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-                  }`}
+            <TabsList className="grid w-full max-w-[440px] grid-cols-2 rounded-xl border border-border bg-muted/40 p-1 h-auto">
+              <TabsTrigger
+                value="overview"
+                className="flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground"
               >
                 <Users className="h-4 w-4" />
                 Overview
-              </button>
-              <button
-                type="button"
-                onClick={() => handleActiveViewChange("chat")}
-                className={`flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition ${activeView === "chat"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-                  }`}
+              </TabsTrigger>
+              <TabsTrigger
+                value="chat"
+                className="flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground"
               >
                 <MessageSquare className="h-4 w-4" />
                 Team Chat
-              </button>
-            </div>
+              </TabsTrigger>
+            </TabsList>
           </div>
 
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeView}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="w-full"
-            >
-              {activeView === "overview" ? (
-                <section className="dashboard-surface overflow-hidden">
+          <TabsContent value="overview" className="mt-0 outline-none">
+            <section className="dashboard-surface overflow-hidden">
               <div className="p-5 md:p-6 border-b border-border/50">
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex min-w-0 flex-col gap-1.5">
@@ -777,7 +760,9 @@ export default function TeamsPage() {
                 </div>
               </div>
             </section>
-          ) : (
+          </TabsContent>
+          
+          <TabsContent value="chat" className="mt-0 outline-none">
             <TeamChatWorkspace
               title="Team Chat"
               subtitle={`${team?.projectTitle || "No project yet"} - ${team?.name || ""}`}
@@ -795,10 +780,8 @@ export default function TeamsPage() {
               isLoading={isChatLoading}
               className="h-[calc(100vh-240px)] min-h-[500px] rounded-2xl border border-border/50 shadow-sm"
             />
-            )}
-            </motion.div>
-          </AnimatePresence>
-        </>
+          </TabsContent>
+        </Tabs>
       )}
       
       <ConfirmDialog 
