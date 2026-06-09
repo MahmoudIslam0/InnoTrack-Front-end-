@@ -58,12 +58,16 @@ export default function Login() {
                 src="/logo-light.png"
                 alt="InnoTrack Logo"
                 fill
+                sizes="112px"
+                priority
                 className="drop-shadow-xl mix-blend-multiply object-contain dark:hidden"
               />
               <Image
                 src="/logo-dark.png"
                 alt="InnoTrack Logo"
                 fill
+                sizes="112px"
+                priority
                 className="drop-shadow-xl mix-blend-screen object-contain hidden dark:block"
               />
             </div>

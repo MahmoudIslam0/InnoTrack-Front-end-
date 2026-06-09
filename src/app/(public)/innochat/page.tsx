@@ -535,14 +535,15 @@ function InnoChatContent() {
         <div className="px-6 py-5 border-t border-border/50 backdrop-blur-sm relative z-10">
           <div className="max-w-4xl mx-auto">
             <div className="flex gap-3 items-end">
-              <div className="flex-1 relative">
+              <div className="flex-1 relative min-w-0">
                 <Textarea
                   ref={textareaRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder={isTypingGreeting ? "Please wait while InnoChat initializes..." : "Ask me anything about your graduation project..."}
-                  className="min-h-[60px] max-h-50 resize-none py-[18px] px-6 text-center backdrop-blur-sm bg-card/80 dark:bg-card/60 border-border/50 shadow-md"
+                  className="!h-[60px] overflow-y-auto resize-none py-[18px] pl-6 pr-32 backdrop-blur-sm bg-card/80 dark:bg-card/60 border-border/50 shadow-md"
+                  style={{ fieldSizing: "fixed", height: "60px" } as any}
                   rows={1}
                   disabled={isTypingGreeting}
                 />

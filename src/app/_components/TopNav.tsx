@@ -236,7 +236,7 @@ export function TopNav({
   };
 
   useEffect(() => {
-    if (!showNotifications) return;
+    if (!showNotifications || !isAuthenticated) return;
 
     const token = localStorage.getItem("accessToken");
     if (!token) return;
@@ -295,14 +295,28 @@ export function TopNav({
       });
     });
 
+    let isMounted = true;
+
     connection.start()
-      .then(() => console.log("SignalR Notifications Connected"))
-      .catch((err) => console.error("SignalR Notifications Connection Error: ", err));
+      .then(() => {
+        if (!isMounted) {
+          connection.stop();
+        } else {
+          console.log("SignalR Notifications Connected");
+        }
+      })
+      .catch((err) => {
+        if (err && err.message && err.message.includes("stopped during negotiation")) {
+          return; // Ignore error from fast unmounting (StrictMode)
+        }
+        console.error("SignalR Notifications Connection Error: ", err);
+      });
 
     return () => {
+      isMounted = false;
       connection.stop();
     };
-  }, [showNotifications, profileHref, router]);
+  }, [showNotifications, profileHref, router, isAuthenticated]);
 
   return (
     <header className={`fixed top-0 left-0 ${isSidebarCollapsed ? 'md:left-20' : 'md:left-64'} right-0 h-16 bg-background/90 backdrop-blur-md border-b border-border z-40 transition-all duration-300 ease-in-out`}>

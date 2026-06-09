@@ -185,7 +185,10 @@ export function useProfessorTeamChat(teamId: number | null) {
             online: onlineUserIds.includes(parseInt(m.id))
           })));
         }
-      } catch (err) {
+      } catch (err: any) {
+        if (err && err.message && err.message.includes("stopped during negotiation")) {
+          return; // Ignore fast unmount error
+        }
         console.error("SignalR Connection Error:", err);
       }
     };

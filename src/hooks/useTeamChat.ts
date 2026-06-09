@@ -225,6 +225,7 @@ export function useTeamChat(teamId: number | null, onTeamUpdated?: () => void) {
       }));
     });
 
+    let isMounted = true;
     const joinTeamChat = async () => {
       try {
         let currentUserId = 0;
@@ -245,7 +246,7 @@ export function useTeamChat(teamId: number | null, onTeamUpdated?: () => void) {
           online: m.id === currentUserId.toString() || onlineUserIds.includes(parseInt(m.id))
         }));
 
-        setIsConnected(true);
+        if (isMounted) setIsConnected(true);
       } catch (e) {
         console.error("Failed to join team chat room", e);
         toast.error("Failed to connect to live chat");
@@ -255,7 +256,16 @@ export function useTeamChat(teamId: number | null, onTeamUpdated?: () => void) {
     if (connection.state === signalR.HubConnectionState.Connected) {
       joinTeamChat();
     } else {
-      connection.start().then(joinTeamChat).catch((err) => {
+      connection.start().then(() => {
+        if (!isMounted) {
+          connection.stop();
+        } else {
+          joinTeamChat();
+        }
+      }).catch((err) => {
+        if (err && err.message && err.message.includes("stopped during negotiation")) {
+          return; // Ignore StrictMode fast unmounting
+        }
         console.error("SignalR Connection Error: ", err);
         toast.error("Failed to connect to chat server");
       });
@@ -311,6 +321,7 @@ export function useTeamChat(teamId: number | null, onTeamUpdated?: () => void) {
     connection.onreconnecting(() => setIsConnected(false));
 
     return () => {
+      isMounted = false;
       connection.off("ReceiveMessage");
       connection.off("MessageEdited");
       connection.off("MessageDeleted");
