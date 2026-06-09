@@ -78,6 +78,7 @@ export function useProfessorTeamChat(teamId: number | null) {
       .withUrl(hubUrl, {
         accessTokenFactory: () => token,
       })
+      .configureLogging(signalR.LogLevel.None)
       .withAutomaticReconnect()
       .build();
 
@@ -227,7 +228,7 @@ export function useProfessorTeamChat(teamId: number | null) {
         const u = JSON.parse(userStr);
         authorName = u.name || "Professor";
         authorId = u.id || 0;
-      } catch (e) {}
+      } catch (e) { }
     }
 
     const currentMember = membersRef.current.find((m) => m.id === authorId.toString());

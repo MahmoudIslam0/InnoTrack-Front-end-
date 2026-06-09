@@ -45,7 +45,7 @@ export function useTeamChat(teamId: number | null, onTeamUpdated?: () => void) {
   const [isConnected, setIsConnected] = useState(false);
   const [connection, setConnection] = useState<signalR.HubConnection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   const membersRef = useRef<TeamChatMember[]>([]);
 
   const fetchTeamData = useCallback(async (isMounted: boolean = true) => {
@@ -57,7 +57,7 @@ export function useTeamChat(teamId: number | null, onTeamUpdated?: () => void) {
         try {
           const u = JSON.parse(localStorage.getItem("user") || "{}");
           currentUserId = u.id || 0;
-        } catch (e) {}
+        } catch (e) { }
 
         const formattedMembers: TeamChatMember[] = data.members.map(m => {
           const existing = membersRef.current.find(ref => ref.id === m.id.toString());
@@ -67,14 +67,14 @@ export function useTeamChat(teamId: number | null, onTeamUpdated?: () => void) {
             name: m.fullName,
             initials: m.initials,
             role: (m.role as "Professor" | "Student") || "Student",
-            online: isCurrentUser ? true : (existing?.online || false), 
+            online: isCurrentUser ? true : (existing?.online || false),
             lastOnlineAt: m.lastOnlineAt
           };
         });
         setMembers(formattedMembers);
         membersRef.current = formattedMembers;
         setProjectTitle(data.projectTitle || "");
-        
+
         const formattedMessages: TeamChatMessage[] = data.messages.map(msg => {
           const member = data.members.find(m => m.id === msg.authorId);
           return {
@@ -136,6 +136,7 @@ export function useTeamChat(teamId: number | null, onTeamUpdated?: () => void) {
       .withUrl(hubUrl, {
         accessTokenFactory: () => token,
       })
+      .configureLogging(signalR.LogLevel.None)
       .withAutomaticReconnect()
       .build();
 
@@ -162,10 +163,10 @@ export function useTeamChat(teamId: number | null, onTeamUpdated?: () => void) {
       const sentAt = data.sentAt || data.SentAt || new Date().toISOString();
 
       const member = membersRef.current.find(m => m.id === senderId?.toString());
-      
+
       const authorName = member?.name || data.authorName || data.AuthorName || "Unknown";
       const attachment = data.attachment || data.Attachment;
-      
+
       const newMsg: TeamChatMessage = {
         id: (data.id || `msg-${Date.now()}-${Math.random()}`).toString(),
         backendId: data.id,
@@ -184,7 +185,7 @@ export function useTeamChat(teamId: number | null, onTeamUpdated?: () => void) {
           type: (attachment.contentType || attachment.ContentType || "").includes("image") ? "image" : (attachment.contentType || attachment.ContentType || "").includes("pdf") ? "pdf" : "document",
         } : undefined
       };
-      
+
       setMessages(prev => {
         const duplicateIdx = prev.findIndex(m => m.content === newMsg.content && !m.backendId);
         if (duplicateIdx !== -1) {
@@ -232,17 +233,17 @@ export function useTeamChat(teamId: number | null, onTeamUpdated?: () => void) {
         try {
           const u = JSON.parse(localStorage.getItem("user") || "{}");
           currentUserId = u.id || 0;
-        } catch (e) {}
+        } catch (e) { }
 
         const onlineUserIds = (await connection.invoke<number[]>("JoinTeamChat", teamId)) || [];
-        
+
         // Update members with actual online status
-        setMembers(prev => prev.map(m => ({ 
-          ...m, 
+        setMembers(prev => prev.map(m => ({
+          ...m,
           online: m.id === currentUserId.toString() || onlineUserIds.includes(parseInt(m.id))
         })));
-        membersRef.current = membersRef.current.map(m => ({ 
-          ...m, 
+        membersRef.current = membersRef.current.map(m => ({
+          ...m,
           online: m.id === currentUserId.toString() || onlineUserIds.includes(parseInt(m.id))
         }));
 
@@ -291,7 +292,7 @@ export function useTeamChat(teamId: number | null, onTeamUpdated?: () => void) {
       try {
         const u = JSON.parse(localStorage.getItem("user") || "{}");
         currentUserId = u.id || 0;
-      } catch (e) {}
+      } catch (e) { }
 
       if (currentUserId === removedMemberId) {
         toast.error("You have been removed from the team.");
@@ -348,15 +349,15 @@ export function useTeamChat(teamId: number | null, onTeamUpdated?: () => void) {
         const u = JSON.parse(currentUserStr);
         authorName = u.name || "Me";
         authorId = u.id || 0;
-      } catch(e) {}
+      } catch (e) { }
     }
-    
+
     let userRole = "Member";
     const currentMember = membersRef.current.find(m => m.id === authorId.toString());
     if (currentMember) {
       userRole = currentMember.role;
     }
-    
+
     const msgId = `msg-${Date.now()}-${Math.random()}`;
     const newMsg: TeamChatMessage = {
       id: msgId,
@@ -377,10 +378,10 @@ export function useTeamChat(teamId: number | null, onTeamUpdated?: () => void) {
         // Fallback to REST
         await studentApi.sendChatMessage(content);
       }
-      
+
       // Artificial delay to let the sending indicator show longer
       await new Promise(resolve => setTimeout(resolve, 800));
-      
+
       setMessages(prev => prev.map(m => m.id === msgId ? { ...m, status: "sent" } : m));
     } catch (err) {
       console.error("Failed to send message", err);

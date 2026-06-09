@@ -168,29 +168,29 @@ export function ManageProjectDialog({
 
   return (
     <Dialog open={Boolean(project)} onOpenChange={handleClose}>
-     <DialogContent className="w-[min(1100px,calc(100vw-32px))] sm:max-w-none max-h-[90vh] bg-[#f8f9fa] dark:bg-slate-950 p-0 shadow-2xl flex flex-col [&>button]:hidden overflow-hidden rounded-3xl border-0 ring-1 ring-black/5">
+      <DialogContent className="w-[min(1100px,calc(100vw-32px))] sm:max-w-none max-h-[90vh] bg-[#f8f9fa] dark:bg-slate-950 p-0 shadow-2xl flex flex-col [&>button]:hidden overflow-hidden rounded-3xl border-0 ring-1 ring-black/5">
         {project && (
           <>
-                                                {/* Header */}
+            {/* Header */}
             <DialogHeader className="px-8 pt-8 pb-6 border-b border-slate-200/60 dark:border-slate-800 shrink-0 bg-transparent">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
                 <div className="space-y-4 max-w-3xl">
-                    <DialogTitle className="text-[26px] font-bold text-slate-900 dark:text-slate-100 leading-tight">
-                      <span className="text-slate-500 dark:text-slate-400 font-medium mr-2">Project:</span>
-                      {project.title}
-                    </DialogTitle>
-                    <div className="flex flex-wrap items-center gap-4 text-[15px] text-slate-500 dark:text-slate-400">
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4" />
-                        <span>Team: <span className="font-semibold text-slate-700 dark:text-slate-300">{project.teamName || "No team"}</span></span>
-                      </div>
-                      <div className="hidden sm:block text-slate-300 dark:text-slate-700">|</div>
-                      <div className="flex items-center gap-2">
-                        <Target className="w-4 h-4" />
-                        <span>Domain: <span className="font-semibold text-slate-700 dark:text-slate-300">{project.domain}</span></span>
-                      </div>
+                  <DialogTitle className="text-[26px] font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                    <span className="text-slate-500 dark:text-slate-400 font-medium mr-2">Project:</span>
+                    {project.title}
+                  </DialogTitle>
+                  <div className="flex flex-wrap items-center gap-4 text-[15px] text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      <span>Team: <span className="font-semibold text-slate-700 dark:text-slate-300">{project.teamName || "No team"}</span></span>
+                    </div>
+                    <div className="hidden sm:block text-slate-300 dark:text-slate-700">|</div>
+                    <div className="flex items-center gap-2">
+                      <Target className="w-4 h-4" />
+                      <span>Domain: <span className="font-semibold text-slate-700 dark:text-slate-300">{project.domain}</span></span>
                     </div>
                   </div>
+                </div>
                 <div className="flex items-center gap-4 shrink-0">
                   {project.originalityScore !== undefined && (
                     <div className="flex flex-col items-center justify-center w-20 h-20 rounded-2xl bg-primary/10 border border-primary/20 shrink-0">
@@ -216,30 +216,31 @@ export function ManageProjectDialog({
                 {/* Removed TabsList */}
 
                 {/* ── OVERVIEW TAB ── */}
-                                                                <TabsContent value="overview" className="m-0">
+                <TabsContent value="overview" className="m-0">
                   <div className="flex flex-col gap-6 p-8 max-w-5xl mx-auto">
-                    
+
                     {/* Team Members */}
-                    {team && team.members && team.members.length > 0 && (
+                    {((team && team.members && team.members.length > 0) || (project.members && project.members.length > 0)) && (
                       <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-7 shadow-sm space-y-5">
                         <h4 className="text-sm font-bold flex items-center gap-2 text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                           <Users className="w-4 h-4" />
                           Team Members
                         </h4>
                         <div className="flex flex-wrap gap-4">
-                          {team.members.map((member: any) => {
+                          {(team?.members || project.members).map((member: any) => {
                             const displayName = member.name || member.fullName || "Unknown";
                             return (
-                            <div key={member.id || Math.random()} className="w-64 p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 flex items-center gap-4 bg-[#f8f9fa] dark:bg-slate-950">
-                              <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-primary/40 text-primary dark:text-indigo-300 flex items-center justify-center text-sm font-bold shrink-0">
-                                {displayName.substring(0, 2).toUpperCase()}
+                              <div key={member.id || member.studentId || Math.random()} className="w-64 p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 flex items-center gap-4 bg-[#f8f9fa] dark:bg-slate-950">
+                                <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-primary/40 text-primary dark:text-indigo-300 flex items-center justify-center text-sm font-bold shrink-0">
+                                  {displayName.substring(0, 2).toUpperCase()}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[14px] font-bold text-slate-900 dark:text-slate-100 truncate">{displayName}</p>
+                                  <p className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate mt-0.5 font-medium">{member.role || "Member"}</p>
+                                </div>
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[14px] font-bold text-slate-900 dark:text-slate-100 truncate">{displayName}</p>
-                                <p className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate mt-0.5 font-medium">{member.role || "Member"}</p>
-                              </div>
-                            </div>
-                          )})}
+                            )
+                          })}
                         </div>
                       </div>
                     )}
@@ -291,15 +292,8 @@ export function ManageProjectDialog({
                           <Target className="w-4 h-4" />
                           Objectives
                         </h4>
-                        {project.objectives && project.objectives.length > 0 ? (
-                          <ul className="space-y-3 text-[15px] text-slate-600 dark:text-slate-300">
-                            {project.objectives.map((obj: string, i: number) => (
-                              <li key={i} className="flex gap-3">
-                                <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-600 shrink-0" />
-                                <span className="leading-relaxed">{obj}</span>
-                              </li>
-                            ))}
-                          </ul>
+                        {project.objectives ? (
+                          <p className="text-[15px] text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{project.objectives}</p>
                         ) : (
                           <p className="text-[15px] text-slate-600 dark:text-slate-300 leading-relaxed">No objectives provided.</p>
                         )}
@@ -385,7 +379,7 @@ export function ManageProjectDialog({
               </Tabs>
             </div>
 
-           
+
           </>
         )}
       </DialogContent>

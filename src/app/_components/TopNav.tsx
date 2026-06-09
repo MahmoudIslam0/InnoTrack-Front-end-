@@ -111,7 +111,7 @@ export function TopNav({
       if (segment === "project-management") label = "Project Management";
       if (segment === "innochat") label = "InnoChat";
       if (segment === "dashboard") label = "Dashboard";
-      
+
       // Dynamic IDs
       const isId = !isNaN(Number(segment));
       if (isId) {
@@ -248,6 +248,7 @@ export function TopNav({
       .withUrl(hubUrl, {
         accessTokenFactory: () => token,
       })
+      .configureLogging(signalR.LogLevel.None)
       .withAutomaticReconnect()
       .build();
 
@@ -333,14 +334,14 @@ export function TopNav({
               <SidebarContent variant={variant} />
             </SheetContent>
           </Sheet>
-          
-          <button 
+
+          <button
             onClick={toggleSidebar}
             className="hidden md:flex p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground rounded-xl transition-colors"
           >
             {isSidebarCollapsed ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
           </button>
-          
+
           <nav className="flex items-center gap-1.5 text-sm font-medium" aria-label="Breadcrumb">
             {getBreadcrumbs().map((crumb, idx, arr) => {
               const isLast = idx === arr.length - 1;
@@ -494,7 +495,7 @@ export function TopNav({
                       Account
                     </span>
                   </div>
-                  
+
                   <DropdownMenuItem asChild className="cursor-pointer rounded-xl bg-accent/30 hover:bg-accent/60 focus:bg-accent/60 border border-border/20 px-4 py-3 mx-3 transition-all duration-200 text-foreground hover:text-foreground focus:text-foreground">
                     <Link href={finalProfileHref} className="flex items-center w-full">
                       <User className="w-4.5 h-4.5 text-primary shrink-0 mr-3" />
@@ -502,11 +503,11 @@ export function TopNav({
                       <ChevronRight className="w-4 h-4 text-muted-foreground/60 ml-auto shrink-0" />
                     </Link>
                   </DropdownMenuItem>
-                  
+
                   <div className="my-2 mx-3 border-t border-border/50" />
-                  
-                  <DropdownMenuItem 
-                    onClick={handleLogout} 
+
+                  <DropdownMenuItem
+                    onClick={handleLogout}
                     variant="destructive"
                     className="cursor-pointer rounded-xl text-destructive hover:text-destructive focus:text-destructive hover:bg-destructive/10 focus:bg-destructive/10 border border-transparent px-4 py-3 mx-3 transition-all duration-200"
                   >
