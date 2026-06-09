@@ -49,9 +49,9 @@ export function TrendingTechnologies() {
           {!isLoading && technologies.map((tech) => (
             <div
               key={tech.name}
-              className="flex items-center gap-2 px-4 py-2.5 bg-background/50 hover:bg-primary/5 border border-border/50 hover:border-primary/30 rounded-xl transition-all duration-300 group cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2.5 bg-background/50 border border-border/50 rounded-xl transition-all duration-300"
             >
-              <span className="font-medium text-foreground group-hover:text-primary dark:group-hover:text-primary transition-colors">
+              <span className="font-medium text-foreground transition-colors">
                 {tech.name}
               </span>
               <Badge

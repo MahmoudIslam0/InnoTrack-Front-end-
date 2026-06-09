@@ -364,8 +364,8 @@ function InnoChatContent() {
     <div className="fixed inset-0 top-16 md:left-64 flex flex-col bg-background">
       {/* Glassmorphism background */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-400/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-400/15 rounded-full blur-3xl"></div>
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-primary/15 rounded-full blur-3xl"></div>
       </div>
 
       <div className="flex-1 flex flex-col m-4 md:m-6 backdrop-blur-xl bg-card/70 dark:bg-card/40 rounded-2xl border border-border/50 shadow-2xl relative overflow-hidden">
@@ -382,7 +382,7 @@ function InnoChatContent() {
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+          <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
             <Bot className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -542,7 +542,7 @@ function InnoChatContent() {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder={isTypingGreeting ? "Please wait while InnoChat initializes..." : "Ask me anything about your graduation project..."}
-                  className="min-h-15 max-h-50 resize-none pr-24 backdrop-blur-sm bg-card/80 dark:bg-card/60 border-border/50 shadow-md"
+                  className="min-h-[60px] max-h-50 resize-none py-[18px] px-6 text-center backdrop-blur-sm bg-card/80 dark:bg-card/60 border-border/50 shadow-md"
                   rows={1}
                   disabled={isTypingGreeting}
                 />
@@ -553,7 +553,7 @@ function InnoChatContent() {
               <Button
                 onClick={handleSend}
                 disabled={!input.trim() || isTyping || isTypingGreeting}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white h-[60px] px-6 shadow-lg"
+                className="bg-blue-600 hover:bg-blue-700 text-white h-[60px] px-6 shadow-lg"
               >
                 <Send className="w-5 h-5" />
               </Button>

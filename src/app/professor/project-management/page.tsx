@@ -187,9 +187,16 @@ export default function ProfessorProjectManagement() {
     fetchAll();
   }, []);
 
-  const openManage = (project: any) => {
-    setDialogTab("overview");
-    setSelectedProject(project);
+  const openManage = async (project: any) => {
+    try {
+      const detail = await professorApi.getProjectDetails(project.id);
+      setSelectedProject({ ...project, ...detail });
+      setDialogTab("overview");
+    } catch (e) {
+      toast.error("Failed to load full project details.");
+      setSelectedProject(project); // Fallback to partial project
+      setDialogTab("overview");
+    }
   };
 
   const openViewDetails = (project: any) => {

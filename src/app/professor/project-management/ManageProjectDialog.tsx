@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { OriginalityMeter, StatusBadge } from "../_components";
 import { Project, teams as initialTeams } from "../_data";
-import { formatPercent, normalizeStatusTone } from "@/lib/student-api";
+import { formatPercent, normalizeStatusTone, normalizeOriginalityPercent } from "@/lib/student-api";
 import { professorApi } from "@/lib/professor-api";
 
 interface ManageProjectDialogProps {
@@ -194,7 +194,7 @@ export function ManageProjectDialog({
                 <div className="flex items-center gap-4 shrink-0">
                   {project.originalityScore !== undefined && (
                     <div className="flex flex-col items-center justify-center w-20 h-20 rounded-2xl bg-primary/10 border border-primary/20 shrink-0">
-                      <span className="text-2xl font-bold text-primary leading-none">{Math.round(project.originalityScore || 0)}%</span>
+                      <span className="text-2xl font-bold text-primary leading-none">{normalizeOriginalityPercent(project.originalityScore)}%</span>
                       <span className="text-[10px] font-bold text-primary/70 uppercase tracking-widest mt-1.5">Score</span>
                     </div>
                   )}

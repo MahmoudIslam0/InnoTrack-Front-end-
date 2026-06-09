@@ -113,18 +113,18 @@ export default function SubmitToSupervisor() {
 
 
       {/* ─── Main Grid ─── */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px] items-start">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
 
         {/* ── Left: Proposal Details ── */}
-        <div className="bg-card rounded-2xl border border-border/60 shadow-sm overflow-hidden">
-          <div className="px-6 py-5 border-b border-border/50">
+        <div className="bg-card rounded-2xl border border-border/60 shadow-sm overflow-hidden flex flex-col h-full">
+          <div className="px-6 py-5 border-b border-border/50 shrink-0">
             <h2 className="text-base font-bold text-foreground">Proposal Details</h2>
             <p className="text-xs text-muted-foreground mt-0.5">Fill in the details for your supervisor proposal</p>
           </div>
 
-          <div className="p-6 space-y-5">
+          <div className="p-6 flex flex-col gap-5 flex-1 min-h-0">
             {/* Department */}
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 shrink-0">
               <Label htmlFor="department" className="text-sm font-semibold text-foreground">
                 Department <span className="text-red-500">*</span>
               </Label>
@@ -147,8 +147,8 @@ export default function SubmitToSupervisor() {
             </div>
 
             {/* Proposal Message */}
-            <div className="space-y-1.5">
-              <Label htmlFor="proposalMessage" className="text-sm font-semibold text-foreground">
+            <div className="flex flex-col gap-1.5 flex-1 min-h-0">
+              <Label htmlFor="proposalMessage" className="text-sm font-semibold text-foreground shrink-0">
                 Proposal Message <span className="text-red-500">*</span>
               </Label>
               <Textarea
@@ -158,9 +158,9 @@ export default function SubmitToSupervisor() {
                 onChange={(e) =>
                   setProposalData((cur) => ({ ...cur, message: e.target.value }))
                 }
-                className="min-h-[220px] resize-y rounded-xl border-border bg-muted/40 text-sm focus-visible:ring-indigo-500/30 focus-visible:border-indigo-400 focus-visible:bg-background transition-all"
+                className="flex-1 min-h-[200px] resize-none rounded-xl border-border bg-muted/40 text-sm p-4 focus-visible:ring-indigo-500/30 focus-visible:border-indigo-400 focus-visible:bg-background transition-all"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground shrink-0">
                 Be specific about what you hope to achieve and why this professor is a good fit.
               </p>
             </div>

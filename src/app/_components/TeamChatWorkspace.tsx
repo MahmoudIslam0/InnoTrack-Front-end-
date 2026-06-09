@@ -289,7 +289,7 @@ export function TeamChatWorkspace({
                     layout="position"
                     key={message.id} 
                     id={`message-${message.backendId}`}
-                    className={`flex items-end gap-1 group p-1 ${isOwnMessage ? "justify-end" : ""}`}
+                    className={`flex items-end gap-3 group p-1 ${isOwnMessage ? "justify-end" : ""}`}
                   >
                     {!isOwnMessage && (
                       <Avatar className="h-8 w-8 shrink-0 shadow-sm border border-border/50 mb-1\">

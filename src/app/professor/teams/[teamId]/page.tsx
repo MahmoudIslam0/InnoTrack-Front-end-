@@ -9,6 +9,8 @@ import { useProfessorTeamChat } from "@/hooks/useProfessorTeamChat";
 import { TeamChatWorkspace } from "@/app/_components/TeamChatWorkspace";
 import MembersGrid from "@/components/Team/MembersGrid";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageTransition } from "@/components/ui/animated-loaders";
+import { AnimatePresence } from "framer-motion";
 
 export default function ProfessorTeamDetail() {
   const params = useParams();
@@ -170,8 +172,11 @@ export default function ProfessorTeamDetail() {
             ))}
           </div>
         </section>
-      ) : activeView === "overview" ? (
-        <section className="dashboard-surface p-6 flex-1 overflow-auto">
+      ) : (
+        <AnimatePresence mode="wait">
+          <PageTransition key={activeView} className="flex-1 flex flex-col">
+            {activeView === "overview" ? (
+              <section className="dashboard-surface p-6 flex-1 overflow-auto">
           <div className="mb-4">
             <h2 className="text-lg font-semibold text-foreground">Team Roster</h2>
             <p className="text-sm text-muted-foreground">View the current members of this team.</p>
@@ -200,6 +205,9 @@ export default function ProfessorTeamDetail() {
           isLoading={isChatLoading}
           className="h-[calc(100vh-240px)] min-h-[500px] rounded-2xl border border-border/50 shadow-sm"
         />
+            )}
+          </PageTransition>
+        </AnimatePresence>
       )}
     </div>
   );

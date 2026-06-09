@@ -29,6 +29,8 @@ import {
 } from "@/app/_components/TeamChatWorkspace";
 import { useTeamChat } from "@/hooks/useTeamChat";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { PageTransition } from "@/components/ui/animated-loaders";
+import { AnimatePresence } from "framer-motion";
 import MembersGrid from "@/components/Team/MembersGrid";
 import PendingRequestsList from "@/components/Team/PendingRequestsList";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -482,8 +484,10 @@ export default function TeamsPage() {
             </div>
           </div>
 
-          {activeView === "overview" ? (
-            <section className="dashboard-surface overflow-hidden">
+          <AnimatePresence mode="wait">
+            <PageTransition key={activeView} className="w-full">
+              {activeView === "overview" ? (
+                <section className="dashboard-surface overflow-hidden">
               <div className="p-5 md:p-6 border-b border-border/50">
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex min-w-0 flex-col gap-1.5">
@@ -784,7 +788,9 @@ export default function TeamsPage() {
               isLoading={isChatLoading}
               className="h-[calc(100vh-240px)] min-h-[500px] rounded-2xl border border-border/50 shadow-sm"
             />
-          )}
+            )}
+            </PageTransition>
+          </AnimatePresence>
         </>
       )}
       
