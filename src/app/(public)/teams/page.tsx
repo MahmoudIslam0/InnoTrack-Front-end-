@@ -30,7 +30,7 @@ import {
 import { useTeamChat } from "@/hooks/useTeamChat";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PageTransition } from "@/components/ui/animated-loaders";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import MembersGrid from "@/components/Team/MembersGrid";
 import PendingRequestsList from "@/components/Team/PendingRequestsList";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -485,7 +485,14 @@ export default function TeamsPage() {
           </div>
 
           <AnimatePresence mode="wait">
-            <PageTransition key={activeView} className="w-full">
+            <motion.div
+              key={activeView}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="w-full"
+            >
               {activeView === "overview" ? (
                 <section className="dashboard-surface overflow-hidden">
               <div className="p-5 md:p-6 border-b border-border/50">
@@ -789,7 +796,7 @@ export default function TeamsPage() {
               className="h-[calc(100vh-240px)] min-h-[500px] rounded-2xl border border-border/50 shadow-sm"
             />
             )}
-            </PageTransition>
+            </motion.div>
           </AnimatePresence>
         </>
       )}
