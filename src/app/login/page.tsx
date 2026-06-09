@@ -35,7 +35,7 @@ export default function Login() {
       if (response.role === "Professor") {
         router.push("/professor/dashboard");
       } else {
-        router.push("/");
+        router.push("/dashboard");
       }
     } catch (err: any) {
       setError(err.message || "Invalid email or password");
