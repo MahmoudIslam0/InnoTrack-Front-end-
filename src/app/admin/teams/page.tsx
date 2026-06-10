@@ -8,7 +8,8 @@ import { DataTable } from "@/app/_components/DataTable";
 import { PageHeader } from "@/app/_components/DashboardUI";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, UserMinus, UserPlus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { MoreHorizontal, UserMinus, UserPlus, Trash, Search } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +33,8 @@ export default function AdminTeams() {
   const [pageCount, setPageCount] = useState(0);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [isLoading, setIsLoading] = useState(true);
+  const [searchInput, setSearchInput] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Assignment Modal State
   const [isAssignOpen, setIsAssignOpen] = useState(false);
@@ -44,6 +47,7 @@ export default function AdminTeams() {
       const result = await adminApi.getTeams({
         pageNumber: pagination.pageIndex + 1,
         pageSize: pagination.pageSize,
+        search: searchTerm || undefined,
       });
       setData(result.items);
       setPageCount(result.totalPages);
@@ -65,7 +69,24 @@ export default function AdminTeams() {
 
   useEffect(() => {
     fetchTeams();
-  }, [pagination]);
+  }, [pagination, searchTerm]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearchTerm(searchInput);
+    setPagination({ ...pagination, pageIndex: 0 });
+  };
+
+  const handleDeleteTeam = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this team? This action is irreversible. Deletion is blocked if the team has an Active or Completed project.")) return;
+    try {
+      await adminApi.deleteTeam(id);
+      toast.success("Team deleted successfully");
+      fetchTeams();
+    } catch (error: any) {
+      toast.error("Failed to delete team", { description: error.message });
+    }
+  };
 
   useEffect(() => {
     fetchProfessors();
@@ -158,11 +179,16 @@ export default function AdminTeams() {
                 Assign Supervisor
               </DropdownMenuItem>
               {team.supervisorId && (
-                <DropdownMenuItem onClick={() => handleRemoveSupervisor(team.id)} className="text-destructive focus:bg-destructive/10">
+                <DropdownMenuItem onClick={() => handleRemoveSupervisor(team.id)} className="focus:bg-destructive/10">
                   <UserMinus className="w-4 h-4 mr-2" />
                   Remove Supervisor
                 </DropdownMenuItem>
               )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleDeleteTeam(team.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                <Trash className="w-4 h-4 mr-2" />
+                Delete Team
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -172,10 +198,22 @@ export default function AdminTeams() {
 
   return (
     <div className="dashboard-page">
-      <PageHeader
-        title="Team Management"
-        description="Monitor student teams, supervise capacities, and reassign advisors."
-      />
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+        <PageHeader
+          title="Team Management"
+          description="Monitor student teams, supervise capacities, and reassign advisors."
+        />
+        
+        <form onSubmit={handleSearch} className="flex items-center relative mt-2 sm:mt-0">
+          <Search className="w-4 h-4 absolute left-3 text-muted-foreground" />
+          <Input 
+            placeholder="Search teams..." 
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="pl-9 w-full sm:w-[250px]"
+          />
+        </form>
+      </div>
 
       <div className="mt-8">
         <DataTable

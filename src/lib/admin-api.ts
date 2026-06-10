@@ -177,6 +177,8 @@ export const adminApi = {
     api.patch(`/api/Admin/teams/${teamId}/assign-supervisor`, { professorId }),
   removeSupervisor: (teamId: string) => 
     api.patch(`/api/Admin/teams/${teamId}/remove-supervisor`),
+  deleteTeam: (id: string) => 
+    api.delete(`/api/Admin/teams/${id}`),
 
   // --- Projects ---
   getProjects: (params?: any): Promise<PaginatedResult<AdminProjectDto>> => 
@@ -227,6 +229,8 @@ export const adminApi = {
     api.put(`/api/Admin/academic-years/${id}`, data),
   activateAcademicYear: (id: number) => 
     api.patch(`/api/Admin/academic-years/${id}/activate`),
+  deleteAcademicYear: (id: number) => 
+    api.delete(`/api/Admin/academic-years/${id}`),
 
   // --- Audit Logs ---
   getAuditLogs: (params?: any): Promise<PaginatedResult<AuditLogDto>> => 

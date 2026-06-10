@@ -8,7 +8,7 @@ import { DataTable } from "@/app/_components/DataTable";
 import { PageHeader } from "@/app/_components/DashboardUI";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Plus, CheckCircle } from "lucide-react";
+import { MoreHorizontal, Plus, CheckCircle, Trash } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,6 +71,17 @@ export default function AdminAcademicYears() {
       fetchAcademicYears();
     } catch (error: any) {
       toast.error("Failed to activate academic year", { description: error.message });
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this academic year? It cannot be deleted if it contains registered projects.")) return;
+    try {
+      await adminApi.deleteAcademicYear(id);
+      toast.success("Academic year deleted successfully");
+      fetchAcademicYears();
+    } catch (error: any) {
+      toast.error("Failed to delete academic year", { description: error.message });
     }
   };
 
@@ -137,6 +148,11 @@ export default function AdminAcademicYears() {
               <DropdownMenuItem onClick={() => handleActivate(year.id)}>
                 <CheckCircle className="w-4 h-4 mr-2 text-emerald-500" />
                 Set as Active
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleDelete(year.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                <Trash className="w-4 h-4 mr-2" />
+                Delete Academic Year
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
