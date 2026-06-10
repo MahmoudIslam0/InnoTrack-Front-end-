@@ -56,10 +56,10 @@ export default function AdminTeams() {
 
   const fetchProfessors = async () => {
     try {
-      const result = await adminApi.getProfessors();
-      setProfessors(result.filter(p => p.isActive));
+      const result = await adminApi.getProfessors({ pageSize: 1000 });
+      setProfessors(result.items.filter((p: any) => p.isActive));
     } catch (error) {
-      console.error("Failed to load professors for dropdown");
+      console.error("Failed to load professors:", error);
     }
   };
 

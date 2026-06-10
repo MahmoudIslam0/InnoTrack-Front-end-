@@ -139,8 +139,16 @@ export const adminApi = {
     api.patch(`/api/Admin/students/${id}/reset-password`, { newPassword }),
 
   // --- Professors ---
-  getProfessors: (): Promise<AdminProfessorDto[]> => 
-    api.get("/api/Admin/professors"),
+  getProfessors: (params?: any): Promise<PaginatedResult<AdminProfessorDto>> => 
+    api.get("/api/Admin/professors", { params }).then((res: any) => ({
+      items: res.data || res.items || [],
+      totalCount: res.totalRecords || res.totalCount || 0,
+      pageNumber: res.pageNumber || 1,
+      pageSize: res.pageSize || 10,
+      totalPages: res.totalPages || 0,
+      hasNextPage: res.pageNumber < res.totalPages,
+      hasPreviousPage: res.pageNumber > 1,
+    })),
   getProfessorById: (id: string): Promise<AdminProfessorDto> => 
     api.get(`/api/Admin/professors/${id}`),
   provisionProfessor: (data: ProvisionProfessorDto) => 
@@ -191,8 +199,16 @@ export const adminApi = {
     api.post("/api/Admin/projects/reset-stuck"),
 
   // --- Academic Years ---
-  getAcademicYears: (): Promise<AcademicYearDto[]> => 
-    api.get("/api/Admin/academic-years"),
+  getAcademicYears: (params?: any): Promise<PaginatedResult<AcademicYearDto>> => 
+    api.get("/api/Admin/academic-years", { params }).then((res: any) => ({
+      items: res.data || res.items || [],
+      totalCount: res.totalRecords || res.totalCount || 0,
+      pageNumber: res.pageNumber || 1,
+      pageSize: res.pageSize || 10,
+      totalPages: res.totalPages || 0,
+      hasNextPage: res.pageNumber < res.totalPages,
+      hasPreviousPage: res.pageNumber > 1,
+    })),
   getActiveAcademicYear: (): Promise<AcademicYearDto> => 
     api.get("/api/Admin/academic-years/active"),
   createAcademicYear: (data: Partial<AcademicYearDto>) => 

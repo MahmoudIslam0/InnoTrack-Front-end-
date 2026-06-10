@@ -31,6 +31,8 @@ import { Input } from "@/components/ui/input";
 
 export default function AdminAcademicYears() {
   const [data, setData] = useState<AcademicYearDto[]>([]);
+  const [pageCount, setPageCount] = useState(0);
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [isLoading, setIsLoading] = useState(true);
 
   // Create Modal State
@@ -44,8 +46,12 @@ export default function AdminAcademicYears() {
   const fetchAcademicYears = async () => {
     setIsLoading(true);
     try {
-      const result = await adminApi.getAcademicYears();
-      setData(result);
+      const result = await adminApi.getAcademicYears({
+        pageNumber: pagination.pageIndex + 1,
+        pageSize: pagination.pageSize,
+      });
+      setData(result.items);
+      setPageCount(result.totalPages);
     } catch (error: any) {
       toast.error("Failed to fetch academic years", { description: error.message });
     } finally {
@@ -55,7 +61,7 @@ export default function AdminAcademicYears() {
 
   useEffect(() => {
     fetchAcademicYears();
-  }, []);
+  }, [pagination]);
 
   const handleActivate = async (id: number) => {
     if (!confirm("Are you sure you want to set this as the active academic year? Other years will be deactivated.")) return;
@@ -210,6 +216,9 @@ export default function AdminAcademicYears() {
         <DataTable
           columns={columns}
           data={data}
+          pageCount={pageCount}
+          pagination={pagination}
+          onPaginationChange={setPagination}
           isLoading={isLoading}
         />
       </div>

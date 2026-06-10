@@ -68,8 +68,8 @@ export default function AdminProjects() {
   }, [pagination]);
 
   useEffect(() => {
-    adminApi.getProfessors()
-      .then(res => setProfessors(res.filter(p => p.isActive)))
+    adminApi.getProfessors({ pageSize: 1000 })
+      .then(res => setProfessors(res.items.filter((p: any) => p.isActive)))
       .catch(err => console.error("Failed to load professors", err));
   }, []);
 
