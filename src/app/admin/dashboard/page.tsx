@@ -283,7 +283,7 @@ export default function AdminDashboard() {
       )}
 
       {/* QUICK ACTIONS SECTION */}
-      <SectionCard title="Quick Actions" className="mb-8 border-orange-500/20">
+      <SectionCard title="Quick Actions">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
           {/* Action 1: Reset Stuck Projects */}
           <div className="flex flex-col gap-2 p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-card transition-colors">
