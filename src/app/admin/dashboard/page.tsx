@@ -134,87 +134,105 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-        <ProfessorStatCard
-          title="Total Students"
-          value={String(totalStudents)}
-          subtitle="Registered in system"
-          icon={Users}
-          tone="primary"
-          isLoading={isLoading}
-        />
-        <ProfessorStatCard
-          title="Total Professors"
-          value={String(totalProfessors)}
-          subtitle="Registered supervisors"
-          icon={ClipboardList}
-          tone="info"
-          isLoading={isLoading}
-        />
-        <ProfessorStatCard
-          title="Total Teams"
-          value={String(totalTeams)}
-          subtitle="Across all departments"
-          icon={Users}
-          tone="warning"
-          isLoading={isLoading}
-        />
-        <ProfessorStatCard
-          title="No Supervisor"
-          value={String(teamsWithoutSupervisor)}
-          subtitle="Teams missing supervisor"
-          icon={AlertTriangle}
-          tone="error"
-          isLoading={isLoading}
-        />
-        <ProfessorStatCard
-          title="Projects"
-          value={String(totalProjects)}
-          subtitle={`Avg score: ${averageOriginalityScore}%`}
-          icon={FolderKanban}
-          tone="success"
-          isLoading={isLoading}
-        />
-        <ProfessorStatCard
-          title="Drafts"
-          value={String(draftCount)}
-          subtitle="Projects in draft"
-          icon={FolderKanban}
-          tone="info"
-          isLoading={isLoading}
-        />
-        <ProfessorStatCard
-          title="Under Review"
-          value={String(underReviewCount)}
-          subtitle="Awaiting approval"
-          icon={FolderKanban}
-          tone="warning"
-          isLoading={isLoading}
-        />
-        <ProfessorStatCard
-          title="Completed Projects"
-          value={String(completedCount)}
-          subtitle="Successfully finished"
-          icon={CheckCircle2}
-          tone="success"
-          isLoading={isLoading}
-        />
-        <ProfessorStatCard
-          title="Total Technologies"
-          value={String(totalTechnologies)}
-          subtitle="System wide"
-          icon={ClipboardList}
-          tone="primary"
-          isLoading={isLoading}
-        />
-        <ProfessorStatCard
-          title="Total Domains"
-          value={String(totalDomains)}
-          subtitle="System wide"
-          icon={ClipboardList}
-          tone="info"
-          isLoading={isLoading}
-        />
+      {/* Users & Teams */}
+      <div className="mb-8">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Users & Teams</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <ProfessorStatCard
+            title="Total Students"
+            value={String(totalStudents)}
+            subtitle="Registered in system"
+            icon={Users}
+            tone="primary"
+            isLoading={isLoading}
+          />
+          <ProfessorStatCard
+            title="Total Professors"
+            value={String(totalProfessors)}
+            subtitle="Registered supervisors"
+            icon={ClipboardList}
+            tone="info"
+            isLoading={isLoading}
+          />
+          <ProfessorStatCard
+            title="Total Teams"
+            value={String(totalTeams)}
+            subtitle="Across all departments"
+            icon={Users}
+            tone="warning"
+            isLoading={isLoading}
+          />
+          <ProfessorStatCard
+            title="No Supervisor"
+            value={String(teamsWithoutSupervisor)}
+            subtitle="Teams missing supervisor"
+            icon={AlertTriangle}
+            tone="error"
+            isLoading={isLoading}
+          />
+        </div>
+      </div>
+
+      {/* Projects Overview */}
+      <div className="mb-8">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Projects Overview</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <ProfessorStatCard
+            title="Projects"
+            value={String(totalProjects)}
+            subtitle={`Avg score: ${averageOriginalityScore}%`}
+            icon={FolderKanban}
+            tone="success"
+            isLoading={isLoading}
+          />
+          <ProfessorStatCard
+            title="Drafts"
+            value={String(draftCount)}
+            subtitle="Projects in draft"
+            icon={FolderKanban}
+            tone="info"
+            isLoading={isLoading}
+          />
+          <ProfessorStatCard
+            title="Under Review"
+            value={String(underReviewCount)}
+            subtitle="Awaiting approval"
+            icon={FolderKanban}
+            tone="warning"
+            isLoading={isLoading}
+          />
+          <ProfessorStatCard
+            title="Completed Projects"
+            value={String(completedCount)}
+            subtitle="Successfully finished"
+            icon={CheckCircle2}
+            tone="success"
+            isLoading={isLoading}
+          />
+        </div>
+      </div>
+
+      {/* System Context */}
+      <div className="mb-8">
+        <h3 className="text-lg font-semibold text-foreground mb-4">System Context</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <ProfessorStatCard
+            title="Total Technologies"
+            value={String(totalTechnologies)}
+            subtitle="System wide"
+            icon={ClipboardList}
+            tone="primary"
+            isLoading={isLoading}
+          />
+          <ProfessorStatCard
+            title="Total Domains"
+            value={String(totalDomains)}
+            subtitle="System wide"
+            icon={ClipboardList}
+            tone="info"
+            isLoading={isLoading}
+          />
+        </div>
       </div>
 
       {/* CHARTS SECTION */}
