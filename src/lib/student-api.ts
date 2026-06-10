@@ -411,10 +411,16 @@ export const studentApi = {
       }
     ).then(async (res) => {
       if (!res.ok) {
-        const text = await res.text().catch(() => "");
+        let text = "";
+        try { text = await res.text(); } catch {}
+        try { 
+            const data = JSON.parse(text); 
+            text = data.title || data.detail || data.message || text; 
+        } catch {}
         throw new Error(text || `Upload failed (${res.status})`);
       }
-      return res.json();
+      const respText = await res.text();
+      try { return respText ? JSON.parse(respText) : {}; } catch { return { text: respText }; }
     });
   },
 

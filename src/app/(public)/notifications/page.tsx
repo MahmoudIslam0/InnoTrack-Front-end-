@@ -68,6 +68,8 @@ export default function StudentNotifications() {
           tone: getToneForType(n.type),
           type: n.type,
           unread: !n.isRead,
+          referenceId: n.referenceId,
+          referenceType: n.referenceType,
         })));
       })
       .catch(console.error);
@@ -118,8 +120,21 @@ export default function StudentNotifications() {
     }
   };
 
-  const getNotificationHref = (title: string) => {
+  const getNotificationHref = (notification: any) => {
+    if (notification.referenceId) {
+      const refType = notification.referenceType;
+      
+      const isProject = refType === 1 || refType === "Project";
+      const isTeam = refType === 2 || refType === "TeamRequest";
+      const isChat = refType === 3 || refType === "Chat";
+
+      if (isProject) return `/project-management`;
+      if (isTeam || isChat) return `/teams`;
+    }
+
+    const title = notification.title || "";
     const lower = title.toLowerCase();
+    
     if (lower.includes("team") || lower.includes("message")) return "/teams";
     if (lower.includes("project") || lower.includes("draft") || lower.includes("submission") || lower.includes("similarity") || lower.includes("response")) return "/project-management";
     return "/notifications";
@@ -159,7 +174,7 @@ export default function StudentNotifications() {
           <NotificationList
             items={items.map(item => ({
               ...item,
-              href: getNotificationHref(item.title)
+              href: getNotificationHref(item)
             }))}
             onRead={markAsRead}
           />

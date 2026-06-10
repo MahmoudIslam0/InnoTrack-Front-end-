@@ -157,6 +157,8 @@ export function TopNav({
             message: n.message,
             time: timeAgo(n.createdAt),
             unread: !n.isRead,
+            referenceId: n.referenceId,
+            referenceType: n.referenceType,
           })));
         })
         .catch(console.error);
@@ -233,11 +235,32 @@ export function TopNav({
 
   const unreadCount = notifications.filter((n) => n.unread).length;
 
-  const getNotificationHref = (title: string, isProf: boolean) => {
+  const getNotificationHref = (notification: any, isProf: boolean, isAdmin: boolean) => {
+    if (isAdmin) return "/admin/dashboard";
+
+    if (notification.referenceId) {
+      const refType = notification.referenceType;
+      const refId = notification.referenceId;
+      
+      const isProject = refType === 1 || refType === "Project";
+      const isTeam = refType === 2 || refType === "TeamRequest";
+      const isChat = refType === 3 || refType === "Chat";
+
+      if (isProf) {
+        if (isProject) return `/professor/projects/${refId}`;
+        if (isTeam) return `/professor/teams/${refId}`;
+      } else {
+        if (isProject) return `/project-management`;
+        if (isTeam || isChat) return `/teams`;
+      }
+    }
+
+    const title = notification.title || "";
     const lower = title.toLowerCase();
+    
     if (isProf) {
-      if (lower.includes("proposal")) return "/professor/project-management";
-      if (lower.includes("team") || lower.includes("join")) return "/professor/team-chats";
+      if (lower.includes("proposal") || lower.includes("abandon") || lower.includes("project")) return "/professor/projects";
+      if (lower.includes("team") || lower.includes("join")) return "/professor/teams";
       if (lower.includes("feedback")) return "/professor/feedback";
       return "/professor/notifications";
     } else {
@@ -270,6 +293,8 @@ export function TopNav({
       const titleVal = n.title || n.Title || "Notification";
       const messageVal = n.message || n.Message || "";
       const idVal = n.id !== undefined ? n.id : (n.Id !== undefined ? n.Id : Date.now());
+      const referenceIdVal = n.referenceId !== undefined ? n.referenceId : (n.ReferenceId !== undefined ? n.ReferenceId : undefined);
+      const referenceTypeVal = n.referenceType !== undefined ? n.referenceType : (n.ReferenceType !== undefined ? n.ReferenceType : undefined);
 
       setNotifications(prev => [
         {
@@ -278,6 +303,8 @@ export function TopNav({
           message: messageVal,
           time: "Just now",
           unread: !isReadVal,
+          referenceId: referenceIdVal,
+          referenceType: referenceTypeVal,
         },
         ...prev,
       ]);
@@ -288,7 +315,11 @@ export function TopNav({
           label: "View",
           onClick: () => {
             const isProf = profileHref.startsWith("/professor");
-            const href = getNotificationHref(titleVal, isProf);
+            const href = getNotificationHref({
+              title: titleVal,
+              referenceId: referenceIdVal,
+              referenceType: referenceTypeVal
+            }, isProf, isAdmin);
             router.push(href);
           }
         },
@@ -435,7 +466,7 @@ export function TopNav({
                         notifications.map((notification) => (
                           <Link
                             key={notification.id}
-                            href={getNotificationHref(notification.title, profileHref.startsWith("/professor"))}
+                            href={getNotificationHref(notification, profileHref.startsWith("/professor"), isAdmin)}
                             className={`block px-4 py-3 hover:bg-accent cursor-pointer transition-colors group relative ${notification.unread ? 'bg-muted/30' : ''}`}
                             onMouseEnter={() => markAsRead(notification.id)}
                             onClick={() => markAsRead(notification.id)}

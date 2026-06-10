@@ -56,6 +56,8 @@ export default function ProfessorNotifications() {
           tone: getToneForType(n.type),
           type: n.type,
           unread: !n.isRead,
+          referenceId: n.referenceId,
+          referenceType: n.referenceType,
         })));
       })
       .catch(console.error);
@@ -106,10 +108,23 @@ export default function ProfessorNotifications() {
     }
   };
 
-  const getNotificationHref = (title: string) => {
+  const getNotificationHref = (notification: any) => {
+    if (notification.referenceId) {
+      const refType = notification.referenceType;
+      const refId = notification.referenceId;
+      
+      const isProject = refType === 1 || refType === "Project";
+      const isTeam = refType === 2 || refType === "TeamRequest";
+
+      if (isProject) return `/professor/projects/${refId}`;
+      if (isTeam) return `/professor/teams/${refId}`;
+    }
+
+    const title = notification.title || "";
     const lower = title.toLowerCase();
-    if (lower.includes("proposal")) return "/professor/project-management";
-    if (lower.includes("team") || lower.includes("join")) return "/professor/team-chats";
+    
+    if (lower.includes("proposal") || lower.includes("abandon") || lower.includes("project")) return "/professor/projects";
+    if (lower.includes("team") || lower.includes("join")) return "/professor/teams";
     if (lower.includes("feedback")) return "/professor/feedback";
     return "/professor/notifications";
   };
@@ -148,7 +163,7 @@ export default function ProfessorNotifications() {
           <NotificationList
             items={items.map((notification) => ({
               ...notification,
-              href: getNotificationHref(notification.title),
+              href: getNotificationHref(notification),
             }))}
             onRead={markAsRead}
           />
