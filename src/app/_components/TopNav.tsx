@@ -21,6 +21,10 @@ import { useSidebar } from "@/contexts/SidebarContext";
 import { useAuth } from "@/contexts/AuthContext";
 import * as signalR from "@microsoft/signalr";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 function timeAgo(dateString: string) {
   const date = new Date(dateString);
@@ -66,6 +70,37 @@ export function TopNav({
   const [profile, setProfile] = useState<any>(null);
 
   const isAdmin = pathname.startsWith("/admin");
+
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      toast.error("New passwords do not match.");
+      return;
+    }
+
+    try {
+      setIsChangingPassword(true);
+      await api.put("/api/Users/change-password", {
+        currentPassword,
+        newPassword
+      });
+      toast.success("Password changed successfully.");
+      setIsChangePasswordOpen(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to change password.");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
 
   useEffect(() => {
     if (isAuthenticated && !isAdmin) {
@@ -539,9 +574,11 @@ export function TopNav({
                     <div className="flex flex-col items-start text-left min-w-0">
                       <span className="text-base font-bold text-foreground leading-tight truncate w-full">{finalName}</span>
                       <span className="text-xs text-muted-foreground leading-tight mt-0.5 truncate w-full">{finalSubtitle}</span>
-                      <span className="mt-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold bg-primary/10 text-primary uppercase tracking-wider">
-                        {pathname.startsWith("/professor") ? "Professor" : "Student"}
-                      </span>
+                      {!isAdmin && (
+                        <span className="mt-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold bg-primary/10 text-primary uppercase tracking-wider">
+                          {pathname.startsWith("/professor") ? "Professor" : "Student"}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -560,6 +597,76 @@ export function TopNav({
                           <ChevronRight className="w-4 h-4 text-muted-foreground/60 ml-auto shrink-0" />
                         </Link>
                       </DropdownMenuItem>
+
+                      <div className="my-2 mx-3 border-t border-border/50" />
+                    </>
+                  )}
+
+                  {isAdmin && (
+                    <>
+                      <Dialog open={isChangePasswordOpen} onOpenChange={setIsChangePasswordOpen}>
+                        <DialogTrigger asChild>
+                          <DropdownMenuItem
+                            onSelect={(e) => e.preventDefault()}
+                            className="cursor-pointer rounded-xl bg-accent/30 hover:bg-accent/60 focus:bg-accent/60 border border-border/20 px-4 py-3 mx-3 transition-all duration-200 text-foreground hover:text-foreground focus:text-foreground"
+                          >
+                            <div className="flex items-center w-full">
+                              <User className="w-4.5 h-4.5 text-primary shrink-0 mr-3" />
+                              <span className="font-semibold text-sm">Change Password</span>
+                            </div>
+                          </DropdownMenuItem>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                          <DialogHeader>
+                            <DialogTitle>Change Password</DialogTitle>
+                          </DialogHeader>
+                          <form onSubmit={handleChangePassword} className="space-y-4 pt-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="current-password">Current Password</Label>
+                              <Input
+                                id="current-password"
+                                type="password"
+                                value={currentPassword}
+                                onChange={(e) => setCurrentPassword(e.target.value)}
+                                required
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="new-password">New Password</Label>
+                              <Input
+                                id="new-password"
+                                type="password"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                required
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="confirm-password">Confirm New Password</Label>
+                              <Input
+                                id="confirm-password"
+                                type="password"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                required
+                              />
+                            </div>
+                            <DialogFooter className="pt-4">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsChangePasswordOpen(false)}
+                                disabled={isChangingPassword}
+                              >
+                                Cancel
+                              </Button>
+                              <Button type="submit" disabled={isChangingPassword}>
+                                {isChangingPassword ? "Saving..." : "Change Password"}
+                              </Button>
+                            </DialogFooter>
+                          </form>
+                        </DialogContent>
+                      </Dialog>
 
                       <div className="my-2 mx-3 border-t border-border/50" />
                     </>
