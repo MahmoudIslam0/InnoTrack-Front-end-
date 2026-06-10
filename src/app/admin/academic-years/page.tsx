@@ -217,7 +217,8 @@ export default function AdminAcademicYears() {
           columns={columns}
           data={data}
           pageCount={pageCount}
-          pagination={pagination}
+          pageIndex={pagination.pageIndex}
+          pageSize={pagination.pageSize}
           onPaginationChange={setPagination}
           isLoading={isLoading}
         />
