@@ -135,8 +135,8 @@ export default function StudentNotifications() {
     const title = notification.title || "";
     const lower = title.toLowerCase();
     
-    if (lower.includes("team") || lower.includes("message")) return "/teams";
-    if (lower.includes("project") || lower.includes("draft") || lower.includes("submission") || lower.includes("similarity") || lower.includes("response")) return "/project-management";
+    if (lower.includes("team") || lower.includes("message") || lower.includes("left") || lower.includes("member")) return "/teams";
+    if (lower.includes("project") || lower.includes("draft") || lower.includes("submission") || lower.includes("similarity") || lower.includes("response") || lower.includes("recall")) return "/project-management";
     return "/notifications";
   };
 

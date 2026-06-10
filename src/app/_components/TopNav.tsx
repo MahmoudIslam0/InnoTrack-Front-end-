@@ -236,7 +236,16 @@ export function TopNav({
   const unreadCount = notifications.filter((n) => n.unread).length;
 
   const getNotificationHref = (notification: any, isProf: boolean, isAdmin: boolean) => {
-    if (isAdmin) return "/admin/dashboard";
+    const title = notification.title || "";
+    const lower = title.toLowerCase();
+
+    if (isAdmin) {
+      if (lower.includes("project") || lower.includes("abandon") || lower.includes("submission") || lower.includes("proposal")) return "/admin/projects";
+      if (lower.includes("team") || lower.includes("member") || lower.includes("left")) return "/admin/teams";
+      if (lower.includes("professor")) return "/admin/professors";
+      if (lower.includes("student")) return "/admin/students";
+      return "/admin/dashboard";
+    }
 
     if (notification.referenceId) {
       const refType = notification.referenceType;
@@ -247,25 +256,28 @@ export function TopNav({
       const isChat = refType === 3 || refType === "Chat";
 
       if (isProf) {
-        if (isProject) return `/professor/projects/${refId}`;
-        if (isTeam) return `/professor/teams/${refId}`;
+        if (isProject) {
+            if (lower.includes("abandon") || lower.includes("recall")) return "/professor/projects";
+            return `/professor/projects/${refId}`;
+        }
+        if (isTeam) {
+            if (lower.includes("left") || lower.includes("remove")) return "/professor/teams";
+            return `/professor/teams/${refId}`;
+        }
       } else {
         if (isProject) return `/project-management`;
         if (isTeam || isChat) return `/teams`;
       }
     }
-
-    const title = notification.title || "";
-    const lower = title.toLowerCase();
     
     if (isProf) {
-      if (lower.includes("proposal") || lower.includes("abandon") || lower.includes("project")) return "/professor/projects";
-      if (lower.includes("team") || lower.includes("join")) return "/professor/teams";
+      if (lower.includes("proposal") || lower.includes("abandon") || lower.includes("project") || lower.includes("recall")) return "/professor/projects";
+      if (lower.includes("team") || lower.includes("join") || lower.includes("left") || lower.includes("member")) return "/professor/teams";
       if (lower.includes("feedback")) return "/professor/feedback";
       return "/professor/notifications";
     } else {
-      if (lower.includes("team") || lower.includes("message")) return "/teams";
-      if (lower.includes("project") || lower.includes("draft") || lower.includes("submission") || lower.includes("similarity") || lower.includes("response")) return "/project-management";
+      if (lower.includes("team") || lower.includes("message") || lower.includes("left") || lower.includes("member")) return "/teams";
+      if (lower.includes("project") || lower.includes("draft") || lower.includes("submission") || lower.includes("similarity") || lower.includes("response") || lower.includes("recall")) return "/project-management";
       return "/notifications";
     }
   };

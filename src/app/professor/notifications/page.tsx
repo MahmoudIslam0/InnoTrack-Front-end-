@@ -109,6 +109,9 @@ export default function ProfessorNotifications() {
   };
 
   const getNotificationHref = (notification: any) => {
+    const title = notification.title || "";
+    const lower = title.toLowerCase();
+
     if (notification.referenceId) {
       const refType = notification.referenceType;
       const refId = notification.referenceId;
@@ -116,15 +119,18 @@ export default function ProfessorNotifications() {
       const isProject = refType === 1 || refType === "Project";
       const isTeam = refType === 2 || refType === "TeamRequest";
 
-      if (isProject) return `/professor/projects/${refId}`;
-      if (isTeam) return `/professor/teams/${refId}`;
+      if (isProject) {
+          if (lower.includes("abandon") || lower.includes("recall")) return "/professor/projects";
+          return `/professor/projects/${refId}`;
+      }
+      if (isTeam) {
+          if (lower.includes("left") || lower.includes("remove")) return "/professor/teams";
+          return `/professor/teams/${refId}`;
+      }
     }
 
-    const title = notification.title || "";
-    const lower = title.toLowerCase();
-    
-    if (lower.includes("proposal") || lower.includes("abandon") || lower.includes("project")) return "/professor/projects";
-    if (lower.includes("team") || lower.includes("join")) return "/professor/teams";
+    if (lower.includes("proposal") || lower.includes("abandon") || lower.includes("project") || lower.includes("recall")) return "/professor/projects";
+    if (lower.includes("team") || lower.includes("join") || lower.includes("left") || lower.includes("member")) return "/professor/teams";
     if (lower.includes("feedback")) return "/professor/feedback";
     return "/professor/notifications";
   };
