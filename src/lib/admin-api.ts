@@ -25,19 +25,29 @@ export interface AdminProfessorDto {
   id: string;
   fullName: string;
   email: string;
+  departmentId: number;
   departmentName: string;
-  capacity: number;
-  currentSupervisedTeams: number;
+  maxTeamLoad: number;
+  currentTeamLoad: number;
   isActive: boolean;
   createdAt: string;
 }
 
 export interface ProvisionProfessorDto {
   email: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   password?: string;
   departmentId: number;
-  capacity: number;
+  maxTeamLoad: number;
+}
+
+export interface UpdateProfessorAdminDto {
+  firstName?: string;
+  lastName?: string;
+  departmentId?: number;
+  maxTeamLoad?: number;
+  isActive?: boolean;
 }
 
 // --- Teams ---
@@ -110,7 +120,15 @@ export const adminApi = {
 
   // --- Students ---
   getStudents: (params?: any): Promise<PaginatedResult<AdminStudentDto>> => 
-    api.get("/api/Admin/students", { params }),
+    api.get("/api/Admin/students", { params }).then((res: any) => ({
+      items: res.data || res.items || [],
+      totalCount: res.totalRecords || res.totalCount || 0,
+      pageNumber: res.pageNumber || 1,
+      pageSize: res.pageSize || 10,
+      totalPages: res.totalPages || 0,
+      hasNextPage: res.pageNumber < res.totalPages,
+      hasPreviousPage: res.pageNumber > 1,
+    })),
   getStudentById: (id: string): Promise<AdminStudentDetailDto> => 
     api.get(`/api/Admin/students/${id}`),
   deleteStudent: (id: string) => 
@@ -127,7 +145,7 @@ export const adminApi = {
     api.get(`/api/Admin/professors/${id}`),
   provisionProfessor: (data: ProvisionProfessorDto) => 
     api.post("/api/Admin/professors", data),
-  updateProfessor: (id: string, data: Partial<ProvisionProfessorDto>) => 
+  updateProfessor: (id: string, data: UpdateProfessorAdminDto) => 
     api.put(`/api/Admin/professors/${id}`, data),
   updateProfessorStatus: (id: string, isActive: boolean) => 
     api.patch(`/api/Admin/professors/${id}/status`, { isActive }),
@@ -136,7 +154,15 @@ export const adminApi = {
 
   // --- Teams ---
   getTeams: (params?: any): Promise<PaginatedResult<AdminTeamDto>> => 
-    api.get("/api/Admin/teams", { params }),
+    api.get("/api/Admin/teams", { params }).then((res: any) => ({
+      items: res.data || res.items || [],
+      totalCount: res.totalRecords || res.totalCount || 0,
+      pageNumber: res.pageNumber || 1,
+      pageSize: res.pageSize || 10,
+      totalPages: res.totalPages || 0,
+      hasNextPage: res.pageNumber < res.totalPages,
+      hasPreviousPage: res.pageNumber > 1,
+    })),
   assignSupervisor: (teamId: string, professorId: string) => 
     api.patch(`/api/Admin/teams/${teamId}/assign-supervisor`, { professorId }),
   removeSupervisor: (teamId: string) => 
@@ -144,7 +170,15 @@ export const adminApi = {
 
   // --- Projects ---
   getProjects: (params?: any): Promise<PaginatedResult<AdminProjectDto>> => 
-    api.get("/api/Admin/projects", { params }),
+    api.get("/api/Admin/projects", { params }).then((res: any) => ({
+      items: res.data || res.items || [],
+      totalCount: res.totalRecords || res.totalCount || 0,
+      pageNumber: res.pageNumber || 1,
+      pageSize: res.pageSize || 10,
+      totalPages: res.totalPages || 0,
+      hasNextPage: res.pageNumber < res.totalPages,
+      hasPreviousPage: res.pageNumber > 1,
+    })),
   getProjectById: (id: string): Promise<AdminProjectDetailDto> => 
     api.get(`/api/Admin/projects/${id}`),
   overrideProjectStatus: (id: string, status: string, auditReason: string) => 
@@ -170,5 +204,13 @@ export const adminApi = {
 
   // --- Audit Logs ---
   getAuditLogs: (params?: any): Promise<PaginatedResult<AuditLogDto>> => 
-    api.get("/api/Admin/audit-logs", { params }),
+    api.get("/api/Admin/audit-logs", { params }).then((res: any) => ({
+      items: res.data || res.items || [],
+      totalCount: res.totalRecords || res.totalCount || 0,
+      pageNumber: res.pageNumber || 1,
+      pageSize: res.pageSize || 10,
+      totalPages: res.totalPages || 0,
+      hasNextPage: res.pageNumber < res.totalPages,
+      hasPreviousPage: res.pageNumber > 1,
+    })),
 };

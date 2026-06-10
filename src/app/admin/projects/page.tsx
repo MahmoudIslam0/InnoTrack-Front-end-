@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
-import { adminApi, AdminProjectDto } from "@/lib/admin-api";
+import { adminApi, AdminProjectDto, AdminProfessorDto } from "@/lib/admin-api";
 import { DataTable } from "@/app/_components/DataTable";
 import { PageHeader } from "@/app/_components/DashboardUI";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, AlertTriangle, RefreshCcw, Star, StarOff, PencilRuler } from "lucide-react";
+import { MoreHorizontal, AlertTriangle, RefreshCcw, Star, StarOff, PencilRuler, UserPlus } from "lucide-react";
 import { normalizeStatusTone } from "@/lib/student-api";
 import {
   DropdownMenu,
@@ -35,12 +35,17 @@ export default function AdminProjects() {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [isLoading, setIsLoading] = useState(true);
   const [isResetting, setIsResetting] = useState(false);
+  const [professors, setProfessors] = useState<AdminProfessorDto[]>([]);
 
   // Status Override Modal State
   const [isOverrideOpen, setIsOverrideOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<AdminProjectDto | null>(null);
   const [overrideStatus, setOverrideStatus] = useState<string>("");
   const [overrideReason, setOverrideReason] = useState<string>("");
+
+  // Reassign Supervisor State
+  const [isReassignOpen, setIsReassignOpen] = useState(false);
+  const [reassignProfId, setReassignProfId] = useState<string>("");
 
   const fetchProjects = async () => {
     setIsLoading(true);
@@ -61,6 +66,12 @@ export default function AdminProjects() {
   useEffect(() => {
     fetchProjects();
   }, [pagination]);
+
+  useEffect(() => {
+    adminApi.getProfessors()
+      .then(res => setProfessors(res.filter(p => p.isActive)))
+      .catch(err => console.error("Failed to load professors", err));
+  }, []);
 
   const handleResetStuck = async () => {
     if (!confirm("This will scan for and fix stuck projects. Proceed?")) return;
@@ -83,6 +94,12 @@ export default function AdminProjects() {
     setIsOverrideOpen(true);
   };
 
+  const openReassignModal = (project: AdminProjectDto) => {
+    setSelectedProject(project);
+    setReassignProfId("");
+    setIsReassignOpen(true);
+  };
+
   const submitOverride = async () => {
     if (!selectedProject || !overrideStatus || !overrideReason.trim()) return;
     try {
@@ -92,6 +109,18 @@ export default function AdminProjects() {
       fetchProjects();
     } catch (error: any) {
       toast.error("Failed to override status", { description: error.message });
+    }
+  };
+
+  const handleReassign = async () => {
+    if (!selectedProject || !reassignProfId) return;
+    try {
+      await adminApi.reassignSupervisor(selectedProject.id, reassignProfId);
+      toast.success("Supervisor reassigned successfully.");
+      setIsReassignOpen(false);
+      fetchProjects();
+    } catch (error: any) {
+      toast.error("Failed to reassign supervisor", { description: error.message });
     }
   };
 
@@ -178,6 +207,10 @@ export default function AdminProjects() {
                 <PencilRuler className="w-4 h-4 mr-2" />
                 Override Status
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => openReassignModal(project)}>
+                <UserPlus className="w-4 h-4 mr-2" />
+                Reassign Supervisor
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleToggleShowcase(project)}>
                 <Star className="w-4 h-4 mr-2" />
                 Toggle Showcase
@@ -258,6 +291,35 @@ export default function AdminProjects() {
             <Button onClick={submitOverride} disabled={!overrideReason.trim() || overrideStatus === selectedProject?.status}>
               Confirm Override
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isReassignOpen} onOpenChange={setIsReassignOpen}>
+        <DialogContent className="sm:max-w-[425px] border-border/50 bg-background/95 backdrop-blur-xl">
+          <DialogHeader>
+            <DialogTitle>Reassign Supervisor</DialogTitle>
+            <DialogDescription>
+              Assign a new active professor to supervise project <strong>{selectedProject?.title}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <select 
+              className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              value={reassignProfId}
+              onChange={(e) => setReassignProfId(e.target.value)}
+            >
+              <option value="" disabled>Select a professor...</option>
+              {professors.map(p => (
+                <option key={p.id} value={p.id} disabled={p.currentTeamLoad >= p.maxTeamLoad}>
+                  {p.fullName} ({p.currentTeamLoad}/{p.maxTeamLoad} teams) {p.currentTeamLoad >= p.maxTeamLoad ? ' - FULL' : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsReassignOpen(false)}>Cancel</Button>
+            <Button onClick={handleReassign} disabled={!reassignProfId}>Assign</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

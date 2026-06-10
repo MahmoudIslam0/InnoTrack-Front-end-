@@ -205,8 +205,8 @@ export default function AdminTeams() {
             >
               <option value="" disabled>Select a professor...</option>
               {professors.map(p => (
-                <option key={p.id} value={p.id} disabled={p.currentSupervisedTeams >= p.capacity}>
-                  {p.fullName} ({p.currentSupervisedTeams}/{p.capacity} teams) {p.currentSupervisedTeams >= p.capacity ? ' - FULL' : ''}
+                <option key={p.id} value={p.id} disabled={p.currentTeamLoad >= p.maxTeamLoad}>
+                  {p.fullName} ({p.currentTeamLoad}/{p.maxTeamLoad} teams) {p.currentTeamLoad >= p.maxTeamLoad ? ' - FULL' : ''}
                 </option>
               ))}
             </select>
