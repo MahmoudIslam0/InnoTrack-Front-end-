@@ -196,7 +196,15 @@ export const adminApi = {
   toggleShowcase: (id: string, isShowcased: boolean) => 
     api.patch(`/api/Admin/projects/${id}/toggle-showcase`, { isShowcased }),
   resetStuckProjects: () => 
-    api.post("/api/Admin/projects/reset-stuck"),
+    api.post("/api/Admin/quick-actions/reset-stuck-projects"),
+
+  // --- Quick Actions ---
+  closeAcademicYear: () => 
+    api.post("/api/Admin/quick-actions/close-academic-year"),
+  forceLogoutAll: () => 
+    api.post("/api/Admin/quick-actions/force-logout-all"),
+  openAcademicYear: (id: number) => 
+    api.post(`/api/Admin/quick-actions/open-academic-year/${id}`),
 
   // --- Academic Years ---
   getAcademicYears: (params?: any): Promise<PaginatedResult<AcademicYearDto>> => 

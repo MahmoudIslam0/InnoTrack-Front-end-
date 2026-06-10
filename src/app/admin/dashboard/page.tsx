@@ -1,35 +1,97 @@
 "use client";
 
-import { CheckCircle2, ClipboardList, FolderKanban, Users, ShieldAlert, AlertTriangle } from "lucide-react";
+import { CheckCircle2, ClipboardList, FolderKanban, Users, ShieldAlert, AlertTriangle, RefreshCcw, Lock, LogOut as LogOutIcon, CalendarPlus, Activity } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { adminApi } from "@/lib/admin-api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   PageHeader,
   StatCard as ProfessorStatCard,
   SectionCard,
 } from "@/app/_components/DashboardUI";
 
+const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
+
 export default function AdminDashboard() {
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [isYearModalOpen, setIsYearModalOpen] = useState(false);
+  const [academicYears, setAcademicYears] = useState<any[]>([]);
+  const [selectedYearId, setSelectedYearId] = useState<number | "">("");
+  const [isOpeningYear, setIsOpeningYear] = useState(false);
+  
+  const [isResettingStuck, setIsResettingStuck] = useState(false);
+  const [isClosingYear, setIsClosingYear] = useState(false);
+  const [isForcingLogout, setIsForcingLogout] = useState(false);
+
+  const fetchData = async () => {
+    try {
+      const data = await adminApi.getDashboard();
+      setDashboardData(data);
+    } catch (error) {
+      console.error("Failed to load dashboard data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await adminApi.getDashboard();
-        setDashboardData(data);
-      } catch (error) {
-        console.error("Failed to load dashboard data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchData();
   }, []);
+
+  const handleOpenYearModal = async () => {
+    setIsYearModalOpen(true);
+    try {
+      const res = await adminApi.getAcademicYears({ pageNumber: 1, pageSize: 100 });
+      setAcademicYears(res.items.filter((y: any) => !y.isActive));
+    } catch (err) {
+      toast.error("Failed to fetch academic years");
+    }
+  };
+
+  const submitOpenYear = async () => {
+    if (!selectedYearId) return;
+    setIsOpeningYear(true);
+    try {
+      await adminApi.openAcademicYear(Number(selectedYearId));
+      toast.success("Academic year opened successfully.");
+      setIsYearModalOpen(false);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to open academic year");
+    } finally {
+      setIsOpeningYear(false);
+    }
+  };
+
+  const handleQuickAction = async (action: () => Promise<any>, successMsg: string, setLoader: (val: boolean) => void) => {
+     if (!window.confirm("Are you sure you want to perform this action?")) return;
+     setLoader(true);
+     try {
+       await action();
+       toast.success(successMsg);
+       fetchData();
+     } catch (err: any) {
+       toast.error(err.message || "Action failed");
+     } finally {
+       setLoader(false);
+     }
+  };
 
   const {
     totalStudents = 0,
@@ -43,6 +105,10 @@ export default function AdminDashboard() {
     totalTechnologies = 0,
     totalDomains = 0,
     averageOriginalityScore = 0,
+    stuckProjectsCount = 0,
+    canCloseAcademicYear = false,
+    projectsByStatus = [],
+    projectsByDomain = [],
     alerts = [],
     recentActivity = [],
   } = dashboardData || {};
@@ -150,6 +216,197 @@ export default function AdminDashboard() {
           isLoading={isLoading}
         />
       </div>
+
+      {/* CHARTS SECTION */}
+      {!isLoading && (projectsByStatus.length > 0 || projectsByDomain.length > 0) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {projectsByStatus.length > 0 && (
+            <SectionCard title="Projects by Status">
+              <div className="h-[300px] w-full mt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={projectsByStatus}
+                      dataKey="count"
+                      nameKey="label"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      innerRadius={60}
+                      paddingAngle={5}
+                      label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {projectsByStatus.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                      formatter={(value: any) => [`${value} projects`, 'Count']}
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </SectionCard>
+          )}
+
+          {projectsByDomain.length > 0 && (
+            <SectionCard title="Projects by Domain">
+              <div className="h-[300px] w-full mt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={projectsByDomain} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                    <XAxis 
+                      dataKey="label" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} 
+                      dy={10}
+                    />
+                    <YAxis 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} 
+                    />
+                    <Tooltip 
+                      cursor={{ fill: 'hsl(var(--accent))' }}
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    />
+                    <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={50} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </SectionCard>
+          )}
+        </div>
+      )}
+
+      {/* QUICK ACTIONS SECTION */}
+      <SectionCard title="Quick Actions" className="mb-8 border-orange-500/20">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
+          {/* Action 1: Reset Stuck Projects */}
+          <div className="flex flex-col gap-2 p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-card transition-colors">
+            <div className="flex items-center gap-2 mb-1">
+              <RefreshCcw className="w-4 h-4 text-primary" />
+              <h3 className="font-semibold text-sm">Reset Stuck Projects</h3>
+            </div>
+            <p className="text-xs text-muted-foreground flex-1">
+              Revert projects stuck in Under Review for 48+ hours back to Draft.
+            </p>
+            <div className="mt-2 flex items-center justify-between">
+              <Badge variant={stuckProjectsCount > 0 ? "destructive" : "secondary"}>
+                {stuckProjectsCount} Stuck
+              </Badge>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                disabled={stuckProjectsCount === 0 || isResettingStuck}
+                onClick={() => handleQuickAction(adminApi.resetStuckProjects, "Stuck projects reset.", setIsResettingStuck)}
+              >
+                {isResettingStuck ? "Resetting..." : "Execute"}
+              </Button>
+            </div>
+          </div>
+
+          {/* Action 2: Close Academic Year */}
+          <div className="flex flex-col gap-2 p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-card transition-colors">
+            <div className="flex items-center gap-2 mb-1">
+              <Lock className="w-4 h-4 text-orange-500" />
+              <h3 className="font-semibold text-sm">Close Academic Year</h3>
+            </div>
+            <p className="text-xs text-muted-foreground flex-1">
+              Deactivate current year. Prevents new project drafts from being created.
+            </p>
+            <div className="mt-2 flex justify-end">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="text-orange-600 hover:text-orange-700 hover:bg-orange-100 dark:hover:bg-orange-950"
+                disabled={!canCloseAcademicYear || isClosingYear}
+                onClick={() => handleQuickAction(adminApi.closeAcademicYear, "Academic year closed.", setIsClosingYear)}
+              >
+                {isClosingYear ? "Closing..." : "Close Year"}
+              </Button>
+            </div>
+          </div>
+
+          {/* Action 3: Open Academic Year */}
+          <div className="flex flex-col gap-2 p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-card transition-colors">
+            <div className="flex items-center gap-2 mb-1">
+              <CalendarPlus className="w-4 h-4 text-green-500" />
+              <h3 className="font-semibold text-sm">Open Academic Year</h3>
+            </div>
+            <p className="text-xs text-muted-foreground flex-1">
+              Activate an inactive academic year for the new cycle.
+            </p>
+            <div className="mt-2 flex justify-end">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={handleOpenYearModal}
+              >
+                Open Year
+              </Button>
+            </div>
+          </div>
+
+          {/* Action 4: Force Logout All */}
+          <div className="flex flex-col gap-2 p-4 rounded-xl border border-destructive/20 bg-destructive/5 hover:bg-destructive/10 transition-colors">
+            <div className="flex items-center gap-2 mb-1">
+              <LogOutIcon className="w-4 h-4 text-destructive" />
+              <h3 className="font-semibold text-sm text-destructive">Force Logout All</h3>
+            </div>
+            <p className="text-xs text-destructive/80 flex-1">
+              Invalidate sessions for all non-admin users. Use for security incidents.
+            </p>
+            <div className="mt-2 flex justify-end">
+              <Button 
+                size="sm" 
+                variant="destructive" 
+                disabled={isForcingLogout}
+                onClick={() => handleQuickAction(adminApi.forceLogoutAll, "All users force logged out.", setIsForcingLogout)}
+              >
+                {isForcingLogout ? "Executing..." : "Force Logout"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </SectionCard>
+
+      {/* Open Academic Year Modal */}
+      <Dialog open={isYearModalOpen} onOpenChange={setIsYearModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Open Academic Year</DialogTitle>
+            <DialogDescription>
+              Select an inactive academic year to activate. This will automatically deactivate any currently active year.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <label className="text-sm font-medium mb-2 block">Available Academic Years</label>
+            <select
+              className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              value={selectedYearId}
+              onChange={(e) => setSelectedYearId(Number(e.target.value))}
+            >
+              <option value="" disabled>Select an academic year...</option>
+              {academicYears.length === 0 && <option disabled>No inactive years found.</option>}
+              {academicYears.map((y) => (
+                <option key={y.id} value={y.id}>{y.name}</option>
+              ))}
+            </select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsYearModalOpen(false)} disabled={isOpeningYear}>
+              Cancel
+            </Button>
+            <Button onClick={submitOpenYear} disabled={!selectedYearId || isOpeningYear}>
+              {isOpeningYear ? "Opening..." : "Activate Year"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="space-y-8">
         <SectionCard
