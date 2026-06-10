@@ -86,7 +86,7 @@ export default function AdminDashboard() {
           isLoading={isLoading}
         />
         <ProfessorStatCard
-          title="Active Teams"
+          title="Total Teams"
           value={String(totalTeams)}
           subtitle="Across all departments"
           icon={Users}
