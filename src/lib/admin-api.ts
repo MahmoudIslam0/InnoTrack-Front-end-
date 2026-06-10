@@ -159,6 +159,8 @@ export const adminApi = {
     api.patch(`/api/Admin/professors/${id}/status`, { isActive }),
   resetProfessorPassword: (id: string, newPassword?: string) => 
     api.patch(`/api/Admin/professors/${id}/reset-password`, { newPassword }),
+  deleteProfessor: (id: string) => 
+    api.delete(`/api/Admin/professors/${id}`),
 
   // --- Teams ---
   getTeams: (params?: any): Promise<PaginatedResult<AdminTeamDto>> => 

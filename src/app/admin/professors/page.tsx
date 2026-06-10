@@ -9,7 +9,7 @@ import { PageHeader } from "@/app/_components/DashboardUI";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MoreHorizontal, ShieldOff, KeyRound, Plus, Users, LayoutDashboard } from "lucide-react";
+import { MoreHorizontal, ShieldOff, KeyRound, Plus, Users, LayoutDashboard, Trash, Search } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,12 +52,16 @@ export default function AdminProfessors() {
     maxTeamLoad: 5,
   });
 
+  const [searchInput, setSearchInput] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+
   const fetchProfessors = async () => {
     setIsLoading(true);
     try {
       const result = await adminApi.getProfessors({
         pageNumber: pagination.pageIndex + 1,
         pageSize: pagination.pageSize,
+        searchTerm: searchTerm || undefined,
       });
       setData(result.items);
       setPageCount(result.totalPages);
@@ -70,7 +74,24 @@ export default function AdminProfessors() {
 
   useEffect(() => {
     fetchProfessors();
-  }, [pagination]);
+  }, [pagination, searchTerm]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearchTerm(searchInput);
+    setPagination({ ...pagination, pageIndex: 0 });
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this professor? Deletion is blocked if they are supervising teams with active projects.")) return;
+    try {
+      await adminApi.deleteProfessor(id);
+      toast.success("Professor deleted successfully");
+      fetchProfessors();
+    } catch (error: any) {
+      toast.error("Failed to delete professor", { description: error.message });
+    }
+  };
 
   const handleToggleStatus = async (prof: AdminProfessorDto) => {
     try {
@@ -215,6 +236,11 @@ export default function AdminProfessors() {
                 <KeyRound className="w-4 h-4 mr-2" />
                 Reset Password
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleDelete(prof.id)} className="text-destructive focus:text-destructive">
+                <Trash className="w-4 h-4 mr-2" />
+                Delete Professor
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -230,14 +256,25 @@ export default function AdminProfessors() {
           description="View professors, manage capacities, and provision new supervisor accounts."
         />
         
-        <Dialog open={isProvisionOpen} onOpenChange={setIsProvisionOpen}>
-          <DialogTrigger asChild>
-            <Button className="mt-2 sm:mt-0 bg-primary hover:bg-primary/90 text-primary-foreground">
-              <Plus className="w-4 h-4 mr-2" />
-              Provision Professor
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] border-border/50 bg-background/95 backdrop-blur-xl">
+        <div className="flex flex-col sm:flex-row gap-3 mt-2 sm:mt-0">
+          <form onSubmit={handleSearch} className="flex items-center relative">
+            <Search className="w-4 h-4 absolute left-3 text-muted-foreground" />
+            <Input 
+              placeholder="Search professors..." 
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="pl-9 w-full sm:w-[250px]"
+            />
+          </form>
+
+          <Dialog open={isProvisionOpen} onOpenChange={setIsProvisionOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground whitespace-nowrap">
+                <Plus className="w-4 h-4 mr-2" />
+                Provision Professor
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] border-border/50 bg-background/95 backdrop-blur-xl">
             <DialogHeader>
               <DialogTitle>Provision New Professor</DialogTitle>
               <DialogDescription>
@@ -274,8 +311,9 @@ export default function AdminProfessors() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      </div>
 
-        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
           <DialogContent className="sm:max-w-[425px] border-border/50 bg-background/95 backdrop-blur-xl">
             <DialogHeader>
               <DialogTitle>Edit Professor</DialogTitle>
