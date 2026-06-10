@@ -551,15 +551,19 @@ export function TopNav({
                     </span>
                   </div>
 
-                  <DropdownMenuItem asChild className="cursor-pointer rounded-xl bg-accent/30 hover:bg-accent/60 focus:bg-accent/60 border border-border/20 px-4 py-3 mx-3 transition-all duration-200 text-foreground hover:text-foreground focus:text-foreground">
-                    <Link href={finalProfileHref} className="flex items-center w-full">
-                      <User className="w-4.5 h-4.5 text-primary shrink-0 mr-3" />
-                      <span className="font-semibold text-sm">View Profile</span>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground/60 ml-auto shrink-0" />
-                    </Link>
-                  </DropdownMenuItem>
+                  {!isAdmin && (
+                    <>
+                      <DropdownMenuItem asChild className="cursor-pointer rounded-xl bg-accent/30 hover:bg-accent/60 focus:bg-accent/60 border border-border/20 px-4 py-3 mx-3 transition-all duration-200 text-foreground hover:text-foreground focus:text-foreground">
+                        <Link href={finalProfileHref} className="flex items-center w-full">
+                          <User className="w-4.5 h-4.5 text-primary shrink-0 mr-3" />
+                          <span className="font-semibold text-sm">View Profile</span>
+                          <ChevronRight className="w-4 h-4 text-muted-foreground/60 ml-auto shrink-0" />
+                        </Link>
+                      </DropdownMenuItem>
 
-                  <div className="my-2 mx-3 border-t border-border/50" />
+                      <div className="my-2 mx-3 border-t border-border/50" />
+                    </>
+                  )}
 
                   <DropdownMenuItem
                     onClick={handleLogout}

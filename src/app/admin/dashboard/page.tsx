@@ -38,6 +38,7 @@ export default function AdminDashboard() {
     teamsWithoutSupervisor = 0,
     totalProjects = 0,
     draftCount = 0,
+    underReviewCount = 0,
     completedCount = 0,
     totalTechnologies = 0,
     totalDomains = 0,
@@ -114,6 +115,14 @@ export default function AdminDashboard() {
           subtitle="Projects in draft"
           icon={FolderKanban}
           tone="info"
+          isLoading={isLoading}
+        />
+        <ProfessorStatCard
+          title="Under Review"
+          value={String(underReviewCount)}
+          subtitle="Awaiting approval"
+          icon={FolderKanban}
+          tone="warning"
           isLoading={isLoading}
         />
         <ProfessorStatCard

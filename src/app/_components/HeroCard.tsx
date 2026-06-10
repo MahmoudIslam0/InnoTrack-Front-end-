@@ -28,11 +28,11 @@ export function HeroCard() {
         return;
       }
       // Set the active tab so project-management opens on "New Idea"
-      localStorage.setItem("projectManagementActiveTab", "submit-idea");
+      sessionStorage.setItem("projectManagementActiveTab", "submit-idea");
       router.push("/project-management");
     } catch {
       // If the API call fails, fall back to project-management directly
-      localStorage.setItem("projectManagementActiveTab", "submit-idea");
+      sessionStorage.setItem("projectManagementActiveTab", "submit-idea");
       router.push("/project-management");
     } finally {
       setIsChecking(false);

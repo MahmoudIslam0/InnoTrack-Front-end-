@@ -171,8 +171,21 @@ export default function ProjectManagement() {
       } else {
         setDrafts([]);
       }
-      if (typeof window !== "undefined" && !sessionStorage.getItem("projectManagementActiveTab")) {
-        setActiveTab(hasActiveOrDraft ? "my-projects" : "submit-idea");
+      if (hasActiveOrDraft) {
+        const currentTab = sessionStorage.getItem("projectManagementActiveTab");
+        if (!currentTab || currentTab === "submit-idea") {
+          const newTab = (projectResult.status === "fulfilled" && projectResult.value && mapBackendProject(projectResult.value).status === "submitted") 
+            ? "submitted-projects" 
+            : "my-projects";
+          setActiveTab(newTab);
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem("projectManagementActiveTab", newTab);
+          }
+        }
+      } else {
+        if (typeof window !== "undefined" && !sessionStorage.getItem("projectManagementActiveTab")) {
+          setActiveTab("submit-idea");
+        }
       }
       setIsLoading(false);
     });

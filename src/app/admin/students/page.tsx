@@ -23,14 +23,33 @@ export default function AdminStudents() {
   const [pageCount, setPageCount] = useState(0);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [departmentId, setDepartmentId] = useState<number | "">("");
+  const [hasTeam, setHasTeam] = useState<string>("all");
+  const [isActive, setIsActive] = useState<string>("all");
+  const [departments, setDepartments] = useState<any[]>([]);
+
+  useEffect(() => {
+    import("@/lib/api").then(({ api }) => {
+      api.get("/api/Departments", { params: { pageSize: 100 } })
+        .then((res: any) => setDepartments(res.items || res.data || []))
+        .catch(console.error);
+    });
+  }, []);
 
   const fetchStudents = async () => {
     setIsLoading(true);
     try {
-      const result = await adminApi.getStudents({
+      const params: any = {
         pageNumber: pagination.pageIndex + 1,
         pageSize: pagination.pageSize,
-      });
+      };
+      if (searchQuery) params.search = searchQuery;
+      if (departmentId !== "") params.departmentId = departmentId;
+      if (hasTeam !== "all") params.hasTeam = hasTeam === "true";
+      if (isActive !== "all") params.isActive = isActive === "true";
+
+      const result = await adminApi.getStudents(params);
       setData(result.items);
       setPageCount(result.totalPages);
     } catch (error: any) {
@@ -41,8 +60,11 @@ export default function AdminStudents() {
   };
 
   useEffect(() => {
-    fetchStudents();
-  }, [pagination]);
+    const handler = setTimeout(() => {
+      fetchStudents();
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [pagination.pageIndex, pagination.pageSize, searchQuery, departmentId, hasTeam, isActive]);
 
   const handleToggleStatus = async (student: AdminStudentDto) => {
     try {
@@ -164,7 +186,45 @@ export default function AdminStudents() {
         title="Student Management"
         description="View and manage all registered student accounts."
       />
-      <div className="mt-8">
+
+      <div className="mt-6 flex flex-col sm:flex-row flex-wrap gap-4 items-center">
+        <input
+          placeholder="Search name or email..."
+          value={searchQuery}
+          onChange={e => { setSearchQuery(e.target.value); setPagination(p => ({ ...p, pageIndex: 0 })); }}
+          className="flex h-10 w-full sm:w-64 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        />
+        <select
+          value={departmentId}
+          onChange={e => { setDepartmentId(e.target.value ? Number(e.target.value) : ""); setPagination(p => ({ ...p, pageIndex: 0 })); }}
+          className="flex h-10 w-full sm:w-48 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <option value="">All Departments</option>
+          {departments.map(d => (
+            <option key={d.id} value={d.id}>{d.name}</option>
+          ))}
+        </select>
+        <select
+          value={hasTeam}
+          onChange={e => { setHasTeam(e.target.value); setPagination(p => ({ ...p, pageIndex: 0 })); }}
+          className="flex h-10 w-full sm:w-40 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <option value="all">Any Team Status</option>
+          <option value="true">Has Team</option>
+          <option value="false">No Team</option>
+        </select>
+        <select
+          value={isActive}
+          onChange={e => { setIsActive(e.target.value); setPagination(p => ({ ...p, pageIndex: 0 })); }}
+          className="flex h-10 w-full sm:w-40 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <option value="all">Any Status</option>
+          <option value="true">Active Only</option>
+          <option value="false">Suspended</option>
+        </select>
+      </div>
+
+      <div className="mt-6">
         <DataTable
           columns={columns}
           data={data}
