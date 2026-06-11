@@ -145,10 +145,24 @@ async function request(endpoint: string, options: RequestOptions = {}): Promise<
       
       // Extract specific validation errors if present
       if (responseData.errors && typeof responseData.errors === 'object') {
-        const validationErrors = Object.values(responseData.errors).flat().join(' ');
-        if (validationErrors) {
-          errorMessage = validationErrors;
+        const errorList: string[] = [];
+        for (const [key, value] of Object.entries(responseData.errors)) {
+          // Format the field name to be more readable (e.g., "newPassword" -> "New Password")
+          const fieldName = key.replace(/([A-Z])/g, ' $1').trim();
+          const capitalizedField = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+          
+          const messages = Array.isArray(value) ? value.join(' ') : String(value);
+          errorList.push(`${capitalizedField}: ${messages}`);
         }
+        
+        if (errorList.length > 0) {
+          errorMessage = errorList.join(' • ');
+        }
+      }
+      
+      // Prevent generic ASP.NET Core messages if no specific details are available
+      if (errorMessage === "One or more validation errors occurred." || errorMessage.includes("An error occurred while processing your request.")) {
+        errorMessage = "Please check your input and try again.";
       }
 
       throw new ApiError(
