@@ -9,6 +9,7 @@ import { PageHeader } from "@/app/_components/DashboardUI";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { MoreHorizontal, UserMinus, UserPlus, Trash, Search } from "lucide-react";
 import {
   DropdownMenu,
@@ -40,6 +41,12 @@ export default function AdminTeams() {
   const [isAssignOpen, setIsAssignOpen] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<AdminTeamDto | null>(null);
   const [selectedProfId, setSelectedProfId] = useState<string>("");
+
+  const [teamToDelete, setTeamToDelete] = useState<string | null>(null);
+  const [isDeletingTeam, setIsDeletingTeam] = useState(false);
+
+  const [teamToRemoveSupervisor, setTeamToRemoveSupervisor] = useState<string | null>(null);
+  const [isRemovingSupervisor, setIsRemovingSupervisor] = useState(false);
 
   const fetchTeams = async () => {
     setIsLoading(true);
@@ -77,30 +84,46 @@ export default function AdminTeams() {
     setPagination({ ...pagination, pageIndex: 0 });
   };
 
-  const handleDeleteTeam = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this team? This action is irreversible. Deletion is blocked if the team has an Active or Completed project.")) return;
+  const confirmDeleteTeam = async () => {
+    if (!teamToDelete) return;
+    setIsDeletingTeam(true);
     try {
-      await adminApi.deleteTeam(id);
+      await adminApi.deleteTeam(teamToDelete);
       toast.success("Team deleted successfully");
       fetchTeams();
     } catch (error: any) {
       toast.error("Failed to delete team", { description: error.message });
+    } finally {
+      setIsDeletingTeam(false);
+      setTeamToDelete(null);
     }
+  };
+
+  const handleDeleteTeam = (id: string) => {
+    setTeamToDelete(id);
   };
 
   useEffect(() => {
     fetchProfessors();
   }, []);
 
-  const handleRemoveSupervisor = async (teamId: string) => {
-    if (!confirm("Are you sure you want to remove the supervisor from this team?")) return;
+  const confirmRemoveSupervisor = async () => {
+    if (!teamToRemoveSupervisor) return;
+    setIsRemovingSupervisor(true);
     try {
-      await adminApi.removeSupervisor(teamId);
+      await adminApi.removeSupervisor(teamToRemoveSupervisor);
       toast.success("Supervisor removed successfully");
       fetchTeams();
     } catch (error: any) {
       toast.error("Failed to remove supervisor", { description: error.message });
+    } finally {
+      setIsRemovingSupervisor(false);
+      setTeamToRemoveSupervisor(null);
     }
+  };
+
+  const handleRemoveSupervisor = (teamId: string) => {
+    setTeamToRemoveSupervisor(teamId);
   };
 
   const handleAssignSupervisor = async () => {
@@ -249,12 +272,31 @@ export default function AdminTeams() {
               ))}
             </select>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAssignOpen(false)}>Cancel</Button>
-            <Button onClick={handleAssignSupervisor} disabled={!selectedProfId}>Assign</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={!!teamToDelete}
+        onClose={() => setTeamToDelete(null)}
+        onConfirm={confirmDeleteTeam}
+        title="Delete Team"
+        description="Are you sure you want to delete this team? This action is irreversible. Deletion is blocked if the team has an Active or Completed project."
+        confirmText="Delete"
+        variant="destructive"
+        isLoading={isDeletingTeam}
+      />
+
+      <ConfirmDialog
+        isOpen={!!teamToRemoveSupervisor}
+        onClose={() => setTeamToRemoveSupervisor(null)}
+        onConfirm={confirmRemoveSupervisor}
+        title="Remove Supervisor"
+        description="Are you sure you want to remove the supervisor from this team?"
+        confirmText="Remove"
+        variant="destructive"
+        isLoading={isRemovingSupervisor}
+      />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { PageHeader } from "@/app/_components/DashboardUI";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { MoreHorizontal, ShieldOff, KeyRound, Plus, Users, LayoutDashboard, Trash, Search } from "lucide-react";
 import {
   DropdownMenu,
@@ -55,13 +56,16 @@ export default function AdminProfessors() {
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
+  const [professorToDelete, setProfessorToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const fetchProfessors = async () => {
     setIsLoading(true);
     try {
       const result = await adminApi.getProfessors({
         pageNumber: pagination.pageIndex + 1,
         pageSize: pagination.pageSize,
-        searchTerm: searchTerm || undefined,
+        search: searchTerm || undefined,
       });
       setData(result.items);
       setPageCount(result.totalPages);
@@ -82,15 +86,23 @@ export default function AdminProfessors() {
     setPagination({ ...pagination, pageIndex: 0 });
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this professor? Deletion is blocked if they are supervising teams with active projects.")) return;
+  const confirmDelete = async () => {
+    if (!professorToDelete) return;
+    setIsDeleting(true);
     try {
-      await adminApi.deleteProfessor(id);
+      await adminApi.deleteProfessor(professorToDelete);
       toast.success("Professor deleted successfully");
       fetchProfessors();
     } catch (error: any) {
       toast.error("Failed to delete professor", { description: error.message });
+    } finally {
+      setIsDeleting(false);
+      setProfessorToDelete(null);
     }
+  };
+
+  const handleDelete = (id: string) => {
+    setProfessorToDelete(id);
   };
 
   const handleToggleStatus = async (prof: AdminProfessorDto) => {
@@ -349,6 +361,17 @@ export default function AdminProfessors() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <ConfirmDialog
+          isOpen={!!professorToDelete}
+          onClose={() => setProfessorToDelete(null)}
+          onConfirm={confirmDelete}
+          title="Delete Professor"
+          description="Are you sure you want to delete this professor? Deletion is blocked if they are supervising teams with active projects."
+          confirmText="Delete"
+          variant="destructive"
+          isLoading={isDeleting}
+        />
       </div>
 
       <div className="mt-8">
