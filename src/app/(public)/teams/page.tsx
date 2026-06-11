@@ -89,6 +89,7 @@ export default function TeamsPage() {
   const [showHint, setShowHint] = useState(false);
   const [joinCodeInput, setJoinCodeInput] = useState("");
   const [newTeamName, setNewTeamName] = useState("");
+  const [newTeamMaxSize, setNewTeamMaxSize] = useState("4");
   const [memberContact, setMemberContact] = useState("");
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [isEditingTeamName, setIsEditingTeamName] = useState(false);
@@ -255,7 +256,7 @@ export default function TeamsPage() {
     }
 
     try {
-      await studentApi.createTeam(name);
+      await studentApi.createTeam(name, parseInt(newTeamMaxSize, 10));
       const created = await studentApi.getMyTeam();
       if (created) {
         const mappedTeam = mapTeam(created);
@@ -454,6 +455,8 @@ export default function TeamsPage() {
           joinByCode={joinByCode}
           newTeamName={newTeamName}
           setNewTeamName={setNewTeamName}
+          newTeamMaxSize={newTeamMaxSize}
+          setNewTeamMaxSize={setNewTeamMaxSize}
           createTeam={createTeam}
         />
       ) : (
@@ -803,6 +806,8 @@ function NoTeamState({
   joinByCode,
   newTeamName,
   setNewTeamName,
+  newTeamMaxSize,
+  setNewTeamMaxSize,
   createTeam,
 }: {
   joinCodeInput: string;
@@ -810,6 +815,8 @@ function NoTeamState({
   joinByCode: () => void;
   newTeamName: string;
   setNewTeamName: (value: string) => void;
+  newTeamMaxSize: string;
+  setNewTeamMaxSize: (value: string) => void;
   createTeam: () => void;
 }) {
   return (
@@ -884,6 +891,15 @@ function NoTeamState({
                 placeholder="Team name"
                 value={newTeamName}
                 onChange={(event) => setNewTeamName(event.target.value)}
+                className="h-14 text-lg bg-background"
+              />
+              <Input
+                placeholder="Max size (default 4)"
+                type="number"
+                min="1"
+                max="10"
+                value={newTeamMaxSize}
+                onChange={(event) => setNewTeamMaxSize(event.target.value)}
                 className="h-14 text-lg bg-background"
               />
 
