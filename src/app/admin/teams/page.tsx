@@ -272,6 +272,9 @@ export default function AdminTeams() {
               ))}
             </select>
           </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAssignOpen(false)}>Cancel</Button>
+            <Button onClick={handleAssignSupervisor} disabled={!selectedProfId}>Assign</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
