@@ -352,9 +352,11 @@ function InnoChatContent() {
   const router = useRouter();
   const { user: authUser } = useAuth();
   const [userId, setUserId] = useState("");
+  const [sessionId, setSessionId] = useState("");
   const [myTeam, setMyTeam] = useState<MyTeamDto | null>(null);
 
   useEffect(() => {
+    setSessionId(Math.random().toString(36).substring(7));
     studentApi.getMyTeam().then(team => setMyTeam(team)).catch(() => {});
   }, []);
 
@@ -475,7 +477,7 @@ function InnoChatContent() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          user_id: userId || authUser?.name || "anonymous",
+          user_id: `${userId || authUser?.name || "anonymous"}_${sessionId}`,
           message: apiMessage,
         }),
       });
@@ -570,6 +572,20 @@ function InnoChatContent() {
             <p className="text-sm text-muted-foreground">
               {projectContext?.title ? "AI Assistant analyzing your draft" : "AI Assistant for Graduation Projects"}
             </p>
+          </div>
+          <div className="ml-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSessionId(Math.random().toString(36).substring(7));
+                setMessages(messages.slice(0, 1)); // Keep only the greeting
+                toast.success("Chat cache cleared!");
+              }}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              Clear Chat
+            </Button>
           </div>
         </div>
 
