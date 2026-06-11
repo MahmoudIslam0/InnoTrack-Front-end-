@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { Sparkles, Lightbulb, PenTool, LayoutTemplate } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { toast } from "sonner";
@@ -455,10 +456,55 @@ export function TeamChatWorkspace({
                                 </div>
                               )}
 
-                              <div className="flex flex-wrap items-end gap-x-2 gap-y-1">
-                                <div className="break-words overflow-hidden [&>p]:mb-2 [&>p:last-child]:mb-0 [&>ul]:list-disc [&>ul]:ml-4 [&>ol]:list-decimal [&>ol]:ml-4 [&_strong]:font-bold [&_em]:italic [&_code]:bg-black/10 [&_code]:dark:bg-white/10 [&_code]:px-1 [&_code]:rounded-md [&_pre]:bg-black/10 [&_pre]:dark:bg-white/10 [&_pre]:p-2 [&_pre]:rounded-md [&_a]:text-blue-500 [&_a]:underline">
+                              <div className="flex flex-wrap items-end gap-x-2 gap-y-1 w-full">
+                                <div className="break-words overflow-hidden w-full [&>p]:mb-2 [&>p:last-child]:mb-0 [&>ul]:list-disc [&>ul]:ml-4 [&>ol]:list-decimal [&>ol]:ml-4 [&_strong]:font-bold [&_em]:italic [&_code]:bg-black/10 [&_code]:dark:bg-white/10 [&_code]:px-1 [&_code]:rounded-md [&_pre]:bg-black/10 [&_pre]:dark:bg-white/10 [&_pre]:p-2 [&_pre]:rounded-md [&_a]:text-blue-500 [&_a]:underline">
                                   {message.isDeletedForAll ? (
                                     <span className="italic">This message was deleted</span>
+                                  ) : message.author.includes("Graduation Project Assistant") && message.content.includes("Here's how to get started") ? (
+                                    <div className="flex flex-col space-y-4 pt-1">
+                                      <div className="flex items-center gap-2 text-primary font-medium mb-1">
+                                        <Sparkles className="w-4 h-4" />
+                                        <p>Here's how I can help you:</p>
+                                      </div>
+                                      <div className="grid gap-2">
+                                        <button 
+                                          onClick={() => { setDraftMessage("idea"); setTimeout(sendMessage, 50); }}
+                                          className="flex items-center gap-3 p-3 text-left rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors group"
+                                        >
+                                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary group-hover:scale-110 transition-transform">
+                                            <Lightbulb className="w-4 h-4" />
+                                          </div>
+                                          <div>
+                                            <span className="font-semibold block text-sm text-foreground">Generate project ideas by domain</span>
+                                            <span className="text-xs text-muted-foreground">Discover exciting topics for your graduation project</span>
+                                          </div>
+                                        </button>
+                                        <button 
+                                          onClick={() => { setDraftMessage("My project title is "); inputRef.current?.focus(); }}
+                                          className="flex items-center gap-3 p-3 text-left rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors group"
+                                        >
+                                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary group-hover:scale-110 transition-transform">
+                                            <LayoutTemplate className="w-4 h-4" />
+                                          </div>
+                                          <div>
+                                            <span className="font-semibold block text-sm text-foreground">Generate smart features</span>
+                                            <span className="text-xs text-muted-foreground">Get feature suggestions based on your title</span>
+                                          </div>
+                                        </button>
+                                        <button 
+                                          onClick={() => { setDraftMessage("generate full project"); setTimeout(sendMessage, 50); }}
+                                          className="flex items-center gap-3 p-3 text-left rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors group"
+                                        >
+                                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary group-hover:scale-110 transition-transform">
+                                            <PenTool className="w-4 h-4" />
+                                          </div>
+                                          <div>
+                                            <span className="font-semibold block text-sm text-foreground">Generate complete specification</span>
+                                            <span className="text-xs text-muted-foreground">Create a full PRD for your chosen idea</span>
+                                          </div>
+                                        </button>
+                                      </div>
+                                    </div>
                                   ) : (
                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                       {message.content || ""}
