@@ -28,6 +28,7 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  draftId?: number;
 }
 
 interface ProjectContext {
@@ -164,16 +165,19 @@ function MessageContent({
   let textBuffer: string[] = [];
   let optionCount = 0;
   let isInteractiveSection = false;
-
-  const parsedProject = parseProjectData(content);
-  const isFullProject = parsedProject.title && parsedProject.abstract && parsedProject.problemStatement;
-  const hasInlineOptions = content.includes("1️⃣") || content.includes("2️⃣") || content.match(/\[1\]/);
+  const router = useRouter();
 
   let cleanContent = content;
+  const hasInlineOptions = content.includes("1️⃣") || content.includes("2️⃣") || content.match(/\[1\]/);
+
   if (hasInlineOptions) {
     cleanContent = cleanContent.replace(/Would you like me to.*?(?:specification\?|it\?)/i, "").trim();
   }
   cleanContent = cleanContent.replace(/👉?\s*Do you want to submit this project\?\s*\(Yes\/No\)/i, "").trim();
+
+  const parsedProject = parseProjectData(cleanContent);
+  const isFullProject = parsedProject.title && parsedProject.abstract && parsedProject.problemStatement;
+
 
   const flushText = (key: string) => {
     if (textBuffer.length > 0) {
@@ -317,7 +321,12 @@ function MessageContent({
         <Button
           onClick={() => {
             if (!hasTeam) {
-              toast.error("You must be part of a team to save a project draft!");
+              toast.error("You must be part of a team to save a project draft!", {
+                action: {
+                  label: "Go to Teams",
+                  onClick: () => router.push("/teams")
+                }
+              });
               return;
             }
             onSendToSubmission(parsedProject);
@@ -674,6 +683,12 @@ function InnoChatContent() {
                           content={message.content}
                           hasTeam={!!myTeam}
                           onSendToSubmission={async (data) => {
+                            if (message.draftId) {
+                              toast.success("Opening existing draft...");
+                              router.push(`/project-submission?draft=${message.draftId}`);
+                              return;
+                            }
+
                             try {
                               toast.loading("Saving your project draft...");
                               
@@ -686,9 +701,11 @@ function InnoChatContent() {
 
                               const techIds: number[] = [];
                               if (data.technologies && technologies.length > 0) {
-                                for (const tech of data.technologies) {
-                                  const matchedTech = technologies.find(t => t.name.toLowerCase() === tech.toLowerCase());
-                                  if (matchedTech) techIds.push(matchedTech.id);
+                                const allTechsString = data.technologies.join(' ').toLowerCase();
+                                for (const tech of technologies) {
+                                  if (allTechsString.includes(tech.name.toLowerCase())) {
+                                    techIds.push(tech.id);
+                                  }
                                 }
                               }
                               if (techIds.length === 0 && technologies.length > 0) {
@@ -709,6 +726,10 @@ function InnoChatContent() {
                               };
 
                               const draft = await studentApi.saveDraft(payload);
+                              
+                              // Update the message so we know it has a draft associated
+                              setMessages(prev => prev.map(m => m.id === message.id ? { ...m, draftId: draft.id } : m));
+                              
                               toast.dismiss();
                               toast.success("Draft saved! Redirecting...");
                               router.push(`/project-submission?draft=${draft.id}`);
