@@ -62,6 +62,7 @@ export default function Projects() {
   const [filterSupervisor, setFilterSupervisor] = useState<string>("");
   const [filterTechnology, setFilterTechnology] = useState<string>("");
   const [filterMinOriginality, setFilterMinOriginality] = useState<string>("");
+  const [filterMaxOriginality, setFilterMaxOriginality] = useState<string>("");
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== "undefined") {
       return sessionStorage.getItem("projectsActiveTab") || "current";
@@ -96,6 +97,7 @@ export default function Projects() {
     const supervisor = supervisors.find((item) => item.fullName === filterSupervisor);
     const year = Number(filterYear);
     const minOriginalityScore = Number(filterMinOriginality);
+    const maxOriginalityScore = Number(filterMaxOriginality);
 
     return {
       search: searchQuery.trim() || undefined,
@@ -106,11 +108,15 @@ export default function Projects() {
       minOriginalityScore: Number.isFinite(minOriginalityScore) && filterMinOriginality !== ""
         ? minOriginalityScore
         : undefined,
+      maxOriginalityScore: Number.isFinite(maxOriginalityScore) && filterMaxOriginality !== ""
+        ? maxOriginalityScore
+        : undefined,
     };
   }, [
     domains,
     filterDomain,
     filterMinOriginality,
+    filterMaxOriginality,
     filterSupervisor,
     filterTechnology,
     filterYear,
@@ -182,7 +188,7 @@ export default function Projects() {
     [technologies, allProjects],
   );
 
-  const hasActiveFilters = filterYear || filterDomain || filterSupervisor || filterTechnology || filterMinOriginality;
+  const hasActiveFilters = filterYear || filterDomain || filterSupervisor || filterTechnology || filterMinOriginality || filterMaxOriginality;
 
   const clearAllFilters = () => {
     setFilterYear("");
@@ -190,6 +196,7 @@ export default function Projects() {
     setFilterSupervisor("");
     setFilterTechnology("");
     setFilterMinOriginality("");
+    setFilterMaxOriginality("");
     setCurrentPage(1);
     setOldPage(1);
   };
@@ -282,7 +289,7 @@ export default function Projects() {
             </div>
 
             {showFilters && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 animate-in fade-in duration-300">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 animate-in fade-in duration-300">
                 {/* Year Filter */}
                 <div className="space-y-2">
                   <label className="text-xs font-semibold text-foreground uppercase tracking-wide">Year</label>
@@ -374,6 +381,27 @@ export default function Projects() {
                         setOldPage(1);
                       }}
                       placeholder="0"
+                      className="w-full pl-3.5 pr-12 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all text-foreground placeholder:text-muted-foreground font-medium"
+                    />
+                    <span className="absolute right-8 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-semibold pointer-events-none">%</span>
+                  </div>
+                </div>
+
+                {/* Max Originality Filter */}
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground uppercase tracking-wide">Max Originality</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={filterMaxOriginality}
+                      onChange={(e) => {
+                        setFilterMaxOriginality(e.target.value);
+                        setCurrentPage(1);
+                        setOldPage(1);
+                      }}
+                      placeholder="100"
                       className="w-full pl-3.5 pr-12 py-2.5 text-sm bg-background border border-border/50 rounded-lg hover:border-border focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all text-foreground placeholder:text-muted-foreground font-medium"
                     />
                     <span className="absolute right-8 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-semibold pointer-events-none">%</span>

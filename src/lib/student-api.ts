@@ -199,6 +199,7 @@ export type ProjectCatalogFilters = {
   supervisorId?: number;
   technologyId?: number;
   minOriginalityScore?: number;
+  maxOriginalityScore?: number;
   isCurrentAcademicYear?: boolean;
 };
 
@@ -436,6 +437,29 @@ export const studentApi = {
     ).then(async (res) => {
       if (!res.ok) {
         const text = await res.text().catch(() => "");
+        throw new Error(text || `Download failed (${res.status})`);
+      }
+      return res.blob();
+    });
+  },
+
+  downloadOriginalityReport: async (projectId: string | number) => {
+    return fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || "https://innotrack-aneshpdxd6habnd6.uaenorth-01.azurewebsites.net"}/api/Projects/${projectId}/originality-report/pdf`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${typeof window !== "undefined" ? localStorage.getItem("accessToken") || "" : ""}`,
+        },
+      }
+    ).then(async (res) => {
+      if (!res.ok) {
+        let text = "";
+        try { text = await res.text(); } catch {}
+        try { 
+            const data = JSON.parse(text); 
+            text = data.title || data.detail || data.message || text; 
+        } catch {}
         throw new Error(text || `Download failed (${res.status})`);
       }
       return res.blob();

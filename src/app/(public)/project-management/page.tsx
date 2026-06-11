@@ -15,6 +15,7 @@ import {
   Users,
   ChevronDown,
   ChevronRight,
+  Download,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -351,6 +352,30 @@ export default function ProjectManagement() {
     }
   };
 
+  const [isDownloadingReport, setIsDownloadingReport] = useState(false);
+
+  const handleDownloadOriginalityReport = async () => {
+    if (!project || project.id === "current") return;
+    try {
+      setIsDownloadingReport(true);
+      toast.info("Generating Originality Report...");
+      const blob = await studentApi.downloadOriginalityReport(project.id);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Originality_Report_${project.id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Report downloaded successfully");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to download originality report. Make sure you are the team leader.");
+    } finally {
+      setIsDownloadingReport(false);
+    }
+  };
+
   return (
     <div className="p-4 md:p-8 max-w-[1200px] mx-auto">
       <div className="mb-8">
@@ -623,6 +648,14 @@ export default function ProjectManagement() {
                             View Full Project
                           </Link>
                         </Button>
+                        <Button 
+                          variant="secondary" 
+                          onClick={handleDownloadOriginalityReport}
+                          disabled={isDownloadingReport}
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          {isDownloadingReport ? "Downloading..." : "Originality Report"}
+                        </Button>
                         <Dialog open={isAbandonDialogOpen} onOpenChange={setIsAbandonDialogOpen}>
                           <DialogTrigger asChild>
                             <Button variant="destructive" className="ml-auto">
@@ -808,6 +841,17 @@ export default function ProjectManagement() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
+                    {isTeamLeader && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={handleDownloadOriginalityReport}
+                        disabled={isDownloadingReport}
+                      >
+                        <Download className="w-3 h-3 mr-1.5" />
+                        {isDownloadingReport ? "Downloading..." : "Report"}
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
