@@ -531,34 +531,33 @@ function ProjectSubmissionPage() {
         >
           ← Back to Project Management
         </Button>
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-semibold text-foreground tracking-tight mb-2">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-3xl font-semibold text-foreground tracking-tight">
               {isViewOnly ? "View Draft" : isDetailsOnly ? "Edit Project Details" : isEditing ? "Edit Draft" : "Project Submission"}
             </h1>
-            <p className="text-muted-foreground">
-              {isDetailsOnly
-                ? "Update the editable details of your approved project"
-                : isViewOnly
-                  ? "Review this team draft without changing it"
-                : isEditing
-                  ? "Continue working on your saved draft"
-                  : "Submit your graduation project proposal"}
-            </p>
+            {!isViewOnly && !isDetailsOnly && (
+              <Button
+                variant="outline"
+                size="icon"
+                className="w-8 h-8 shrink-0 border-red-500/30 text-red-600 hover:bg-red-500/10 dark:text-red-400 rounded-lg"
+                onClick={handleClearForm}
+                disabled={isSaving || isSubmitting || isLoading}
+                title="Clear Form"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
           </div>
-          
-          {!isViewOnly && !isDetailsOnly && (
-            <Button
-              variant="outline"
-              size="icon"
-              className="shrink-0 border-red-500/30 text-red-600 hover:bg-red-500/10 dark:text-red-400 rounded-xl"
-              onClick={handleClearForm}
-              disabled={isSaving || isSubmitting || isLoading}
-              title="Clear Form"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          )}
+          <p className="text-muted-foreground">
+            {isDetailsOnly
+              ? "Update the editable details of your approved project"
+              : isViewOnly
+                ? "Review this team draft without changing it"
+              : isEditing
+                ? "Continue working on your saved draft"
+                : "Submit your graduation project proposal"}
+          </p>
         </div>
       </div>
 
