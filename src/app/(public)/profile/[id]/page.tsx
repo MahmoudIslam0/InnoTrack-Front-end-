@@ -29,6 +29,7 @@ interface ProfileData {
   hasTeam: boolean;
   skills: string[];
   profilePictureUrl?: string | null;
+  profileBannerColor?: string | null;
 }
 
 export default function OtherStudentProfile({ params }: { params: { id: string } }) {
@@ -77,7 +78,12 @@ export default function OtherStudentProfile({ params }: { params: { id: string }
     );
   }
 
-  const initials = `${profile.firstName[0]}${profile.lastName[0]}`.toUpperCase();
+  const getInitials = () => {
+    const first = profile.firstName?.charAt(0) || "";
+    const last = profile.lastName?.charAt(0) || "";
+    return `${first}${last}`.toUpperCase() || profile.email?.charAt(0).toUpperCase() || "S";
+  };
+  const initials = getInitials();
   const gpaColor = (profile.gpa ?? 0) >= 3.5
     ? "text-emerald-500"
     : (profile.gpa ?? 0) >= 2.5
@@ -103,8 +109,11 @@ export default function OtherStudentProfile({ params }: { params: { id: string }
 
         {/* ─── Hero Card ─── */}
         <div className="rounded-3xl border border-border/60 bg-card shadow-sm relative">
-          {/* Gradient Banner */}
-          <div className="h-28 md:h-36 rounded-t-3xl bg-gradient-to-br from-primary via-purple-600 to-primary/90 relative">
+          {/* Banner */}
+          <div 
+            className="h-28 md:h-36 rounded-t-3xl relative"
+            style={{ backgroundColor: profile.profileBannerColor || "#4f46e5" }}
+          >
             <div className="absolute inset-0 rounded-t-3xl overflow-hidden opacity-20" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)", backgroundSize: "40px 40px" }}></div>
             
             {/* Avatar */}
