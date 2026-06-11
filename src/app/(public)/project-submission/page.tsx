@@ -943,40 +943,47 @@ function ProjectSubmissionPage() {
           </div>
 
           {/* Similar Projects */}
-          {hasRunSimilarityCheck && (
-            <div className="bg-card text-card-foreground rounded-2xl p-6 border border-border shadow-sm">
-              <h3 className="text-lg font-semibold mb-4">
-                Similar Projects
-              </h3>
+          <div className="bg-card text-card-foreground rounded-2xl p-6 border border-border shadow-sm">
+            <h3 className="text-lg font-semibold mb-4">
+              Similar Projects
+            </h3>
 
-              <div className="space-y-3">
-              {similarProjects.map((project) => (
-                <div
-                  key={project.id || project.title}
-                  className="p-4 bg-background/50 rounded-xl border border-border/50 hover:border-border transition-colors group"
-                >
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <p className="text-sm font-medium flex-1 leading-snug">
-                      {project.title}
-                    </p>
-                    <Badge variant="secondary" className="text-xs font-semibold bg-accent">
-                      {formatPercent(project.similarity, 0)}%
-                    </Badge>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    className="w-full text-xs text-primary dark:text-primary hover:bg-primary/10 h-8"
-                    asChild
-                  >
-                    <Link href={project.id ? `/projects/${project.id}` : "/projects"}>
-                      View Details
-                    </Link>
-                  </Button>
-                </div>
-              ))}
+            {!hasRunSimilarityCheck || similarProjects.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-6 text-center bg-muted/20 rounded-xl border border-dashed border-border/60">
+                <FolderKanban className="w-8 h-8 text-muted-foreground/30 mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  Run the originality check to view similar projects.
+                </p>
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="space-y-3">
+                {similarProjects.map((project) => (
+                  <div
+                    key={project.id || project.title}
+                    className="p-4 bg-background/50 rounded-xl border border-border/50 hover:border-border transition-colors group"
+                  >
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <p className="text-sm font-medium flex-1 leading-snug">
+                        {project.title}
+                      </p>
+                      <Badge variant="secondary" className="text-xs font-semibold bg-accent">
+                        {formatPercent(project.similarity, 0)}%
+                      </Badge>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      className="w-full text-xs text-primary dark:text-primary hover:bg-primary/10 h-8"
+                      asChild
+                    >
+                      <Link href={project.id ? `/projects/${project.id}` : "/projects"}>
+                        View Details
+                      </Link>
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         </div>
         </>

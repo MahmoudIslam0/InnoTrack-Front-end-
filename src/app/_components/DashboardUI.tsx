@@ -456,6 +456,16 @@ export function NotificationList({
   items: NotificationListItem[];
   onRead?: (id: string) => void;
 }) {
+  if (items.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center bg-muted/20 rounded-xl border border-dashed border-border/60 mx-6 mb-6">
+        <Bell className="w-10 h-10 text-muted-foreground/30 mb-3" />
+        <h3 className="text-sm font-medium text-foreground">No notifications</h3>
+        <p className="text-xs text-muted-foreground mt-1">You're all caught up! There are no system notifications right now.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="divide-y divide-slate-100 dark:divide-border/50">
       {items.map((notification) => {
