@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { adminApi } from "@/lib/admin-api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import {
@@ -79,18 +80,65 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleQuickAction = async (action: () => Promise<any>, successMsg: string, setLoader: (val: boolean) => void) => {
-     if (!window.confirm("Are you sure you want to perform this action?")) return;
-     setLoader(true);
-     try {
-       await action();
-       toast.success(successMsg);
-       fetchData();
-     } catch (err: any) {
-       toast.error(err.message || "Action failed");
-     } finally {
-       setLoader(false);
-     }
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean;
+    action: (() => Promise<any>) | null;
+    successMsg: string;
+    setLoader: ((val: boolean) => void) | null;
+    title: string;
+    description: string;
+    confirmText: string;
+    variant: "default" | "destructive";
+    isLoading: boolean;
+  }>({
+    isOpen: false,
+    action: null,
+    successMsg: "",
+    setLoader: null,
+    title: "",
+    description: "",
+    confirmText: "Execute",
+    variant: "default",
+    isLoading: false,
+  });
+
+  const handleQuickAction = (
+    action: () => Promise<any>,
+    successMsg: string,
+    setLoader: (val: boolean) => void,
+    title: string,
+    description: string,
+    confirmText: string = "Execute",
+    variant: "default" | "destructive" = "default"
+  ) => {
+    setConfirmState({
+      isOpen: true,
+      action,
+      successMsg,
+      setLoader,
+      title,
+      description,
+      confirmText,
+      variant,
+      isLoading: false,
+    });
+  };
+
+  const executeConfirmAction = async () => {
+    if (!confirmState.action || !confirmState.setLoader) return;
+    
+    setConfirmState(prev => ({ ...prev, isLoading: true }));
+    confirmState.setLoader(true);
+    try {
+      await confirmState.action();
+      toast.success(confirmState.successMsg);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || "Action failed");
+    } finally {
+      confirmState.setLoader(false);
+      setConfirmState(prev => ({ ...prev, isOpen: false, isLoading: false }));
+    }
   };
 
   const {
@@ -320,7 +368,15 @@ export default function AdminDashboard() {
                 size="sm" 
                 variant="outline" 
                 disabled={stuckProjectsCount === 0 || isResettingStuck}
-                onClick={() => handleQuickAction(adminApi.resetStuckProjects, "Stuck projects reset.", setIsResettingStuck)}
+                onClick={() => handleQuickAction(
+                  adminApi.resetStuckProjects, 
+                  "Stuck projects reset.", 
+                  setIsResettingStuck,
+                  "Reset Stuck Projects",
+                  "Are you sure you want to reset projects that have been stuck in review for over 48 hours? They will be returned to Draft status.",
+                  "Reset",
+                  "destructive"
+                )}
               >
                 {isResettingStuck ? "Resetting..." : "Execute"}
               </Button>
@@ -342,7 +398,15 @@ export default function AdminDashboard() {
                 variant="outline" 
                 className="text-orange-600 hover:text-orange-700 hover:bg-orange-100 dark:hover:bg-orange-950"
                 disabled={!canCloseAcademicYear || isClosingYear}
-                onClick={() => handleQuickAction(adminApi.closeAcademicYear, "Academic year closed.", setIsClosingYear)}
+                onClick={() => handleQuickAction(
+                  adminApi.closeAcademicYear, 
+                  "Academic year closed.", 
+                  setIsClosingYear,
+                  "Close Academic Year",
+                  "Are you sure you want to close the current academic year? This will prevent any new project drafts from being created.",
+                  "Close Year",
+                  "destructive"
+                )}
               >
                 {isClosingYear ? "Closing..." : "Close Year"}
               </Button>
@@ -383,7 +447,15 @@ export default function AdminDashboard() {
                 size="sm" 
                 variant="destructive" 
                 disabled={isForcingLogout}
-                onClick={() => handleQuickAction(adminApi.forceLogoutAll, "All users force logged out.", setIsForcingLogout)}
+                onClick={() => handleQuickAction(
+                  adminApi.forceLogoutAll, 
+                  "All users force logged out.", 
+                  setIsForcingLogout,
+                  "Force Logout All Users",
+                  "Are you sure you want to invalidate all non-admin sessions? All students and professors will be immediately logged out.",
+                  "Force Logout",
+                  "destructive"
+                )}
               >
                 {isForcingLogout ? "Executing..." : "Force Logout"}
               </Button>
@@ -473,6 +545,18 @@ export default function AdminDashboard() {
           )}
         </SectionCard>
       </div>
+
+      {/* Quick Action Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={confirmState.isOpen}
+        onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={executeConfirmAction}
+        title={confirmState.title}
+        description={confirmState.description}
+        confirmText={confirmState.confirmText}
+        variant={confirmState.variant}
+        isLoading={confirmState.isLoading}
+      />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { DataTable } from "@/app/_components/DataTable";
 import { PageHeader } from "@/app/_components/DashboardUI";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { MoreHorizontal, AlertTriangle, RefreshCcw, Star, StarOff, PencilRuler, UserPlus } from "lucide-react";
 import { normalizeStatusTone } from "@/lib/student-api";
 import {
@@ -47,6 +48,10 @@ export default function AdminProjects() {
   const [isReassignOpen, setIsReassignOpen] = useState(false);
   const [reassignProfId, setReassignProfId] = useState<string>("");
 
+  // Confirmation States
+  const [isResetStuckOpen, setIsResetStuckOpen] = useState(false);
+  const [projectToShowcase, setProjectToShowcase] = useState<AdminProjectDto | null>(null);
+
   const fetchProjects = async () => {
     setIsLoading(true);
     try {
@@ -74,7 +79,6 @@ export default function AdminProjects() {
   }, []);
 
   const handleResetStuck = async () => {
-    if (!confirm("This will scan for and fix stuck projects. Proceed?")) return;
     setIsResetting(true);
     try {
       await adminApi.resetStuckProjects();
@@ -84,6 +88,7 @@ export default function AdminProjects() {
       toast.error("Failed to reset stuck projects", { description: error.message });
     } finally {
       setIsResetting(false);
+      setIsResetStuckOpen(false);
     }
   };
 
@@ -124,20 +129,20 @@ export default function AdminProjects() {
     }
   };
 
-  const handleToggleShowcase = async (project: AdminProjectDto) => {
-    // Note: Assuming isShowcased is on project or we blindly toggle
-    // Here we can fetch details first, or just hit the toggle based on UI intent
-    // The endpoint might handle boolean value or just invert
-    // Let's assume we prompt for true/false or simply toggle via API. 
-    // The endpoint expects { isShowcased: boolean }.
-    // If we don't have isShowcased in Dto, we could just send true for now, 
-    // or we'd ideally have it in Dto. Let's assume we set it to true.
-    const val = confirm("Do you want to flag this project as showcased? (Click OK for Yes, Cancel for No)");
+  const handleToggleShowcase = (project: AdminProjectDto) => {
+    setProjectToShowcase(project);
+  };
+
+  const handleToggleShowcaseConfirm = async (val: boolean) => {
+    if (!projectToShowcase) return;
     try {
-      await adminApi.toggleShowcase(project.id, val);
-      toast.success(`Project showcase status updated to ${val}`);
+      await adminApi.toggleShowcase(projectToShowcase.id, val);
+      toast.success(`Project showcase status updated to ${val ? "Showcased" : "Not Showcased"}`);
+      fetchProjects();
     } catch (error: any) {
       toast.error("Failed to update showcase status", { description: error.message });
+    } finally {
+      setProjectToShowcase(null);
     }
   };
 
@@ -228,18 +233,18 @@ export default function AdminProjects() {
     <div className="dashboard-page">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <PageHeader
-          title="Project Database"
-          description="Global view of all proposals and active projects. Enforce state transitions if required."
+          title="Projects Management"
+          description="Monitor and manage student graduation projects, intervene on stuck projects, and reassign supervisors if needed."
         />
         
         <Button 
-          onClick={handleResetStuck} 
+          variant="outline" 
+          className="mt-2 sm:mt-0"
+          onClick={() => setIsResetStuckOpen(true)}
           disabled={isResetting}
-          variant="outline"
-          className="mt-2 sm:mt-0 border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 dark:border-amber-900 dark:text-amber-400 dark:bg-amber-950/30 dark:hover:bg-amber-950/50"
         >
-          <AlertTriangle className="w-4 h-4 mr-2" />
-          {isResetting ? "Scanning..." : "Reset Stuck Projects"}
+          <RefreshCcw className={`w-4 h-4 mr-2 ${isResetting ? "animate-spin" : ""}`} />
+          Reset Stuck Projects
         </Button>
       </div>
 
@@ -296,30 +301,62 @@ export default function AdminProjects() {
       </Dialog>
 
       <Dialog open={isReassignOpen} onOpenChange={setIsReassignOpen}>
-        <DialogContent className="sm:max-w-[425px] border-border/50 bg-background/95 backdrop-blur-xl">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Reassign Supervisor</DialogTitle>
             <DialogDescription>
-              Assign a new active professor to supervise project <strong>{selectedProject?.title}</strong>.
+              Assign a new supervisor to <strong>{selectedProject?.title}</strong>. This will notify both the old and new supervisors.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <select 
-              className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              value={reassignProfId}
-              onChange={(e) => setReassignProfId(e.target.value)}
-            >
-              <option value="" disabled>Select a professor...</option>
-              {professors.map(p => (
-                <option key={p.id} value={p.id} disabled={p.currentTeamLoad >= p.maxTeamLoad}>
-                  {p.fullName} ({p.currentTeamLoad}/{p.maxTeamLoad} teams) {p.currentTeamLoad >= p.maxTeamLoad ? ' - FULL' : ''}
-                </option>
-              ))}
-            </select>
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <Label>Select New Supervisor</Label>
+              <select
+                className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                value={reassignProfId}
+                onChange={(e) => setReassignProfId(e.target.value)}
+              >
+                <option value="" disabled>Choose a professor...</option>
+                {professors.map(p => (
+                  <option key={p.id} value={p.id}>{p.fullName} ({p.departmentName})</option>
+                ))}
+              </select>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsReassignOpen(false)}>Cancel</Button>
-            <Button onClick={handleReassign} disabled={!reassignProfId}>Assign</Button>
+            <Button onClick={handleReassign} disabled={!reassignProfId}>Confirm Reassignment</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        isOpen={isResetStuckOpen}
+        onClose={() => setIsResetStuckOpen(false)}
+        onConfirm={handleResetStuck}
+        title="Reset Stuck Projects"
+        description="This will scan for projects that have been stuck in the Under Review status for over 48 hours and return them to Draft status. Proceed?"
+        confirmText="Reset Projects"
+        variant="default"
+        isLoading={isResetting}
+      />
+
+      <Dialog open={!!projectToShowcase} onOpenChange={(open) => !open && setProjectToShowcase(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Project Showcase Status</DialogTitle>
+            <DialogDescription>
+              Set the showcase visibility for <strong>{projectToShowcase?.title}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+            <Button variant="outline" onClick={() => handleToggleShowcaseConfirm(false)}>
+              Remove Showcase
+            </Button>
+            <Button onClick={() => handleToggleShowcaseConfirm(true)} className="bg-amber-500 hover:bg-amber-600 text-white">
+              <Star className="w-4 h-4 mr-2" />
+              Set as Showcased
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

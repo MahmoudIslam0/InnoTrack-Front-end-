@@ -8,6 +8,7 @@ import { DataTable } from "@/app/_components/DataTable";
 import { PageHeader } from "@/app/_components/DashboardUI";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { MoreHorizontal, ShieldOff, KeyRound, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
@@ -28,6 +29,9 @@ export default function AdminStudents() {
   const [hasTeam, setHasTeam] = useState<string>("all");
   const [isActive, setIsActive] = useState<string>("all");
   const [departments, setDepartments] = useState<any[]>([]);
+
+  const [studentToDelete, setStudentToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     import("@/lib/api").then(({ api }) => {
@@ -76,14 +80,22 @@ export default function AdminStudents() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to soft-delete this student?")) return;
+  const handleDelete = (id: string) => {
+    setStudentToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!studentToDelete) return;
+    setIsDeleting(true);
     try {
-      await adminApi.deleteStudent(id);
+      await adminApi.deleteStudent(studentToDelete);
       toast.success("Student deleted successfully");
       fetchStudents();
     } catch (error: any) {
       toast.error("Delete failed", { description: error.message });
+    } finally {
+      setIsDeleting(false);
+      setStudentToDelete(null);
     }
   };
 
@@ -235,6 +247,17 @@ export default function AdminStudents() {
           isLoading={isLoading}
         />
       </div>
+
+      <ConfirmDialog
+        isOpen={!!studentToDelete}
+        onClose={() => setStudentToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Delete Student"
+        description="Are you sure you want to soft-delete this student? They will lose access, but their records will remain in the database."
+        confirmText="Delete"
+        variant="destructive"
+        isLoading={isDeleting}
+      />
     </div>
   );
 }
