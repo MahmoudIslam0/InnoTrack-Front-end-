@@ -15,6 +15,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -454,8 +457,14 @@ export function TeamChatWorkspace({
                               )}
 
                               <div className="flex flex-wrap items-end gap-x-2 gap-y-1">
-                                <div className="break-words">
-                                  {message.isDeletedForAll ? "This message was deleted" : message.content}
+                                <div className="break-words overflow-hidden [&>p]:mb-2 [&>p:last-child]:mb-0 [&>ul]:list-disc [&>ul]:ml-4 [&>ol]:list-decimal [&>ol]:ml-4 [&_strong]:font-bold [&_em]:italic [&_code]:bg-black/10 [&_code]:dark:bg-white/10 [&_code]:px-1 [&_code]:rounded-md [&_pre]:bg-black/10 [&_pre]:dark:bg-white/10 [&_pre]:p-2 [&_pre]:rounded-md [&_a]:text-blue-500 [&_a]:underline">
+                                  {message.isDeletedForAll ? (
+                                    <span className="italic">This message was deleted</span>
+                                  ) : (
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                      {message.content || ""}
+                                    </ReactMarkdown>
+                                  )}
                                 </div>
                                 
                                 <div className={`flex items-center gap-1 shrink-0 ml-auto text-[10px] pb-0.5 ${isOwnMessage ? 'text-white/70' : 'text-muted-foreground/70'}`}>
