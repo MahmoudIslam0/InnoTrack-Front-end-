@@ -10,6 +10,7 @@ import {
   FileText,
   TrendingUp,
   ArrowLeft,
+  FolderKanban
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,6 +18,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { studentApi, MyTeamDto, SaveDraftPayload } from "@/lib/student-api";
+import { toast } from "sonner";
 
 const AI_CHAT_URL = "https://innotrack-graduation-project-v1-2.hf.space/chat";
 
@@ -90,18 +93,82 @@ function StaggeredTextFade({ text }: { text: string }) {
   );
 }
 
+function parseProjectData(content: string): Partial<SaveDraftPayload> {
+  const data: any = {};
+  const lines = content.split('\n');
+  let currentField = '';
+  let currentValue = '';
+
+  for (const line of lines) {
+    const l = line.trim();
+    if (l.match(/Project Title:/i)) {
+      if (currentField) data[currentField] = currentValue.trim();
+      currentField = 'title';
+      currentValue = l.replace(/.*Project Title:/i, '');
+    } else if (l.match(/Category:/i)) {
+      if (currentField) data[currentField] = currentValue.trim();
+      currentField = 'domain';
+      currentValue = l.replace(/.*Category:/i, '');
+    } else if (l.match(/Technologies:/i)) {
+      if (currentField) data[currentField] = currentValue.trim();
+      currentField = 'technologies';
+      currentValue = l.replace(/.*Technologies:/i, '');
+    } else if (l.match(/Abstract:/i)) {
+      if (currentField) data[currentField] = currentValue.trim();
+      currentField = 'abstract';
+      currentValue = l.replace(/.*Abstract:/i, '');
+    } else if (l.match(/Problem Statement:/i)) {
+      if (currentField) data[currentField] = currentValue.trim();
+      currentField = 'problemStatement';
+      currentValue = l.replace(/.*Problem Statement:/i, '');
+    } else if (l.match(/Proposed Solution:/i)) {
+      if (currentField) data[currentField] = currentValue.trim();
+      currentField = 'proposedSolution';
+      currentValue = l.replace(/.*Proposed Solution:/i, '');
+    } else if (l.match(/Objectives:/i)) {
+      if (currentField) data[currentField] = currentValue.trim();
+      currentField = 'objectives';
+      currentValue = l.replace(/.*Objectives:/i, '');
+    } else {
+      if (currentField) currentValue += '\n' + l;
+    }
+  }
+  if (currentField) data[currentField] = currentValue.trim();
+
+  for (const key in data) {
+    if (typeof data[key] === 'string') {
+      data[key] = data[key].replace(/\*\*/g, '').replace(/^[:-]\s*/, '').trim();
+    }
+  }
+
+  if (data.technologies) {
+    data.technologies = data.technologies.split(',').map((t: string) => t.trim()).filter(Boolean);
+  }
+
+  return data;
+}
+
 function MessageContent({
   content,
   onOptionClick,
+  onSendToSubmission,
+  hasTeam,
 }: {
   content: string;
   onOptionClick: (text: string) => void;
+  onSendToSubmission: (data: Partial<SaveDraftPayload>) => void;
+  hasTeam: boolean;
 }) {
   const lines = content.split("\n");
   const elements: React.ReactNode[] = [];
   let textBuffer: string[] = [];
   let optionCount = 0;
   let isInteractiveSection = false;
+
+  const parsedProject = parseProjectData(content);
+  const isFullProject = parsedProject.title && parsedProject.abstract && parsedProject.problemStatement;
+  const isYesNo = content.match(/\([yY]es\/[nN]o\)/) || content.match(/Do you want to submit this project\?/i);
+  const hasInlineOptions = content.includes("1️⃣") || content.includes("2️⃣") || content.match(/\[1\]/);
 
   const flushText = (key: string) => {
     if (textBuffer.length > 0) {
@@ -205,6 +272,78 @@ function MessageContent({
 
   flushText("text-end");
 
+  // Handle inline options extracted from the text
+  if (hasInlineOptions && !isYesNo && optionCount === 0) {
+    const inlineMatches = [
+      { label: "Generate features for it", command: "1" },
+      { label: "Generate the full project specification", command: "2" },
+      { label: "Generate features", command: "1" },
+      { label: "Generate full project", command: "2" },
+    ];
+    let matchedOptions = 0;
+    inlineMatches.forEach((opt) => {
+      if (content.toLowerCase().includes(opt.label.toLowerCase()) && matchedOptions < 2) {
+        matchedOptions++;
+        elements.push(
+          <button
+            key={`inline-opt-${matchedOptions}`}
+            onClick={() => onOptionClick(opt.command)}
+            className="flex items-center gap-3.5 w-full text-left mt-2 px-4 py-3 rounded-2xl border border-primary/20 bg-primary/5 hover:bg-primary/10 hover:border-primary/40 transition-all duration-200 group shadow-sm hover:shadow-md"
+          >
+            <span className="w-8 h-8 rounded-full bg-primary/10 text-primary border border-primary/20 text-[13px] font-bold flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 group-hover:bg-primary/20 transition-all">
+              {matchedOptions}
+            </span>
+            <span className="text-[14.5px] font-semibold text-foreground/90 group-hover:text-primary transition-colors">{opt.label}</span>
+          </button>
+        );
+      }
+    });
+  }
+
+  // Handle Yes/No buttons
+  if (isYesNo && optionCount === 0) {
+    elements.push(
+      <div key="yes-no-options" className="flex gap-3 mt-3">
+        <button
+          onClick={() => onOptionClick("yes")}
+          className="flex-1 px-4 py-2 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 transition shadow"
+        >
+          Yes
+        </button>
+        <button
+          onClick={() => onOptionClick("no")}
+          className="flex-1 px-4 py-2 bg-muted text-foreground font-semibold rounded-xl hover:bg-muted/80 transition shadow"
+        >
+          No
+        </button>
+      </div>
+    );
+  }
+
+  // Handle Full Project Generated -> Send to submission
+  if (isFullProject) {
+    elements.push(
+      <div key="submit-project-option" className="mt-5 p-4 border border-green-500/30 bg-green-500/5 rounded-2xl">
+        <p className="text-sm font-medium text-green-700 dark:text-green-400 mb-3">
+          I've generated the full project details! Would you like to save this as a draft and review it on the submission page?
+        </p>
+        <Button
+          onClick={() => {
+            if (!hasTeam) {
+              toast.error("You must be part of a team to save a project draft!");
+              return;
+            }
+            onSendToSubmission(parsedProject);
+          }}
+          className="w-full bg-green-600 hover:bg-green-700 text-white font-medium"
+        >
+          <FolderKanban className="w-4 h-4 mr-2" />
+          Send to Project Submission
+        </Button>
+      </div>
+    );
+  }
+
   return <div className="space-y-0.5">{elements}</div>;
 }
 
@@ -213,6 +352,11 @@ function InnoChatContent() {
   const router = useRouter();
   const { user: authUser } = useAuth();
   const [userId, setUserId] = useState("");
+  const [myTeam, setMyTeam] = useState<MyTeamDto | null>(null);
+
+  useEffect(() => {
+    studentApi.getMyTeam().then(team => setMyTeam(team)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -487,6 +631,22 @@ function InnoChatContent() {
                       ) : (
                         <MessageContent
                           content={message.content}
+                          hasTeam={!!myTeam}
+                          onSendToSubmission={async (data) => {
+                            try {
+                              toast.loading("Saving your project draft...");
+                              const draft = await studentApi.saveDraft({
+                                ...data,
+                                teamId: myTeam!.id
+                              } as SaveDraftPayload);
+                              toast.dismiss();
+                              toast.success("Draft saved! Redirecting...");
+                              router.push(`/project-submission?draft=${draft.id}`);
+                            } catch (e) {
+                              toast.dismiss();
+                              toast.error("Failed to save draft. Please try again.");
+                            }
+                          }}
                           onOptionClick={(text) => {
                             setInput(text);
                             textareaRef.current?.focus();
