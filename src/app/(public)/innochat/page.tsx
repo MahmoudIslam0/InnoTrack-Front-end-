@@ -487,10 +487,7 @@ function InnoChatContent() {
                       ) : (
                         <MessageContent
                           content={message.content}
-                          onOptionClick={(text) => {
-                            setInput(text);
-                            textareaRef.current?.focus();
-                          }}
+                          onOptionClick={handleSuggestedPrompt}
                         />
                       )
                     ) : (
