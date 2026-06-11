@@ -237,10 +237,14 @@ function MessageContent({
 
   lines.forEach((line, idx) => {
     const lowerLine = line.toLowerCase();
-    if (lowerLine.includes("project idea") || lowerLine.includes("choose what you want") || lowerLine.includes("you can also type")) {
-      isInteractiveSection = true;
-    } else if (lowerLine.includes("feature") || lowerLine.includes("requirement") || lowerLine.includes("step")) {
-      isInteractiveSection = false;
+    const isListItem = line.match(/^[-*•]\s+(.+)$/u) || line.match(/^(?:\d[.):\]]|\[\d\])\s+(.+)$/u) || line.match(/^(?:\d️⃣)\s+(.+)$/u);
+
+    if (!isListItem) {
+      if (lowerLine.includes("project idea") || lowerLine.includes("choose what you want") || lowerLine.includes("you can also type")) {
+        isInteractiveSection = true;
+      } else if (lowerLine.includes("feature") || lowerLine.includes("requirement") || lowerLine.includes("step") || lowerLine.match(/abstract:/i)) {
+        isInteractiveSection = false;
+      }
     }
 
     const emojiMatch = line.match(/^(?:\d️⃣)\s+(.+)$/u);
