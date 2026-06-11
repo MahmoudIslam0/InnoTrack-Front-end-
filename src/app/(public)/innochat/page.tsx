@@ -156,7 +156,7 @@ function MessageContent({
 }: {
   content: string;
   onOptionClick: (text: string) => void;
-  onSendToSubmission: (data: Partial<SaveDraftPayload>) => void;
+  onSendToSubmission: (data: any) => void;
   hasTeam: boolean;
 }) {
 
