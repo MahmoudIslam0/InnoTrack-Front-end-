@@ -10,7 +10,10 @@ import {
   FileText,
   TrendingUp,
   ArrowLeft,
-  FolderKanban
+  FolderKanban,
+  Settings,
+  Package,
+  Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -45,28 +48,28 @@ interface ProjectContext {
 const getSuggestedPrompts = (projectTitle?: string) => [
   {
     icon: Lightbulb,
-    text: "Explore AI Project Ideas",
+    text: "Brainstorm new project ideas",
     color: "text-yellow-600 dark:text-yellow-400",
     bg: "bg-yellow-500/10",
     border: "border-yellow-500/20",
   },
   {
-    icon: Sparkles,
-    text: `Generate Features For "${projectTitle || "My Project"}"`,
+    icon: Settings,
+    text: projectTitle ? `Suggest smart features for "${projectTitle}"` : "Suggest smart features for my project",
     color: "text-purple-600 dark:text-purple-400",
     bg: "bg-purple-500/10",
     border: "border-purple-500/20",
   },
   {
-    icon: TrendingUp,
-    text: "Enhance My Graduation Project",
+    icon: Package,
+    text: "Generate a full project specification",
     color: "text-green-600 dark:text-green-400",
     bg: "bg-green-500/10",
     border: "border-green-500/20",
   },
   {
-    icon: FileText,
-    text: "Recommend a FinTech Tech Stack",
+    icon: Globe,
+    text: "Show me the top project domains",
     color: "text-blue-600 dark:text-blue-400",
     bg: "bg-blue-500/10",
     border: "border-blue-500/20",
