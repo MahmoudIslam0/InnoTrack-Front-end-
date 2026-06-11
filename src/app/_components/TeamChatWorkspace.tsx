@@ -460,7 +460,7 @@ export function TeamChatWorkspace({
                                 <div className="break-words overflow-hidden w-full [&>p]:mb-2 [&>p:last-child]:mb-0 [&>ul]:list-disc [&>ul]:ml-4 [&>ol]:list-decimal [&>ol]:ml-4 [&_strong]:font-bold [&_em]:italic [&_code]:bg-black/10 [&_code]:dark:bg-white/10 [&_code]:px-1 [&_code]:rounded-md [&_pre]:bg-black/10 [&_pre]:dark:bg-white/10 [&_pre]:p-2 [&_pre]:rounded-md [&_a]:text-blue-500 [&_a]:underline">
                                   {message.isDeletedForAll ? (
                                     <span className="italic">This message was deleted</span>
-                                  ) : message.author.includes("Graduation Project Assistant") && message.content.includes("Here's how to get started") ? (
+                                  ) : message.author.includes("Graduation Project Assistant") && message.content?.includes("Here's how to get started") ? (
                                     <div className="flex flex-col space-y-4 pt-1">
                                       <div className="flex items-center gap-2 text-primary font-medium mb-1">
                                         <Sparkles className="w-4 h-4" />
