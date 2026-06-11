@@ -283,25 +283,33 @@ function InnoChatContent() {
     return () => clearTimeout(timer);
   }, [projectContext?.title]);
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
+  const handleSend = async (directMessage?: string | React.MouseEvent | React.KeyboardEvent) => {
+    const isDirectString = typeof directMessage === 'string';
+    const textToSend = isDirectString ? directMessage : input;
+    
+    if (!textToSend.trim()) return;
 
     // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: input,
+      content: textToSend,
       timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setInput("");
+    
+    // Only clear input if we are sending what's in the input box
+    if (!isDirectString || directMessage === input) {
+      setInput("");
+    }
+    
     setIsTyping(true);
 
     const isFirstUserMessage = !messages.some((m) => m.role === "user");
-    let apiMessage = input;
+    let apiMessage = textToSend;
     if (isFirstUserMessage && projectContext?.title) {
-      apiMessage = `[System Context: The student is working on a project titled "${projectContext.title}". Category: "${projectContext.category || ""}". Technologies: "${projectContext.technologies || ""}". Description: "${projectContext.description || ""}". Problem Statement: "${projectContext.problemStatement || ""}". Objectives: "${projectContext.objectives || ""}". Please keep this project details in mind.]\n\nQuestion: ${input}`;
+      apiMessage = `[System Context: The student is working on a project titled "${projectContext.title}". Category: "${projectContext.category || ""}". Technologies: "${projectContext.technologies || ""}". Description: "${projectContext.description || ""}". Problem Statement: "${projectContext.problemStatement || ""}". Objectives: "${projectContext.objectives || ""}". Please keep this project details in mind.]\n\nQuestion: ${textToSend}`;
     }
 
     if (!AI_CHAT_URL) {
@@ -371,8 +379,12 @@ function InnoChatContent() {
   };
 
   const handleSuggestedPrompt = (promptText: string) => {
-    setInput(promptText);
-    textareaRef.current?.focus();
+    if (promptText === "My project title is ") {
+      setInput(promptText);
+      textareaRef.current?.focus();
+    } else {
+      handleSend(promptText);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
