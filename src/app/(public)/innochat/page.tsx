@@ -345,7 +345,6 @@ function InnoChatContent() {
   const [technologies, setTechnologies] = useState<LookupItem[]>([]);
 
   useEffect(() => {
-    setSessionId(Math.random().toString(36).substring(7));
     studentApi.getMyTeam().then(team => setMyTeam(team)).catch(() => {});
     studentApi.getDomains().then(d => setDomains(readPagedData(d))).catch(() => {});
     studentApi.getTechnologies().then(t => setTechnologies(readPagedData(t))).catch(() => {});
@@ -394,6 +393,27 @@ function InnoChatContent() {
   }, [messages, isTyping]);
 
   useEffect(() => {
+    const savedSessionId = localStorage.getItem("innoChatSessionId");
+    const savedMessages = localStorage.getItem("innoChatMessages");
+
+    if (savedSessionId && savedMessages && !projectContext?.title) {
+      // Load from cache if no project context is provided (meaning a regular chat, not coming from submission)
+      try {
+        const parsed = JSON.parse(savedMessages).map((m: any) => ({
+          ...m,
+          timestamp: new Date(m.timestamp)
+        }));
+        setMessages(parsed);
+        setSessionId(savedSessionId);
+        setIsTypingGreeting(false);
+        return;
+      } catch (e) {
+        console.error("Failed to parse saved chat", e);
+      }
+    }
+
+    setSessionId(Math.random().toString(36).substring(7));
+    
     const greetingText = projectContext?.title
       ? `Hello! I'm InnoChat, your AI assistant for graduation projects. I can see you're working on "${projectContext.title}". How can I help you today? I can:\n\n• Provide feedback on your project idea\n• Suggest improvements to increase originality\n• Help refine your problem statement and objectives\n• Recommend relevant technologies\n• Check for similar existing projects\n\nWhat would you like to discuss?`
       : "Hello! I'm InnoChat, your AI assistant for graduation projects. I can help you brainstorm ideas, refine your proposal, check originality, and provide guidance throughout your project journey. How can I assist you today?";
@@ -419,6 +439,15 @@ function InnoChatContent() {
 
     return () => clearTimeout(timer);
   }, [projectContext?.title]);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem("innoChatMessages", JSON.stringify(messages));
+    }
+    if (sessionId) {
+      localStorage.setItem("innoChatSessionId", sessionId);
+    }
+  }, [messages, sessionId]);
 
   const handleSend = async (directMessage?: string | React.MouseEvent | React.KeyboardEvent) => {
     const isDirectString = typeof directMessage === 'string';
@@ -569,13 +598,18 @@ function InnoChatContent() {
               variant="outline"
               size="sm"
               onClick={() => {
-                setSessionId(Math.random().toString(36).substring(7));
-                setMessages(messages.slice(0, 1)); // Keep only the greeting
-                toast.success("Chat cache cleared!");
+                const newSessionId = Math.random().toString(36).substring(7);
+                setSessionId(newSessionId);
+                const initialGreeting = messages.length > 0 ? messages[0] : null;
+                const newMessages = initialGreeting ? [initialGreeting] : [];
+                setMessages(newMessages);
+                localStorage.setItem("innoChatSessionId", newSessionId);
+                localStorage.setItem("innoChatMessages", JSON.stringify(newMessages));
+                toast.success("Started a new chat session!");
               }}
               className="text-muted-foreground hover:text-foreground"
             >
-              Clear Chat
+              New Chat
             </Button>
           </div>
         </div>
