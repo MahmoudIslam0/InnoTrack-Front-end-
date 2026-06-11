@@ -163,17 +163,39 @@ function MessageContent({
       flushText(`text-${idx}`);
       optionCount++;
       const num = optionCount;
-      const label = match[1].trim();
+      const rawLabel = match[1].trim();
+      let displayLabel = rawLabel.replace(/\*\*/g, "");
+      let commandToSend = rawLabel.replace(/\*\*/g, "");
+
+      if (rawLabel.toLowerCase().includes("type **idea**") || rawLabel.toLowerCase().includes("type idea")) {
+        displayLabel = "Generate graduation project ideas by domain";
+        commandToSend = "idea";
+      } else if (rawLabel.toLowerCase().includes("project title")) {
+        displayLabel = "Generate smart features for a specific project title";
+        commandToSend = "My project title is ";
+      } else if (rawLabel.toLowerCase().includes("generate full project")) {
+        displayLabel = "Generate a complete PRD and project specification";
+        commandToSend = "generate full project";
+      } else if (rawLabel.includes("→") || rawLabel.includes("->")) {
+        const parts = rawLabel.split(/→|->/);
+        commandToSend = parts[0].replace(/Type/i, "").replace(/\*\*/g, "").trim();
+        displayLabel = parts[1].replace(/\*\*/g, "").trim();
+        // Capitalize first letter of displayLabel
+        if (displayLabel.length > 0) {
+          displayLabel = displayLabel.charAt(0).toUpperCase() + displayLabel.slice(1);
+        }
+      }
+
       elements.push(
         <button
           key={`opt-${idx}`}
-          onClick={() => onOptionClick(label)}
-          className="flex items-center gap-2.5 w-full text-left mt-1.5 px-3.5 py-2.5 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 hover:border-primary/40 transition-all duration-150 group shadow-sm hover:shadow-md"
+          onClick={() => onOptionClick(commandToSend)}
+          className="flex items-center gap-3.5 w-full text-left mt-2 px-4 py-3 rounded-2xl border border-primary/20 bg-primary/5 hover:bg-primary/10 hover:border-primary/40 transition-all duration-200 group shadow-sm hover:shadow-md"
         >
-          <span className="w-6 h-6 rounded-lg bg-primary text-primary-foreground text-[12px] font-bold flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform">
+          <span className="w-8 h-8 rounded-full bg-primary/10 text-primary border border-primary/20 text-[13px] font-bold flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 group-hover:bg-primary/20 transition-all">
             {num}
           </span>
-          <span className="text-[15px] font-semibold text-foreground/90">{label}</span>
+          <span className="text-[14.5px] font-semibold text-foreground/90 group-hover:text-primary transition-colors">{displayLabel}</span>
         </button>
       );
     } else {
