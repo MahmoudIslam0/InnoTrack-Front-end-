@@ -631,11 +631,6 @@ function ProjectSubmissionPage() {
                 <div className="space-y-1.5">
                   <Label htmlFor="category" className="flex items-center gap-2">
                     Category
-                    {hasRunSimilarityCheck && (
-                      <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                        Auto-generated
-                      </span>
-                    )}
                   </Label>
                 <select
                   id="category"

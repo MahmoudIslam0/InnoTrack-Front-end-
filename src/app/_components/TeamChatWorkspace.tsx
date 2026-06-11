@@ -120,6 +120,13 @@ export function TeamChatWorkspace({
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !onUploadFile) return;
+
+    if (file.size > 25 * 1024 * 1024) {
+      toast.error("File is too large! Maximum allowed size is 25MB.");
+      e.target.value = "";
+      return;
+    }
+
     // Reset so same file can be re-selected
     e.target.value = "";
     setIsUploading(true);
@@ -486,7 +493,7 @@ export function TeamChatWorkspace({
                                           <DropdownMenuItem className="py-2.5 px-3 cursor-pointer rounded-xl font-medium text-red-500 focus:text-red-600 hover:bg-red-500/10 focus:bg-red-500/10 transition-colors" onClick={() => onDeleteMessage?.(message.backendId!, false)}>
                                             <Trash2 className="w-4 h-4 mr-3 opacity-80" /> Delete for me
                                           </DropdownMenuItem>
-                                          {isOwnMessage && (
+                                          {isOwnMessage && !message.isDeletedForAll && (
                                             <DropdownMenuItem className="py-2.5 px-3 cursor-pointer rounded-xl font-medium text-red-500 focus:text-red-600 hover:bg-red-500/10 focus:bg-red-500/10 transition-colors" onClick={() => onDeleteMessage?.(message.backendId!, true)}>
                                               <Trash2 className="w-4 h-4 mr-3 opacity-80" /> Delete for everyone
                                             </DropdownMenuItem>
@@ -501,7 +508,7 @@ export function TeamChatWorkspace({
                           )}
 
                           {/* Reactions */}
-                          {message.reactions && message.reactions.length > 0 && (
+                          {!message.isDeletedForAll && message.reactions && message.reactions.length > 0 && (
                             <div className={`flex flex-wrap gap-1.5 mt-2 ${isOwnMessage ? "justify-end" : "justify-start"}`}>
                               {(() => {
                                 const totalCount = message.reactions!.length;
