@@ -18,7 +18,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { studentApi, MyTeamDto, SaveDraftPayload } from "@/lib/student-api";
+import { studentApi, MyTeamDto, SaveDraftPayload, LookupItem, readPagedData } from "@/lib/student-api";
 import { toast } from "sonner";
 
 const AI_CHAT_URL = "https://innotrack-graduation-project-v1-2.hf.space/chat";
@@ -159,7 +159,7 @@ function MessageContent({
   onSendToSubmission: (data: Partial<SaveDraftPayload>) => void;
   hasTeam: boolean;
 }) {
-  const lines = content.split("\n");
+
   const elements: React.ReactNode[] = [];
   let textBuffer: string[] = [];
   let optionCount = 0;
@@ -167,8 +167,13 @@ function MessageContent({
 
   const parsedProject = parseProjectData(content);
   const isFullProject = parsedProject.title && parsedProject.abstract && parsedProject.problemStatement;
-  const isYesNo = content.match(/\([yY]es\/[nN]o\)/) || content.match(/Do you want to submit this project\?/i);
   const hasInlineOptions = content.includes("1️⃣") || content.includes("2️⃣") || content.match(/\[1\]/);
+
+  let cleanContent = content;
+  if (hasInlineOptions) {
+    cleanContent = cleanContent.replace(/Would you like me to.*?(?:specification\?|it\?)/i, "").trim();
+  }
+  cleanContent = cleanContent.replace(/👉?\s*Do you want to submit this project\?\s*\(Yes\/No\)/i, "").trim();
 
   const flushText = (key: string) => {
     if (textBuffer.length > 0) {
@@ -211,6 +216,8 @@ function MessageContent({
       textBuffer = [];
     }
   };
+
+  const lines = cleanContent.split("\n");
 
   lines.forEach((line, idx) => {
     const lowerLine = line.toLowerCase();
@@ -273,12 +280,12 @@ function MessageContent({
   flushText("text-end");
 
   // Handle inline options extracted from the text
-  if (hasInlineOptions && !isYesNo && optionCount === 0) {
+  if (hasInlineOptions && optionCount === 0) {
     const inlineMatches = [
-      { label: "Generate features for it", command: "1" },
-      { label: "Generate the full project specification", command: "2" },
-      { label: "Generate features", command: "1" },
-      { label: "Generate full project", command: "2" },
+      { label: "Generate features for it", command: "Generate features for it" },
+      { label: "Generate the full project specification", command: "Generate the full project specification" },
+      { label: "Generate features", command: "Generate features" },
+      { label: "Generate full project", command: "Generate full project" },
     ];
     let matchedOptions = 0;
     inlineMatches.forEach((opt) => {
@@ -298,26 +305,6 @@ function MessageContent({
         );
       }
     });
-  }
-
-  // Handle Yes/No buttons
-  if (isYesNo && optionCount === 0) {
-    elements.push(
-      <div key="yes-no-options" className="flex gap-3 mt-3">
-        <button
-          onClick={() => onOptionClick("yes")}
-          className="flex-1 px-4 py-2 bg-primary text-primary-foreground font-semibold rounded-xl hover:bg-primary/90 transition shadow"
-        >
-          Yes
-        </button>
-        <button
-          onClick={() => onOptionClick("no")}
-          className="flex-1 px-4 py-2 bg-muted text-foreground font-semibold rounded-xl hover:bg-muted/80 transition shadow"
-        >
-          No
-        </button>
-      </div>
-    );
   }
 
   // Handle Full Project Generated -> Send to submission
@@ -354,10 +341,14 @@ function InnoChatContent() {
   const [userId, setUserId] = useState("");
   const [sessionId, setSessionId] = useState("");
   const [myTeam, setMyTeam] = useState<MyTeamDto | null>(null);
+  const [domains, setDomains] = useState<LookupItem[]>([]);
+  const [technologies, setTechnologies] = useState<LookupItem[]>([]);
 
   useEffect(() => {
     setSessionId(Math.random().toString(36).substring(7));
     studentApi.getMyTeam().then(team => setMyTeam(team)).catch(() => {});
+    studentApi.getDomains().then(d => setDomains(readPagedData(d))).catch(() => {});
+    studentApi.getTechnologies().then(t => setTechnologies(readPagedData(t))).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -651,16 +642,46 @@ function InnoChatContent() {
                           onSendToSubmission={async (data) => {
                             try {
                               toast.loading("Saving your project draft...");
-                              const draft = await studentApi.saveDraft({
-                                ...data,
-                                teamId: myTeam!.id
-                              } as SaveDraftPayload);
+                              
+                              let domainId = 1;
+                              if (data.domain && domains.length > 0) {
+                                const matchedDomain = domains.find(d => d.name.toLowerCase() === data.domain?.toLowerCase());
+                                if (matchedDomain) domainId = matchedDomain.id;
+                                else domainId = domains[0].id;
+                              }
+
+                              const techIds: number[] = [];
+                              if (data.technologies && technologies.length > 0) {
+                                for (const tech of data.technologies) {
+                                  const matchedTech = technologies.find(t => t.name.toLowerCase() === tech.toLowerCase());
+                                  if (matchedTech) techIds.push(matchedTech.id);
+                                }
+                              }
+                              if (techIds.length === 0 && technologies.length > 0) {
+                                techIds.push(technologies[0].id);
+                              }
+
+                              const payload: SaveDraftPayload = {
+                                title: data.title || "Generated Project",
+                                studentNames: myTeam?.members?.map((m: any) => m.fullName || m.name || m.email).join(", ") || "",
+                                year: new Date().getFullYear(),
+                                abstract: data.abstract || "",
+                                description: (data.problemStatement || "") + "\n\n" + (data.proposedSolution || ""),
+                                domainId,
+                                technologyIds: techIds,
+                                problemStatement: data.problemStatement || null,
+                                proposedSolution: data.proposedSolution || null,
+                                objectives: data.objectives || null,
+                              };
+
+                              const draft = await studentApi.saveDraft(payload);
                               toast.dismiss();
                               toast.success("Draft saved! Redirecting...");
                               router.push(`/project-submission?draft=${draft.id}`);
-                            } catch (e) {
+                            } catch (e: any) {
                               toast.dismiss();
-                              toast.error("Failed to save draft. Please try again.");
+                              const errMessage = e?.response?.data?.message || e.message || "Failed to save draft. Please try again.";
+                              toast.error(errMessage);
                             }
                           }}
                           onOptionClick={(text) => {
