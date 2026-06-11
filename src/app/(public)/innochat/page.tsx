@@ -118,6 +118,10 @@ function parseProjectData(content: string): Partial<SaveDraftPayload> {
       if (currentField) data[currentField] = currentValue.trim();
       currentField = 'abstract';
       currentValue = l.replace(/.*Abstract:/i, '');
+    } else if (l.match(/Detailed Description:/i)) {
+      if (currentField) data[currentField] = currentValue.trim();
+      currentField = 'detailedDescription';
+      currentValue = l.replace(/.*Detailed Description:/i, '');
     } else if (l.match(/Problem Statement:/i)) {
       if (currentField) data[currentField] = currentValue.trim();
       currentField = 'problemStatement';
@@ -138,7 +142,12 @@ function parseProjectData(content: string): Partial<SaveDraftPayload> {
 
   for (const key in data) {
     if (typeof data[key] === 'string') {
-      data[key] = data[key].replace(/\*\*/g, '').replace(/^[:-]\s*/, '').trim();
+      data[key] = data[key]
+        .replace(/\*\*/g, '')
+        .replace(/^[:-]\s*/, '')
+        .replace(/_{3,}/g, '')
+        .replace(/-{4,}/g, '') // match long dashes, avoiding normal dashes
+        .trim();
     }
   }
 
@@ -717,7 +726,7 @@ function InnoChatContent() {
                                 studentNames: myTeam?.members?.map((m: any) => m.fullName || m.name || m.email).join(", ") || "",
                                 year: new Date().getFullYear(),
                                 abstract: data.abstract || "",
-                                description: (data.problemStatement || "") + "\n\n" + (data.proposedSolution || ""),
+                                description: data.detailedDescription || ((data.problemStatement || "") + "\n\n" + (data.proposedSolution || "")).trim(),
                                 domainId,
                                 technologyIds: techIds,
                                 problemStatement: data.problemStatement || null,
