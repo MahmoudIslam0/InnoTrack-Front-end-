@@ -300,6 +300,23 @@ function ProjectSubmissionPage() {
         description: formData.description,
       }));
       toast.success(`Similarity check completed. Score: ${score}%`);
+
+      // Attempt to auto-save draft with the new score
+      try {
+        const payload = await buildDraftPayload();
+        payload.originalityScore = score; // Override with the newly generated score
+        if (selectedDraftId) {
+          await studentApi.updateDraft(selectedDraftId, payload);
+        } else {
+          const saved = await studentApi.saveDraft(payload);
+          setSelectedDraftId(String(saved.id));
+          sessionStorage.setItem("projectSubmissionId", String(saved.id));
+        }
+        toast.success("Draft auto-saved with new originality score!");
+      } catch (e) {
+        // If it fails (e.g., missing domain/tech), just silently ignore or log it,
+        // because the user might just be testing the score before filling the rest of the form.
+      }
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, "Similarity check failed."));
     } finally {
@@ -343,6 +360,7 @@ function ProjectSubmissionPage() {
       problemStatement: formData.problemStatement || null,
       proposedSolution: formData.proposedSolution || null,
       objectives: formData.objectives || null,
+      originalityScore: originalityScore > 0 ? originalityScore : null,
     };
   };
 

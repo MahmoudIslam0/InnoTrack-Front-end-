@@ -181,6 +181,7 @@ export type SaveDraftPayload = {
   problemStatement?: string | null;
   proposedSolution?: string | null;
   objectives?: string | null;
+  originalityScore?: number | null;
 };
 
 export type SubmitProjectPayload = {
