@@ -5,6 +5,7 @@ import ApplicantCard from "./ApplicantCard";
 
 type JoinRequest = {
   id: string;
+  studentId?: string;
   fullName: string;
   department: string;
   skills?: string[];

@@ -147,7 +147,7 @@ function MessageContent({
 
   lines.forEach((line, idx) => {
     const lowerLine = line.toLowerCase();
-    if (lowerLine.includes("project idea") || lowerLine.includes("choose what you want") || lowerLine.includes("you can also type") || lowerLine.includes("which domain") || lowerLine.includes("select a domain")) {
+    if (lowerLine.includes("project idea") || lowerLine.includes("choose what you want") || lowerLine.includes("you can also type")) {
       isInteractiveSection = true;
     } else if (lowerLine.includes("feature") || lowerLine.includes("requirement") || lowerLine.includes("step")) {
       isInteractiveSection = false;
@@ -487,7 +487,10 @@ function InnoChatContent() {
                       ) : (
                         <MessageContent
                           content={message.content}
-                          onOptionClick={handleSuggestedPrompt}
+                          onOptionClick={(text) => {
+                            setInput(text);
+                            textareaRef.current?.focus();
+                          }}
                         />
                       )
                     ) : (

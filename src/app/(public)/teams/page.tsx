@@ -59,6 +59,7 @@ import { api } from "@/lib/api";
 
 type JoinRequest = {
   id: string;
+  studentId?: string;
   fullName: string;
   department: string;
   skills?: string[];
@@ -978,6 +979,7 @@ function mapTeam(value: MyTeamDto): Team {
 function mapRequest(value: PendingJoinRequestDto): JoinRequest {
   return {
     id: String(value.id),
+    studentId: value.studentId ? String(value.studentId) : undefined,
     fullName: value.studentName,
     department: value.department,
     skills: value.skills || [],

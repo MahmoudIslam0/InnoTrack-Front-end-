@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 
 type Applicant = {
   id: string;
+  studentId?: string;
   fullName: string;
   department: string;
   skills?: string[];
@@ -15,7 +16,13 @@ export default function ApplicantCard({ applicant, onAccept, onReject }:{ applic
     <div className="bg-card p-4 rounded-xl border border-border/50 w-80 flex flex-col gap-3">
       <div className="flex justify-between items-start">
         <div>
-          <h4 className="font-semibold">{applicant.fullName}</h4>
+          {applicant.studentId ? (
+            <a href={`/profile/${applicant.studentId}`} className="font-semibold hover:underline cursor-pointer text-foreground block">
+              {applicant.fullName}
+            </a>
+          ) : (
+            <h4 className="font-semibold">{applicant.fullName}</h4>
+          )}
           <div className="text-sm text-muted-foreground">{applicant.department}</div>
         </div>
       </div>
