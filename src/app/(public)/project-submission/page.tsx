@@ -924,7 +924,7 @@ function ProjectSubmissionPage() {
                     cx="80"
                     cy="80"
                     r="72"
-                    stroke={originalityScore >= 60 ? "#10B981" : originalityScore > 0 ? "#EF4444" : "#6366f1"}
+                    stroke={originalityScore >= 80 ? "#10B981" : originalityScore >= 40 ? "#EAB308" : originalityScore > 0 ? "#EF4444" : "#6366f1"}
                     strokeWidth="12"
                     fill="none"
                     strokeDasharray={`${2 * Math.PI * 72}`}

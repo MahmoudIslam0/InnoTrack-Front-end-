@@ -9,8 +9,7 @@ export {
 } from "@/app/_components/DashboardUI";
 
 export function OriginalityMeter({ score }: { score: number }) {
-  const isLow = score < 70;
-  const color = isLow ? "#EF4444" : score < 80 ? "#F59E0B" : "#10B981";
+  const color = score >= 80 ? "#10B981" : score >= 40 ? "#EAB308" : "#EF4444";
 
   return (
     <div className="flex flex-col items-center gap-2">
