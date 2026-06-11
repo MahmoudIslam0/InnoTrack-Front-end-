@@ -28,6 +28,7 @@ interface ProfileData {
   graduationYear: number;
   hasTeam: boolean;
   skills: string[];
+  profilePictureUrl?: string | null;
 }
 
 export default function OtherStudentProfile({ params }: { params: { id: string } }) {
@@ -107,8 +108,16 @@ export default function OtherStudentProfile({ params }: { params: { id: string }
             <div className="absolute inset-0 rounded-t-3xl overflow-hidden opacity-20" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)", backgroundSize: "40px 40px" }}></div>
             
             {/* Avatar */}
-            <div className="absolute -bottom-12 md:-bottom-14 left-6 md:left-8 w-24 h-24 md:w-28 md:h-28 shrink-0 rounded-2xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-4xl md:text-5xl font-bold text-white shadow-xl ring-4 ring-card z-20">
-              {initials}
+            <div className="absolute -bottom-12 md:-bottom-14 left-6 md:left-8 w-24 h-24 md:w-28 md:h-28 shrink-0 rounded-2xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-4xl md:text-5xl font-bold text-white shadow-xl ring-4 ring-card z-20 overflow-hidden">
+              {profile.profilePictureUrl ? (
+                <img
+                  src={`${process.env.NEXT_PUBLIC_API_URL || "https://innotrack-aneshpdxd6habnd6.uaenorth-01.azurewebsites.net"}${profile.profilePictureUrl}`}
+                  alt={`${profile.firstName} ${profile.lastName}`}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                initials
+              )}
             </div>
           </div>
 

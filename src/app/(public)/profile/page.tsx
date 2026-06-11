@@ -45,6 +45,7 @@ interface ProfileData {
   graduationYear: number;
   hasTeam: boolean;
   skills: string[];
+  profilePictureUrl?: string | null;
 }
 
 export default function StudentProfile() {
@@ -57,6 +58,41 @@ export default function StudentProfile() {
   const [editSkills, setEditSkills] = useState<string[]>([]);
   const [editGpa, setEditGpa] = useState("0.0");
   const skillInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleProfilePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size must be less than 5MB");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      // Create fetch directly to bypass api.post's JSON stringification of body
+      const token = localStorage.getItem("accessToken");
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://innotrack-aneshpdxd6habnd6.uaenorth-01.azurewebsites.net"}/api/Users/me/profile-picture`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to upload profile picture");
+      }
+
+      toast.success("Profile picture updated successfully");
+      fetchProfile();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to upload profile picture");
+    }
+  };
 
   // Change Password State
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -249,8 +285,29 @@ export default function StudentProfile() {
             <div className="absolute inset-0 rounded-t-3xl overflow-hidden opacity-20" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)", backgroundSize: "40px 40px" }}></div>
             
             {/* Avatar - Absolutely positioned relative to the banner to perfectly overlap without margin clipping */}
-            <div className="absolute -bottom-12 md:-bottom-14 left-6 md:left-8 w-24 h-24 md:w-28 md:h-28 shrink-0 rounded-2xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-4xl md:text-5xl font-bold text-white shadow-xl ring-4 ring-card z-20">
-              {initials}
+            <div 
+              className="absolute -bottom-12 md:-bottom-14 left-6 md:left-8 w-24 h-24 md:w-28 md:h-28 shrink-0 rounded-2xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-4xl md:text-5xl font-bold text-white shadow-xl ring-4 ring-card z-20 group cursor-pointer overflow-hidden"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {profile.profilePictureUrl ? (
+                <img
+                  src={`${process.env.NEXT_PUBLIC_API_URL || "https://innotrack-aneshpdxd6habnd6.uaenorth-01.azurewebsites.net"}${profile.profilePictureUrl}`}
+                  alt={`${profile.firstName} ${profile.lastName}`}
+                  className="w-full h-full object-cover group-hover:brightness-75 transition-all"
+                />
+              ) : (
+                <span className="group-hover:opacity-40 transition-opacity">{initials}</span>
+              )}
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
+                <Pencil className="w-6 h-6 text-white" />
+              </div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/png, image/jpeg, image/jpg, image/webp"
+                onChange={handleProfilePictureUpload}
+              />
             </div>
           </div>
 
