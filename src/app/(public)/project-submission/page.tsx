@@ -58,6 +58,7 @@ function ProjectSubmissionPage() {
 
   const [originalityScore, setOriginalityScore] = useState(0);
   const [hasRunSimilarityCheck, setHasRunSimilarityCheck] = useState(false);
+  const [formHashAtLastCheck, setFormHashAtLastCheck] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isProcessingPDF, setIsProcessingPDF] = useState(false);
   const [selectedDraftId, setSelectedDraftId] = useState<string | null>(null);
@@ -293,6 +294,11 @@ function ProjectSubmissionPage() {
       setOriginalityScore(score);
       setSimilarProjects(result.similarProjects || []);
       setHasRunSimilarityCheck(true);
+      setFormHashAtLastCheck(JSON.stringify({
+        title: formData.title,
+        abstract: formData.abstract,
+        description: formData.description,
+      }));
       toast.success(`Similarity check completed. Score: ${score}%`);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error, "Similarity check failed."));
@@ -401,6 +407,17 @@ function ProjectSubmissionPage() {
       return;
     }
     
+    const currentHash = JSON.stringify({
+      title: formData.title,
+      abstract: formData.abstract,
+      description: formData.description,
+    });
+    
+    if (currentHash !== formHashAtLastCheck) {
+      toast.error("Project details have changed. Please rerun the originality test before submitting.");
+      return;
+    }
+
     if (isDetailsOnly) {
       setIsSubmitting(true);
       try {
@@ -433,14 +450,7 @@ function ProjectSubmissionPage() {
     }
   };
 
-  const handleGetAIHelp = () => {
-    if (!hasRunSimilarityCheck) {
-      toast.error("Please run the similarity check first to calculate originality before getting AI help.");
-      return;
-    }
-    const contextStr = encodeURIComponent(JSON.stringify({ ...formData, originalityScore }));
-    router.push(`/innochat?context=${contextStr}`);
-  };
+
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -521,18 +531,35 @@ function ProjectSubmissionPage() {
         >
           ← Back to Project Management
         </Button>
-        <h1 className="text-3xl font-semibold text-foreground tracking-tight mb-2">
-          {isViewOnly ? "View Draft" : isDetailsOnly ? "Edit Project Details" : isEditing ? "Edit Draft" : "Project Submission"}
-        </h1>
-        <p className="text-muted-foreground">
-          {isDetailsOnly
-            ? "Update the editable details of your approved project"
-            : isViewOnly
-              ? "Review this team draft without changing it"
-            : isEditing
-              ? "Continue working on your saved draft"
-              : "Submit your graduation project proposal"}
-        </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-semibold text-foreground tracking-tight mb-2">
+              {isViewOnly ? "View Draft" : isDetailsOnly ? "Edit Project Details" : isEditing ? "Edit Draft" : "Project Submission"}
+            </h1>
+            <p className="text-muted-foreground">
+              {isDetailsOnly
+                ? "Update the editable details of your approved project"
+                : isViewOnly
+                  ? "Review this team draft without changing it"
+                : isEditing
+                  ? "Continue working on your saved draft"
+                  : "Submit your graduation project proposal"}
+            </p>
+          </div>
+          
+          {!isViewOnly && !isDetailsOnly && (
+            <Button
+              variant="outline"
+              size="icon"
+              className="shrink-0 border-red-500/30 text-red-600 hover:bg-red-500/10 dark:text-red-400 rounded-xl"
+              onClick={handleClearForm}
+              disabled={isSaving || isSubmitting || isLoading}
+              title="Clear Form"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {isLoading ? (
@@ -815,29 +842,8 @@ function ProjectSubmissionPage() {
                     )}
                     Save Draft
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="flex-1 h-12 rounded-xl border-red-500/30 text-red-600 hover:bg-red-500/10 dark:text-red-400"
-                    onClick={handleClearForm}
-                    disabled={isSaving || isSubmitting || isLoading}
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Clear Form
-                  </Button>
                 </>
               )}
-              <Button
-                onClick={handleGetAIHelp}
-                variant="outline"
-                className={`flex-1 h-12 rounded-xl border-purple-500/30 text-purple-600 dark:text-purple-400 ${
-                  !hasRunSimilarityCheck
-                    ? "opacity-50 hover:bg-transparent"
-                    : "hover:bg-purple-500/10"
-                }`}
-              >
-                <Bot className="w-4 h-4 mr-2" />
-                Get AI Help
-              </Button>
               <Button
                 onClick={handleSubmitToSupervisor}
                 className="flex-1 h-12 rounded-xl bg-primary text-white hover:bg-primary/90 shadow-md shadow-primary/20"

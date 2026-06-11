@@ -15,10 +15,9 @@ import { SupervisorDto, studentApi } from "@/lib/student-api";
 
 const departments = [
   "Computer Science",
-  "Software Engineering",
   "Information Systems",
   "Artificial Intelligence",
-  "Cybersecurity",
+  "Scientific Computing",
 ];
 
 export default function SubmitToSupervisor() {
