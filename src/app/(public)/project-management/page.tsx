@@ -114,6 +114,7 @@ export default function ProjectManagement() {
   const [currentTeamId, setCurrentTeamId] = useState<string | null>(null);
   const [isCreateTeamOpen, setIsCreateTeamOpen] = useState(false);
   const [newTeamName, setNewTeamName] = useState("");
+  const [newTeamMaxSize, setNewTeamMaxSize] = useState("4");
   const [newTeamMembers, setNewTeamMembers] = useState(""); // comma-separated names
   const activeTeam = teams.find((team) => team.id === currentTeamId) || teams[0] || null;
   const projectTeamName = activeTeam?.name || project?.team || "My Team";
@@ -204,7 +205,7 @@ export default function ProjectManagement() {
     }
 
     try {
-      await studentApi.createTeam(name);
+      await studentApi.createTeam(name, parseInt(newTeamMaxSize, 10));
       const created = await studentApi.getMyTeam();
       if (created) {
         const mappedTeam = mapBackendTeam(created);
@@ -900,6 +901,10 @@ export default function ProjectManagement() {
             <div>
               <Label htmlFor="team-name" className="mb-2 block">Team Name</Label>
               <Input id="team-name" placeholder="e.g. Nova Path" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="max-size" className="mb-2 block">Max Size</Label>
+              <Input id="max-size" type="number" min="1" max="10" value={newTeamMaxSize} onChange={(e) => setNewTeamMaxSize(e.target.value)} />
             </div>
             <div>
               <Label htmlFor="team-members" className="mb-2 block">Team Members (comma-separated)</Label>
