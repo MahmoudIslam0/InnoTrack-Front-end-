@@ -603,22 +603,22 @@ function InnoChatContent() {
             variant="ghost"
             size="sm"
             onClick={() => router.back()}
-            className="mr-2 hover:bg-muted/40 dark:bg-muted/20"
+            className="mr-2 hover:bg-muted/40 dark:bg-muted/20 shrink-0"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
-            <Bot className="w-6 h-6 text-white" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shrink-0">
+            <Bot className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
-          <div>
-            <h2 className="text-xl font-semibold text-foreground">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-lg sm:text-xl font-semibold text-foreground truncate">
               {projectContext?.title ? `InnoChat - ${projectContext.title}` : "InnoChat"}
             </h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground truncate">
               {projectContext?.title ? "AI Assistant analyzing your draft" : "AI Assistant for Graduation Projects"}
             </p>
           </div>
-          <div className="ml-auto">
+          <div className="ml-auto shrink-0">
             <Button
               variant="outline"
               size="sm"
@@ -843,13 +843,13 @@ function InnoChatContent() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder={isTypingGreeting ? "Please wait while InnoChat initializes..." : "Ask me anything about your graduation project..."}
-                  className="!h-[60px] overflow-y-auto resize-none py-[18px] pl-6 pr-32 backdrop-blur-sm bg-card/80 dark:bg-card/60 border-border/50 shadow-md"
+                  placeholder={isTypingGreeting ? "Please wait while InnoChat initializes..." : "Ask me anything..."}
+                  className="!h-[60px] overflow-y-auto resize-none py-[18px] pl-4 pr-4 sm:pl-6 sm:pr-32 backdrop-blur-sm bg-card/80 dark:bg-card/60 border-border/50 shadow-md"
                   style={{ fieldSizing: "fixed", height: "60px" } as any}
                   rows={1}
                   disabled={isTypingGreeting}
                 />
-                <div className="absolute bottom-3 right-3 text-xs text-muted-foreground bg-card/60 dark:bg-card/40 px-2 py-1 rounded">
+                <div className="hidden sm:block absolute bottom-3 right-3 text-xs text-muted-foreground bg-card/60 dark:bg-card/40 px-2 py-1 rounded">
                   Press Enter to send
                 </div>
               </div>
