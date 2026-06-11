@@ -141,8 +141,18 @@ async function request(endpoint: string, options: RequestOptions = {}): Promise<
     }
 
     if (!response.ok) {
+      let errorMessage = responseData.error || responseData.message || responseData.detail || responseData.title || `Request failed with status ${response.status}`;
+      
+      // Extract specific validation errors if present
+      if (responseData.errors && typeof responseData.errors === 'object') {
+        const validationErrors = Object.values(responseData.errors).flat().join(' ');
+        if (validationErrors) {
+          errorMessage = validationErrors;
+        }
+      }
+
       throw new ApiError(
-        responseData.error || responseData.message || responseData.detail || responseData.title || `Request failed with status ${response.status}`,
+        errorMessage,
         response.status,
         responseData
       );

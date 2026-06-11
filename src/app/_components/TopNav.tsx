@@ -87,7 +87,7 @@ export function TopNav({
     try {
       setIsChangingPassword(true);
       await api.put("/api/Users/change-password", {
-        currentPassword,
+        oldPassword: currentPassword,
         newPassword
       });
       toast.success("Password changed successfully.");
