@@ -377,7 +377,11 @@ export function TeamChatWorkspace({
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <p className="truncate text-sm font-medium">{message.file.name}</p>
-                                  <p className={`text-[11px] font-medium mt-0.5 ${isOwnMessage ? 'text-white/70' : 'text-muted-foreground'}`}>{message.file.size}</p>
+                                  <div className={`flex items-center gap-2 text-[11px] font-medium mt-0.5 ${isOwnMessage ? 'text-white/70' : 'text-muted-foreground'}`}>
+                                    <span>{message.file.size}</span>
+                                    <span className="opacity-50">•</span>
+                                    <span>{message.timestamp}</span>
+                                  </div>
                                 </div>
                                 <Button variant="ghost" size="icon" onClick={() => handleDownloadFile(message.file!.backendFileName, message.file!.name)} className={`rounded-xl ${isOwnMessage ? "text-white hover:bg-white/20" : "text-muted-foreground hover:bg-muted/80"}`}>
                                   <Download className="h-4 w-4" />

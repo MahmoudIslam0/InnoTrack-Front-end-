@@ -8,6 +8,7 @@ import { DataTable } from "@/app/_components/DataTable";
 import { PageHeader } from "@/app/_components/DashboardUI";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { MoreHorizontal, Plus, CheckCircle, Trash } from "lucide-react";
 import {
   DropdownMenu,
@@ -43,6 +44,11 @@ export default function AdminAcademicYears() {
     endDate: "",
   });
 
+  const [yearToDelete, setYearToDelete] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [yearToActivate, setYearToActivate] = useState<number | null>(null);
+  const [isActivating, setIsActivating] = useState(false);
+
   const fetchAcademicYears = async () => {
     setIsLoading(true);
     try {
@@ -63,25 +69,41 @@ export default function AdminAcademicYears() {
     fetchAcademicYears();
   }, [pagination]);
 
-  const handleActivate = async (id: number) => {
-    if (!confirm("Are you sure you want to set this as the active academic year? Other years will be deactivated.")) return;
+  const handleActivate = (id: number) => {
+    setYearToActivate(id);
+  };
+
+  const confirmActivate = async () => {
+    if (!yearToActivate) return;
+    setIsActivating(true);
     try {
-      await adminApi.activateAcademicYear(id);
+      await adminApi.activateAcademicYear(yearToActivate);
       toast.success("Academic year activated successfully");
       fetchAcademicYears();
     } catch (error: any) {
       toast.error("Failed to activate academic year", { description: error.message });
+    } finally {
+      setIsActivating(false);
+      setYearToActivate(null);
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this academic year? It cannot be deleted if it contains registered projects.")) return;
+  const handleDelete = (id: number) => {
+    setYearToDelete(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!yearToDelete) return;
+    setIsDeleting(true);
     try {
-      await adminApi.deleteAcademicYear(id);
+      await adminApi.deleteAcademicYear(yearToDelete);
       toast.success("Academic year deleted successfully");
       fetchAcademicYears();
     } catch (error: any) {
       toast.error("Failed to delete academic year", { description: error.message });
+    } finally {
+      setIsDeleting(false);
+      setYearToDelete(null);
     }
   };
 
@@ -239,6 +261,28 @@ export default function AdminAcademicYears() {
           isLoading={isLoading}
         />
       </div>
+
+      <ConfirmDialog
+        isOpen={!!yearToDelete}
+        onClose={() => setYearToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Delete Academic Year"
+        description="Are you sure you want to delete this academic year? It cannot be deleted if it contains registered projects."
+        confirmText="Delete"
+        variant="destructive"
+        isLoading={isDeleting}
+      />
+
+      <ConfirmDialog
+        isOpen={!!yearToActivate}
+        onClose={() => setYearToActivate(null)}
+        onConfirm={confirmActivate}
+        title="Activate Academic Year"
+        description="Are you sure you want to set this as the active academic year? Other years will be deactivated."
+        confirmText="Activate"
+        variant="default"
+        isLoading={isActivating}
+      />
     </div>
   );
 }
