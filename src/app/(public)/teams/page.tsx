@@ -967,8 +967,8 @@ function NoTeamState({
               <Input
                 placeholder="Max size (default 4)"
                 type="number"
-                min="1"
-                max="10"
+                min="2"
+                max="11"
                 value={newTeamMaxSize}
                 onChange={(event) => setNewTeamMaxSize(event.target.value)}
                 className="h-14 text-lg bg-background"
