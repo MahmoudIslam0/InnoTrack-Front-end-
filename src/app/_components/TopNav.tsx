@@ -421,7 +421,7 @@ export function TopNav({
               </button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-72 bg-background/80 backdrop-blur-xl border-border/50">
-              <SidebarContent variant={variant} />
+              <SidebarContent variant={isAdmin ? "admin" : (pathname.startsWith("/professor") ? "professor" : "student")} />
             </SheetContent>
           </Sheet>
 

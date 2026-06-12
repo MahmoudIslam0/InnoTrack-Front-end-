@@ -17,6 +17,7 @@ export default function ProfessorLayout({
         initials="MK"
         profileHref="/professor/profile"
         showNotifications
+        variant="professor"
       />
 
       <MainContentArea>{children}</MainContentArea>
