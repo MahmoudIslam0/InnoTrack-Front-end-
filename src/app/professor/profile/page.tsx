@@ -53,7 +53,9 @@ export default function ProfessorProfile() {
   const [editBannerColor, setEditBannerColor] = useState("#4f46e5");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const handleProfilePictureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfilePictureUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -67,13 +69,16 @@ export default function ProfessorProfile() {
 
     try {
       const token = localStorage.getItem("accessToken");
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://innotrack-aneshpdxd6habnd6.uaenorth-01.azurewebsites.net"}/api/Users/me/profile-picture`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "https://innotrack-aneshpdxd6habnd6.uaenorth-01.azurewebsites.net"}/api/Users/me/profile-picture`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
         },
-        body: formData
-      });
+      );
 
       if (!res.ok) {
         throw new Error("Failed to upload profile picture");
@@ -92,7 +97,7 @@ export default function ProfessorProfile() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  
+
   // Show Password States
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -196,7 +201,9 @@ export default function ProfessorProfile() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center">
         <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
-        <p className="text-muted-foreground mt-4 font-medium">Loading profile...</p>
+        <p className="text-muted-foreground mt-4 font-medium">
+          Loading profile...
+        </p>
       </div>
     );
   }
@@ -205,9 +212,16 @@ export default function ProfessorProfile() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center p-4">
         <div className="text-center max-w-md bg-card border border-border rounded-2xl p-8 shadow-sm">
-          <h2 className="text-2xl font-bold text-foreground mb-2">Access Denied</h2>
-          <p className="text-muted-foreground mb-6">Please log in with a professor account to access this profile.</p>
-          <Button onClick={() => router.push("/login")} className="w-full bg-primary hover:bg-primary/90 text-white">
+          <h2 className="text-2xl font-bold text-foreground mb-2">
+            Access Denied
+          </h2>
+          <p className="text-muted-foreground mb-6">
+            Please log in with a professor account to access this profile.
+          </p>
+          <Button
+            onClick={() => router.push("/login")}
+            className="w-full bg-primary hover:bg-primary/90 text-white"
+          >
             Go to Login
           </Button>
         </div>
@@ -218,19 +232,26 @@ export default function ProfessorProfile() {
   const getInitials = () => {
     const first = profile.firstName?.charAt(0) || "";
     const last = profile.lastName?.charAt(0) || "";
-    return `${first}${last}`.toUpperCase() || profile.email?.charAt(0).toUpperCase() || "P";
+    return (
+      `${first}${last}`.toUpperCase() ||
+      profile.email?.charAt(0).toUpperCase() ||
+      "P"
+    );
   };
   const initials = getInitials();
 
   return (
     <div className="dashboard-page max-w-5xl mx-auto">
       <div className="space-y-8">
-
         {/* ─── Header ─── */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">My Profile</h1>
-            <p className="text-muted-foreground mt-1 text-sm">Manage your professional information and preferences</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">
+              My Profile
+            </h1>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Manage your professional information and preferences
+            </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {!isEditing ? (
@@ -243,10 +264,17 @@ export default function ProfessorProfile() {
               </Button>
             ) : (
               <>
-                <Button variant="outline" onClick={handleCancel} className="rounded-xl h-10 gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleCancel}
+                  className="rounded-xl h-10 gap-2"
+                >
                   <X className="w-4 h-4" /> Cancel
                 </Button>
-                <Button onClick={handleSave} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl h-10 gap-2">
+                <Button
+                  onClick={handleSave}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl h-10 gap-2"
+                >
                   <Save className="w-4 h-4" /> Save Changes
                 </Button>
               </>
@@ -257,15 +285,43 @@ export default function ProfessorProfile() {
         {/* ─── Hero Card ─── */}
         <div className="rounded-3xl border border-border/60 bg-card shadow-sm relative">
           {/* Banner */}
-          <div 
-            className="h-28 md:h-36 rounded-t-3xl relative"
-            style={{ backgroundColor: profile.profileBannerColor || "#4f46e5" }}
+          <div
+            className="h-28 md:h-36 rounded-t-3xl relative transition-colors duration-300"
+            style={{
+              backgroundColor: isEditing
+                ? editBannerColor
+                : profile.profileBannerColor || "#4f46e5",
+            }}
           >
-            <div className="absolute inset-0 rounded-t-3xl overflow-hidden opacity-20" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)", backgroundSize: "40px 40px" }}></div>
-            
+            <div
+              className="absolute inset-0 rounded-t-3xl overflow-hidden opacity-20"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)",
+                backgroundSize: "40px 40px",
+              }}
+            ></div>
+
+            {isEditing && (
+              <div className="absolute top-4 right-4 z-20">
+                <label
+                  className="cursor-pointer bg-black/40 hover:bg-black/60 text-white p-2.5 rounded-full flex items-center justify-center transition-colors shadow-sm"
+                  title="Change Banner Color"
+                >
+                  <Pencil className="w-4 h-4" />
+                  <input
+                    type="color"
+                    value={editBannerColor}
+                    onChange={(e) => setEditBannerColor(e.target.value)}
+                    className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                  />
+                </label>
+              </div>
+            )}
+
             {/* Avatar - Absolutely positioned relative to the banner to perfectly overlap without margin clipping */}
-            <div 
-              className="absolute -bottom-12 md:-bottom-14 left-6 md:left-8 w-24 h-24 md:w-28 md:h-28 shrink-0 rounded-2xl bg-primary flex items-center justify-center text-4xl md:text-5xl font-bold text-white shadow-xl ring-4 ring-card z-20 group cursor-pointer overflow-hidden"
+            <div
+              className="absolute -bottom-12 md:-bottom-14 left-6 md:left-8 w-24 h-24 md:w-28 md:h-28 shrink-0 rounded-2xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-4xl md:text-5xl font-bold text-white shadow-xl ring-4 ring-card z-20 group cursor-pointer overflow-hidden"
               onClick={() => fileInputRef.current?.click()}
             >
               {profile.profilePictureUrl ? (
@@ -275,7 +331,9 @@ export default function ProfessorProfile() {
                   className="w-full h-full object-cover group-hover:brightness-75 transition-all"
                 />
               ) : (
-                <span className="group-hover:opacity-40 transition-opacity">{initials}</span>
+                <span className="group-hover:opacity-40 transition-opacity">
+                  {initials}
+                </span>
               )}
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
                 <Pencil className="w-6 h-6 text-white" />
@@ -294,17 +352,25 @@ export default function ProfessorProfile() {
           <div className="px-6 md:px-8 pb-6 md:pb-8 pt-16 md:pt-20 relative z-10">
             <div className="space-y-1">
               <div className="flex items-center flex-wrap gap-2 mb-2">
-                <Badge variant="secondary" className="bg-primary/10 text-primary/90 dark:text-primary px-3 py-1 text-xs font-semibold rounded-full border border-primary/20">
+                <Badge
+                  variant="secondary"
+                  className="bg-primary/10 text-primary/90 dark:text-primary px-3 py-1 text-xs font-semibold rounded-full border border-primary/20"
+                >
                   Professor
                 </Badge>
-                <Badge variant="secondary" className="bg-blue-500/10 text-blue-800 dark:text-blue-300 px-3 py-1 text-xs font-semibold rounded-full border border-blue-500/20">
+                <Badge
+                  variant="secondary"
+                  className="bg-blue-500/10 text-blue-800 dark:text-blue-300 px-3 py-1 text-xs font-semibold rounded-full border border-blue-500/20"
+                >
                   {profile.departmentName}
                 </Badge>
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-foreground leading-tight">
                 {profile.firstName} {profile.lastName}
               </h2>
-              <p className="text-muted-foreground text-sm font-medium">{profile.email}</p>
+              <p className="text-muted-foreground text-sm font-medium">
+                {profile.email}
+              </p>
             </div>
 
             {/* Stats Strip */}
@@ -314,8 +380,12 @@ export default function ProfessorProfile() {
                   <Building2 className="w-4 h-4 text-primary" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs text-muted-foreground font-medium">Department</p>
-                  <p className="text-sm font-semibold text-foreground truncate">{profile.departmentName}</p>
+                  <p className="text-xs text-muted-foreground font-medium">
+                    Department
+                  </p>
+                  <p className="text-sm font-semibold text-foreground truncate">
+                    {profile.departmentName}
+                  </p>
                 </div>
               </div>
               <div className="bg-muted/40 rounded-2xl p-4 flex items-center gap-3">
@@ -323,8 +393,12 @@ export default function ProfessorProfile() {
                   <Users className="w-4 h-4 text-emerald-500" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs text-muted-foreground font-medium">Max Team Load</p>
-                  <p className="text-sm font-semibold text-foreground">{profile.maxTeamLoad} Teams</p>
+                  <p className="text-xs text-muted-foreground font-medium">
+                    Max Team Load
+                  </p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {profile.maxTeamLoad} Teams
+                  </p>
                 </div>
               </div>
             </div>
@@ -333,7 +407,6 @@ export default function ProfessorProfile() {
 
         {/* ─── Two-column info grid ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
           {/* Personal Information */}
           <div className="bg-card rounded-2xl border border-border/60 p-6 shadow-sm space-y-5">
             <h3 className="text-base font-bold text-foreground flex items-center gap-2.5">
@@ -344,19 +417,25 @@ export default function ProfessorProfile() {
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">First Name</Label>
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  First Name
+                </Label>
                 <div className="px-3.5 py-2.5 rounded-xl bg-muted/40 text-sm text-foreground font-medium">
                   {profile.firstName}
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Last Name</Label>
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Last Name
+                </Label>
                 <div className="px-3.5 py-2.5 rounded-xl bg-muted/40 text-sm text-foreground font-medium">
                   {profile.lastName}
                 </div>
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Email Address</Label>
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Email Address
+                </Label>
                 <div className="px-3.5 py-2.5 rounded-xl bg-muted/40 text-sm text-foreground font-medium flex items-center gap-2">
                   <Mail className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                   <span className="truncate">{profile.email}</span>
@@ -374,7 +453,7 @@ export default function ProfessorProfile() {
               Professional Information
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5 sm:col-span-2">
+              {/* <div className="space-y-1.5 sm:col-span-2">
                 <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Banner Color</Label>
                 {isEditing ? (
                   <div className="flex items-center gap-3">
@@ -392,15 +471,19 @@ export default function ProfessorProfile() {
                     <span className="text-sm font-medium text-foreground uppercase">{profile.profileBannerColor || "#4f46e5"}</span>
                   </div>
                 )}
-              </div>
+              </div> */}
               <div className="space-y-1.5 sm:col-span-2">
-                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Department</Label>
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Department
+                </Label>
                 <div className="px-3.5 py-2.5 rounded-xl bg-muted/40 text-sm text-foreground font-medium">
                   {profile.departmentName}
                 </div>
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Maximum Team Load</Label>
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Maximum Team Load
+                </Label>
                 {isEditing ? (
                   <Input
                     value={editMaxTeamLoad}
@@ -425,7 +508,10 @@ export default function ProfessorProfile() {
 
         {/* ─── Actions Strip ─── */}
         <div className="flex flex-col sm:flex-row justify-end items-center gap-3 pt-4 border-t border-border/40">
-          <Dialog open={isPasswordModalOpen} onOpenChange={setIsPasswordModalOpen}>
+          <Dialog
+            open={isPasswordModalOpen}
+            onOpenChange={setIsPasswordModalOpen}
+          >
             <DialogTrigger asChild>
               <Button
                 variant="outline"
@@ -461,7 +547,11 @@ export default function ProfessorProfile() {
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground"
                       onClick={() => setShowOldPassword(!showOldPassword)}
                     >
-                      {showOldPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showOldPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -483,7 +573,11 @@ export default function ProfessorProfile() {
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground"
                       onClick={() => setShowNewPassword(!showNewPassword)}
                     >
-                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showNewPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -503,17 +597,31 @@ export default function ProfessorProfile() {
                       variant="ghost"
                       size="icon"
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
                     >
-                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showConfirmPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
                     </Button>
                   </div>
                 </div>
                 <div className="flex justify-end gap-2 pt-2">
-                  <Button type="button" variant="outline" onClick={() => setIsPasswordModalOpen(false)}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsPasswordModalOpen(false)}
+                  >
                     Cancel
                   </Button>
-                  <Button type="submit" className="bg-primary text-white hover:bg-primary/90" disabled={isChangingPassword}>
+                  <Button
+                    type="submit"
+                    className="bg-primary text-white hover:bg-primary/90"
+                    disabled={isChangingPassword}
+                  >
                     {isChangingPassword ? "Saving..." : "Change Password"}
                   </Button>
                 </div>
@@ -530,7 +638,6 @@ export default function ProfessorProfile() {
             Sign Out
           </Button>
         </div>
-
       </div>
     </div>
   );
