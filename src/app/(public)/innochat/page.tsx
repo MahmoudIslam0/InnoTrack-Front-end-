@@ -593,7 +593,7 @@ function InnoChatContent() {
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-primary/15 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="flex-1 flex flex-col m-4 md:m-6 backdrop-blur-xl bg-card/70 dark:bg-card/40 rounded-2xl border border-border/50 shadow-2xl relative overflow-hidden">
+      <div className="flex-1 min-h-0 flex flex-col m-4 md:m-6 backdrop-blur-xl bg-card/70 dark:bg-card/40 rounded-2xl border border-border/50 shadow-2xl relative overflow-hidden">
         {/* Subtle overlay */}
         <div className="absolute inset-0 bg-white/30 dark:bg-transparent pointer-events-none"></div>
 
@@ -658,7 +658,7 @@ function InnoChatContent() {
         )}
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 relative z-10">
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6 relative z-10">
           <div className="max-w-4xl mx-auto space-y-6">
             {messages.map((message) => (
               <div
@@ -834,7 +834,7 @@ function InnoChatContent() {
         </div>
 
         {/* Input Area */}
-        <div className="px-6 py-5 border-t border-border/50 backdrop-blur-sm relative z-10">
+        <div className="px-6 py-5 border-t border-border/50 bg-card/50 backdrop-blur-md relative z-10 mt-auto">
           <div className="max-w-4xl mx-auto">
             <div className="flex gap-3 items-end">
               <div className="flex-1 relative min-w-0">
