@@ -1,7 +1,7 @@
 "use client";
 
 import { Search, Bell, User, Menu, LogOut, PanelLeftClose, PanelLeft, ChevronRight, ChevronDown } from "lucide-react";
-import { Avatar, AvatarFallback } from "../../components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -552,6 +552,9 @@ export function TopNav({
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2 rounded-xl py-2.5 px-4 hover:bg-accent transition-all duration-200 cursor-pointer focus:outline-none">
                     <Avatar className="w-8 h-8 border border-border/50 shadow-sm shrink-0">
+                      {profile?.profilePictureUrl && (
+                        <AvatarImage src={`${process.env.NEXT_PUBLIC_API_URL || "https://innotrack-aneshpdxd6habnd6.uaenorth-01.azurewebsites.net"}${profile.profilePictureUrl}`} className="object-cover" />
+                      )}
                       <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
                         {finalInitials}
                       </AvatarFallback>
@@ -567,6 +570,9 @@ export function TopNav({
                   {/* User Profile Header */}
                   <div className="p-4 flex items-center gap-3 bg-gradient-to-b from-accent/40 to-transparent border-b border-border/40">
                     <Avatar className="w-12 h-12 border-2 border-background shadow-md shrink-0">
+                      {profile?.profilePictureUrl && (
+                        <AvatarImage src={`${process.env.NEXT_PUBLIC_API_URL || "https://innotrack-aneshpdxd6habnd6.uaenorth-01.azurewebsites.net"}${profile.profilePictureUrl}`} className="object-cover" />
+                      )}
                       <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
                         {finalInitials}
                       </AvatarFallback>

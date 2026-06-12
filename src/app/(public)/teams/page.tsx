@@ -985,7 +985,7 @@ function mapTeam(value: MyTeamDto): Team {
     name: value.name,
     leaderId: leader?.fullName || value.members[0]?.fullName || "",
     isLeader: value.isLeader,
-    members: value.members.map((member) => ({ id: member.id, name: member.fullName })),
+    members: value.members.map((member: any) => ({ id: member.studentId || member.userId || member.id, name: member.fullName })),
     supervisorName: value.supervisorName ?? undefined,
     projectTitle: value.projectTitle ?? undefined,
     projectTechnologies: value.projectTechnologies ?? [],

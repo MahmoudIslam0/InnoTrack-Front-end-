@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Trash2, MoreVertical } from "lucide-react";
 import {
@@ -24,9 +25,9 @@ export default function MemberCard({ member, isLeaderView, onRemove }: { member:
         </div>
         <div>
           {member.id ? (
-            <a href={`/profile/${member.id}`} className="font-semibold text-sm hover:underline cursor-pointer text-foreground block">
+            <Link href={`/profile/${member.id}`} className="font-semibold text-sm hover:underline cursor-pointer text-foreground block">
               {member.name}
-            </a>
+            </Link>
           ) : (
             <div className="font-semibold text-sm">{member.name}</div>
           )}

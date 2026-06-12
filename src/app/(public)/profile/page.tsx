@@ -292,10 +292,24 @@ export default function StudentProfile() {
         <div className="rounded-3xl border border-border/60 bg-card shadow-sm relative">
           {/* Banner */}
           <div 
-            className="h-28 md:h-36 rounded-t-3xl relative" 
-            style={{ backgroundColor: profile.profileBannerColor || "#4f46e5" }}
+            className="h-28 md:h-36 rounded-t-3xl relative transition-colors duration-300" 
+            style={{ backgroundColor: isEditing ? editBannerColor : (profile.profileBannerColor || "#4f46e5") }}
           >
             <div className="absolute inset-0 rounded-t-3xl overflow-hidden opacity-20" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)", backgroundSize: "40px 40px" }}></div>
+            
+            {isEditing && (
+              <div className="absolute top-4 right-4 z-20">
+                <label className="cursor-pointer bg-black/40 hover:bg-black/60 text-white p-2.5 rounded-full flex items-center justify-center transition-colors shadow-sm" title="Change Banner Color">
+                  <Pencil className="w-4 h-4" />
+                  <input
+                    type="color"
+                    value={editBannerColor}
+                    onChange={(e) => setEditBannerColor(e.target.value)}
+                    className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                  />
+                </label>
+              </div>
+            )}
             
             {/* Avatar - Absolutely positioned relative to the banner to perfectly overlap without margin clipping */}
             <div 
@@ -390,25 +404,6 @@ export default function StudentProfile() {
               Personal Information
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Banner Color</Label>
-                {isEditing ? (
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="color"
-                      value={editBannerColor}
-                      onChange={(e) => setEditBannerColor(e.target.value)}
-                      className="w-10 h-10 rounded cursor-pointer border-0 p-0"
-                    />
-                    <span className="text-sm font-medium text-muted-foreground uppercase">{editBannerColor}</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-muted/40">
-                    <div className="w-6 h-6 rounded border border-border" style={{ backgroundColor: profile.profileBannerColor || "#4f46e5" }} />
-                    <span className="text-sm font-medium text-foreground uppercase">{profile.profileBannerColor || "#4f46e5"}</span>
-                  </div>
-                )}
-              </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Full Name</Label>
                 <div className="px-3.5 py-2.5 rounded-xl bg-muted/40 text-sm text-foreground font-medium">
