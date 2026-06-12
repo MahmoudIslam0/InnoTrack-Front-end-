@@ -54,7 +54,11 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MyTeamDto, PendingJoinRequestDto, studentApi } from "@/lib/student-api";
+import {
+  MyTeamDto,
+  PendingJoinRequestDto,
+  studentApi,
+} from "@/lib/student-api";
 import { api } from "@/lib/api";
 
 type JoinRequest = {
@@ -133,9 +137,9 @@ export default function TeamsPage() {
     } catch {}
   }, []);
 
-  const { 
-    messages: realChatMessages, 
-    members: realChatMembers, 
+  const {
+    messages: realChatMessages,
+    members: realChatMembers,
     sendMessage: realSendMessage,
     editMessage: realEditMessage,
     deleteMessage: realDeleteMessage,
@@ -143,7 +147,7 @@ export default function TeamsPage() {
     reactToMessage: realReactToMessage,
     replyToMessage: realReplyToMessage,
     uploadFile: realUploadFile,
-    isLoading: isChatLoading
+    isLoading: isChatLoading,
   } = useTeamChat(team ? Number(team.id) : null, refreshTeamData);
 
   useEffect(() => {
@@ -179,7 +183,9 @@ export default function TeamsPage() {
         setRequests([]);
       }
 
-      setShowHint(localStorage.getItem("teamsWorkspaceHintDismissed") !== "true");
+      setShowHint(
+        localStorage.getItem("teamsWorkspaceHintDismissed") !== "true",
+      );
       setIsLoading(false);
     });
 
@@ -187,8 +193,6 @@ export default function TeamsPage() {
       ignore = true;
     };
   }, []);
-
-
 
   useEffect(() => {
     if (!team) return;
@@ -226,7 +230,9 @@ export default function TeamsPage() {
     setTeams(next);
 
     const nextTeam =
-      next.find((existingTeam) => existingTeam.id === (selectedId || team?.id)) ||
+      next.find(
+        (existingTeam) => existingTeam.id === (selectedId || team?.id),
+      ) ||
       next[0] ||
       null;
     setTeam(nextTeam);
@@ -241,7 +247,9 @@ export default function TeamsPage() {
   const teamMembers = (team?.members || []).map((m) => ({
     id: m.id,
     name: m.name,
-    role: (m.name === (team?.leaderId || "") ? "Leader" : "Member") as "Leader" | "Member",
+    role: (m.name === (team?.leaderId || "") ? "Leader" : "Member") as
+      | "Leader"
+      | "Member",
   }));
   const visibleTeamMembers = teamMembers.map((member) => ({
     ...member,
@@ -298,7 +306,8 @@ export default function TeamsPage() {
     try {
       await studentApi.handleJoinRequest(Number(id), true);
       const updatedTeam = await studentApi.getMyTeam();
-      if (updatedTeam) saveTeams([mapTeam(updatedTeam)], String(updatedTeam.id));
+      if (updatedTeam)
+        saveTeams([mapTeam(updatedTeam)], String(updatedTeam.id));
       setRequests(requests.filter((request) => request.id !== id));
       toast.success(`${req.fullName} added to team`);
     } catch (error: unknown) {
@@ -327,7 +336,9 @@ export default function TeamsPage() {
     try {
       await studentApi.renameTeam(nextName);
       const updated = teams.map((existingTeam) =>
-        existingTeam.id === team.id ? { ...existingTeam, name: nextName } : existingTeam,
+        existingTeam.id === team.id
+          ? { ...existingTeam, name: nextName }
+          : existingTeam,
       );
       saveTeams(updated, team.id);
       setIsEditingTeamName(false);
@@ -343,23 +354,25 @@ export default function TeamsPage() {
       toast.error("The team leader cannot be removed.");
       return;
     }
-    
+
     setConfirmDialog({
       isOpen: true,
       title: "Remove Member",
       description: `Are you sure you want to remove ${name} from the team?`,
       variant: "destructive",
       onConfirm: async () => {
-        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
         try {
           await studentApi.removeMember(memberId);
 
           const updated = teams.map((existingTeam) =>
             existingTeam.id === team.id
               ? {
-                ...existingTeam,
-                members: existingTeam.members.filter((member) => member.id !== memberId),
-              }
+                  ...existingTeam,
+                  members: existingTeam.members.filter(
+                    (member) => member.id !== memberId,
+                  ),
+                }
               : existingTeam,
           );
 
@@ -368,7 +381,7 @@ export default function TeamsPage() {
         } catch (error: unknown) {
           toast.error(getErrorMessage(error, "Could not remove member."));
         }
-      }
+      },
     });
   };
 
@@ -426,7 +439,9 @@ export default function TeamsPage() {
   };
 
   return (
-    <div className={`dashboard-page ${hasTeam && activeView === "chat" ? "space-y-4 md:pt-5 md:pb-4 !max-w-[95%]" : "space-y-6"}`}>
+    <div
+      className={`dashboard-page ${hasTeam && activeView === "chat" ? "space-y-4 md:pt-5 md:pb-4 !max-w-[95%]" : "space-y-6"}`}
+    >
       {isLoading ? (
         <div className="flex flex-col gap-6">
           <div className="flex justify-center mb-4">
@@ -460,7 +475,11 @@ export default function TeamsPage() {
           createTeam={createTeam}
         />
       ) : (
-        <Tabs value={activeView} onValueChange={(val) => handleActiveViewChange(val as any)} className="w-full">
+        <Tabs
+          value={activeView}
+          onValueChange={(val) => handleActiveViewChange(val as any)}
+          className="w-full"
+        >
           <div className="flex justify-center mb-8">
             <TabsList className="grid !h-auto items-stretch w-full max-w-[440px] grid-cols-2 gap-1 rounded-xl border border-border bg-muted/40 !p-1">
               <TabsTrigger
@@ -489,7 +508,9 @@ export default function TeamsPage() {
                       <div className="flex max-w-xl flex-col gap-2 sm:flex-row sm:items-center">
                         <Input
                           value={teamNameDraft}
-                          onChange={(event) => setTeamNameDraft(event.target.value)}
+                          onChange={(event) =>
+                            setTeamNameDraft(event.target.value)
+                          }
                           onKeyDown={(event) => {
                             if (event.key === "Enter") saveTeamName();
                             if (event.key === "Escape") {
@@ -522,34 +543,48 @@ export default function TeamsPage() {
                           {teamName}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                              >
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start">
                               {isLeader ? (
                                 <>
-                                  <DropdownMenuItem className="cursor-pointer" onClick={() => setIsEditingTeamName(true)}>
+                                  <DropdownMenuItem
+                                    className="cursor-pointer"
+                                    onClick={() => setIsEditingTeamName(true)}
+                                  >
                                     <Pen className="w-4 h-4 mr-2" />
                                     Rename
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem 
+                                  <DropdownMenuItem
                                     className="text-red-600 focus:text-red-700 focus:bg-red-50 dark:focus:bg-red-950/50 cursor-pointer"
                                     onClick={() => {
                                       setConfirmDialog({
                                         isOpen: true,
                                         title: "Delete Team",
-                                        description: "Are you sure you want to delete this team? This action cannot be undone.",
+                                        description:
+                                          "Are you sure you want to delete this team? This action cannot be undone.",
                                         variant: "destructive",
                                         onConfirm: async () => {
-                                          setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                                          setConfirmDialog((prev) => ({
+                                            ...prev,
+                                            isOpen: false,
+                                          }));
                                           try {
                                             await api.delete("/api/Teams/me");
                                             window.location.reload();
                                           } catch (err: any) {
-                                            toast.error(err.message || "Failed to delete team.");
+                                            toast.error(
+                                              err.message ||
+                                                "Failed to delete team.",
+                                            );
                                           }
-                                        }
+                                        },
                                       });
                                     }}
                                   >
@@ -558,23 +593,30 @@ export default function TeamsPage() {
                                   </DropdownMenuItem>
                                 </>
                               ) : (
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   className="text-red-600 focus:text-red-700 focus:bg-red-50 dark:focus:bg-red-950/50 cursor-pointer"
                                   onClick={() => {
                                     setConfirmDialog({
                                       isOpen: true,
                                       title: "Leave Team",
-                                      description: "Are you sure you want to leave this team?",
+                                      description:
+                                        "Are you sure you want to leave this team?",
                                       variant: "destructive",
                                       onConfirm: async () => {
-                                        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                                        setConfirmDialog((prev) => ({
+                                          ...prev,
+                                          isOpen: false,
+                                        }));
                                         try {
                                           await studentApi.leaveTeam();
                                           window.location.reload();
                                         } catch (err: any) {
-                                          toast.error(err.message || "Failed to leave team.");
+                                          toast.error(
+                                            err.message ||
+                                              "Failed to leave team.",
+                                          );
                                         }
-                                      }
+                                      },
                                     });
                                   }}
                                 >
@@ -585,12 +627,12 @@ export default function TeamsPage() {
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </h1>
-                        
+
                         <div className="flex flex-wrap items-center gap-3 text-[13px] text-muted-foreground font-medium">
                           <span className="bg-muted/60 px-2.5 py-0.5 rounded-md text-xs">
                             {isLeader ? "Leader Access" : "Member"}
                           </span>
-                          
+
                           {team?.projectTitle && (
                             <>
                               <span>•</span>
@@ -610,8 +652,15 @@ export default function TeamsPage() {
                   </div>
 
                   <div className="flex gap-4">
-                    <MetricCard label="MEMBERS" value={teamMembers.length.toString()} valueColorClass="text-primary dark:text-primary" />
-                    <MetricCard label="REQUESTS" value={requests.length.toString()} />
+                    <MetricCard
+                      label="MEMBERS"
+                      value={teamMembers.length.toString()}
+                      valueColorClass="text-primary dark:text-primary"
+                    />
+                    <MetricCard
+                      label="REQUESTS"
+                      value={requests.length.toString()}
+                    />
                   </div>
                 </div>
               </div>
@@ -621,8 +670,8 @@ export default function TeamsPage() {
                   <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-primary dark:text-primary">
                     <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
                     <p className="leading-5">
-                      Manage members, join codes, and requests in Overview. Chat is for
-                      team conversation and shared files.
+                      Manage members, join codes, and requests in Overview. Chat
+                      is for team conversation and shared files.
                     </p>
                     <Button
                       variant="ghost"
@@ -653,7 +702,10 @@ export default function TeamsPage() {
                           </p>
                         </div>
                         {isLeader && (
-                          <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
+                          <Dialog
+                            open={isAddMemberOpen}
+                            onOpenChange={setIsAddMemberOpen}
+                          >
                             <DialogTrigger asChild>
                               <Button className="gap-2 bg-primary text-white hover:bg-primary/90">
                                 <UserPlus className="h-4 w-4" />
@@ -664,17 +716,22 @@ export default function TeamsPage() {
                               <DialogHeader>
                                 <DialogTitle>Add Team Member</DialogTitle>
                                 <DialogDescription>
-                                  Invite a student or generate a temporary code for this team.
+                                  Invite a student or generate a temporary code
+                                  for this team.
                                 </DialogDescription>
                               </DialogHeader>
                               <div className="flex flex-col gap-6 py-3">
                                 <div className="space-y-3">
-                                  <h4 className="text-sm font-medium">Invite via Email</h4>
+                                  <h4 className="text-sm font-medium">
+                                    Invite via Email
+                                  </h4>
                                   <div className="flex gap-2">
                                     <Input
                                       placeholder="student@university.edu or student name"
                                       value={memberContact}
-                                      onChange={(event) => setMemberContact(event.target.value)}
+                                      onChange={(event) =>
+                                        setMemberContact(event.target.value)
+                                      }
                                     />
                                     <Button
                                       className="bg-primary text-white hover:bg-primary/90"
@@ -699,7 +756,9 @@ export default function TeamsPage() {
 
                                 <div className="space-y-3">
                                   <div className="flex items-center justify-between">
-                                    <h4 className="text-sm font-medium">Generate Temporary Code</h4>
+                                    <h4 className="text-sm font-medium">
+                                      Generate Temporary Code
+                                    </h4>
                                     {inviteCountdown > 0 && (
                                       <span className="flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
                                         <Timer className="h-3 w-3" />
@@ -713,7 +772,11 @@ export default function TeamsPage() {
                                       <span className="text-2xl font-bold tracking-[0.2em] text-primary dark:text-primary">
                                         {inviteCode}
                                       </span>
-                                      <Button variant="ghost" size="icon" onClick={copyInviteCode}>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={copyInviteCode}
+                                      >
                                         {copied ? (
                                           <Check className="h-4 w-4 text-emerald-500" />
                                         ) : (
@@ -722,7 +785,11 @@ export default function TeamsPage() {
                                       </Button>
                                     </div>
                                   ) : (
-                                    <Button variant="outline" className="w-full" onClick={generateInviteCode}>
+                                    <Button
+                                      variant="outline"
+                                      className="w-full"
+                                      onClick={generateInviteCode}
+                                    >
                                       Generate 6-Digit Code
                                     </Button>
                                   )}
@@ -765,7 +832,7 @@ export default function TeamsPage() {
               </div>
             </section>
           </TabsContent>
-          
+
           <TabsContent value="chat" className="mt-0 outline-none">
             <TeamChatWorkspace
               title="Team Chat"
@@ -787,10 +854,10 @@ export default function TeamsPage() {
           </TabsContent>
         </Tabs>
       )}
-      
-      <ConfirmDialog 
+
+      <ConfirmDialog
         isOpen={confirmDialog.isOpen}
-        onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+        onClose={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
         onConfirm={confirmDialog.onConfirm}
         title={confirmDialog.title}
         description={confirmDialog.description}
@@ -850,7 +917,8 @@ function NoTeamState({
             </h2>
 
             <p className="mt-3 text-center text-base leading-relaxed text-muted-foreground">
-              Enter the 6-digit code from your team leader to unlock the team workspace.
+              Enter the 6-digit code from your team leader to unlock the team
+              workspace.
             </p>
 
             <div className="mt-8 space-y-4">
@@ -858,7 +926,9 @@ function NoTeamState({
                 placeholder="Enter 6-digit code"
                 value={joinCodeInput}
                 onChange={(event) =>
-                  setJoinCodeInput(event.target.value.replace(/\D/g, "").slice(0, 6))
+                  setJoinCodeInput(
+                    event.target.value.replace(/\D/g, "").slice(0, 6),
+                  )
                 }
                 className="h-14 text-center tracking-[0.4em] text-lg bg-background"
                 inputMode="numeric"
@@ -883,7 +953,8 @@ function NoTeamState({
             </h2>
 
             <p className="mt-3 text-center text-base leading-relaxed text-muted-foreground">
-              Start your own team, then invite members and manage requests from your Overview dashboard.
+              Start your own team, then invite members and manage requests from
+              your Overview dashboard.
             </p>
 
             <div className="mt-8 space-y-4">
@@ -920,7 +991,7 @@ function NoTeamState({
 function MetricCard({
   label,
   value,
-  valueColorClass = "text-foreground"
+  valueColorClass = "text-foreground",
 }: {
   label: string;
   value: string;
@@ -928,8 +999,12 @@ function MetricCard({
 }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-xl border border-border/50 bg-background/50 py-5 min-w-[110px] shadow-sm">
-      <p className={`text-[40px] leading-none font-bold ${valueColorClass}`}>{value}</p>
-      <p className="mt-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">{label}</p>
+      <p className={`text-[40px] leading-none font-bold ${valueColorClass}`}>
+        {value}
+      </p>
+      <p className="mt-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">
+        {label}
+      </p>
     </div>
   );
 }
@@ -949,11 +1024,16 @@ function parseTeams(value: unknown): Team[] {
   if (!Array.isArray(value)) return [];
 
   return value
-    .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
+    .filter(
+      (item): item is Record<string, unknown> =>
+        Boolean(item) && typeof item === "object",
+    )
     .map((item) => {
       const leaderId = typeof item.leaderId === "string" ? item.leaderId : "me";
       const members = Array.isArray(item.members)
-        ? item.members.filter((member): member is string => typeof member === "string")
+        ? item.members.filter(
+            (member): member is string => typeof member === "string",
+          )
         : [];
 
       return {
@@ -966,7 +1046,7 @@ function parseTeams(value: unknown): Team[] {
             : typeof item.supervisor === "string"
               ? item.supervisor
               : undefined,
-        members: members.map(m => ({ id: 0, name: m })),
+        members: members.map((m) => ({ id: 0, name: m })),
       };
     });
 }
@@ -985,7 +1065,10 @@ function mapTeam(value: MyTeamDto): Team {
     name: value.name,
     leaderId: leader?.fullName || value.members[0]?.fullName || "",
     isLeader: value.isLeader,
-    members: value.members.map((member: any) => ({ id: member.studentId || member.userId || member.id, name: member.fullName })),
+    members: value.members.map((member: any) => ({
+      id: member.studentId || member.userId || member.id,
+      name: member.fullName,
+    })),
     supervisorName: value.supervisorName ?? undefined,
     projectTitle: value.projectTitle ?? undefined,
     projectTechnologies: value.projectTechnologies ?? [],
@@ -1014,13 +1097,20 @@ function parseRequests(value: unknown): JoinRequest[] {
   if (!Array.isArray(value)) return [];
 
   return value
-    .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
+    .filter(
+      (item): item is Record<string, unknown> =>
+        Boolean(item) && typeof item === "object",
+    )
     .map((item) => ({
       id: typeof item.id === "string" ? item.id : crypto.randomUUID(),
-      fullName: typeof item.fullName === "string" ? item.fullName : "Unknown Student",
-      department: typeof item.department === "string" ? item.department : "Unassigned",
+      fullName:
+        typeof item.fullName === "string" ? item.fullName : "Unknown Student",
+      department:
+        typeof item.department === "string" ? item.department : "Unassigned",
       skills: Array.isArray(item.skills)
-        ? item.skills.filter((skill): skill is string => typeof skill === "string")
+        ? item.skills.filter(
+            (skill): skill is string => typeof skill === "string",
+          )
         : [],
     }));
 }
