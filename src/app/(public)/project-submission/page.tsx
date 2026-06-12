@@ -133,7 +133,7 @@ function ProjectSubmissionPage() {
     if (blocksNewSubmission) return "Your team already has an active or submitted project.";
     if (missingRequiredFields.length > 0) return `Complete ${missingRequiredFields.join(", ")} before sending to a supervisor.`;
     if (!hasRunSimilarityCheck) return "Run the similarity check before sending to a supervisor.";
-    if (originalityScore < 60) return "Project originality must be at least 60% before sending to a supervisor.";
+    if (originalityScore < 40) return "Project originality must be at least 40% before sending to a supervisor.";
     return "";
   })();
 
@@ -881,7 +881,7 @@ function ProjectSubmissionPage() {
             </div>
           )}
 
-          {originalityScore > 0 && originalityScore < 60 && (
+          {originalityScore > 0 && originalityScore < 40 && (
             <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-5 flex items-start gap-4 animate-in slide-in-from-bottom-4">
               <div className="bg-yellow-500/20 p-2 rounded-lg shrink-0">
                 <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
@@ -891,7 +891,7 @@ function ProjectSubmissionPage() {
                   Originality Score Below Threshold
                 </p>
                 <p className="text-sm text-yellow-800/80 dark:text-yellow-400/80 mt-1">
-                  Your project needs an originality score above 60% to submit to
+                  Your project needs an originality score above 40% to submit to
                   a supervisor. Please revise your project idea to improve
                   originality.
                 </p>
