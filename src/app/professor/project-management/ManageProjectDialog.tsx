@@ -245,6 +245,30 @@ export function ManageProjectDialog({
                       </div>
                     )}
 
+                    {/* Proposal Details */}
+                    {(project.proposalDepartment || project.proposalMessage) && (
+                      <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-7 shadow-sm space-y-4">
+                        <h4 className="text-sm font-bold flex items-center gap-2 text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                          <MessageSquare className="w-4 h-4" />
+                          Proposal Details
+                        </h4>
+                        {project.proposalDepartment && (
+                           <div className="mb-3">
+                             <span className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Department: </span>
+                             <span className="text-[15px] text-slate-700 dark:text-slate-200 font-medium ml-2">{project.proposalDepartment}</span>
+                           </div>
+                        )}
+                        {project.proposalMessage && (
+                           <div>
+                             <p className="text-[13px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">Message from team:</p>
+                             <div className="p-4 bg-[#f8f9fa] dark:bg-slate-950 rounded-xl border border-slate-200/80 dark:border-slate-800">
+                               <p className="text-[15px] text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{project.proposalMessage}</p>
+                             </div>
+                           </div>
+                        )}
+                      </div>
+                    )}
+
                     {/* Abstract */}
                     <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-7 shadow-sm space-y-4">
                       <h4 className="text-sm font-bold flex items-center gap-2 text-slate-500 dark:text-slate-400 uppercase tracking-widest">
