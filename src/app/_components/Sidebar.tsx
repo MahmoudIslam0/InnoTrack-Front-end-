@@ -126,12 +126,14 @@ export function SidebarContent({ activeItem, variant = "student" }: SidebarProps
 
 export function Sidebar({ variant = "student" }: SidebarProps) {
   const { isSidebarCollapsed } = useSidebar();
+  const pathname = usePathname();
+  const currentVariant = pathname.startsWith("/admin") ? "admin" : pathname.startsWith("/professor") ? "professor" : "student";
   
   return (
     <aside 
       className={`fixed left-0 top-0 h-screen ${isSidebarCollapsed ? 'w-20' : 'w-64'} bg-background/70 backdrop-blur-2xl border-r border-border/50 hidden md:flex flex-col z-20 shadow-[8px_0_30px_rgba(0,0,0,0.03)] dark:shadow-none transition-all duration-500 ease-in-out`}
     >
-      <SidebarContent variant={variant} />
+      <SidebarContent variant={currentVariant} />
     </aside>
   );
 }

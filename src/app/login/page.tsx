@@ -34,7 +34,7 @@ export default function Login() {
       const response = await login(email, password);
       if (response.role?.toLowerCase() === "admin") {
         router.push("/admin/dashboard");
-      } else if (response.role === "Professor") {
+      } else if (response.role?.toLowerCase() === "professor") {
         router.push("/professor/dashboard");
       } else {
         router.push("/dashboard");
