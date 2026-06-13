@@ -48,6 +48,71 @@ export default function Register() {
     fetchDepartments();
   }, []);
 
+  const [step, setStep] = useState<"register" | "otp">("register");
+  const [otp, setOtp] = useState("");
+  const [countdown, setCountdown] = useState(60);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (step === "otp" && countdown > 0) {
+      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [countdown, step]);
+
+  const handleRequestOtp = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      await api.post("/api/auth/request-otp", { email });
+      setStep("otp");
+      setCountdown(60);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to send OTP.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOtpAndRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otp.length !== 6) {
+      setError("Please enter a 6-digit code.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      await api.post("/api/auth/verify-otp", { email, otp });
+      
+      // If OTP succeeds, finalize registration
+      const parsedGradYear = parseInt(graduationYear);
+      await register({
+        firstName,
+        lastName,
+        email,
+        password,
+        departmentId: parseInt(departmentId),
+        gpa: 3.0,
+        graduationYear: parsedGradYear,
+      });
+      router.push("/");
+    } catch (err: any) {
+      const msg = err.response?.data?.message;
+      if (msg === "OTP Expired or Not Found.") {
+        setError("Code expired. Please request a new one.");
+      } else if (msg === "Invalid OTP.") {
+        setError("Incorrect code. Please try again.");
+      } else {
+        setError(msg || err.message || "Registration failed. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -91,24 +156,7 @@ export default function Register() {
       return;
     }
 
-    setIsLoading(true);
-
-    try {
-      await register({
-        firstName,
-        lastName,
-        email,
-        password,
-        departmentId: parseInt(departmentId),
-        gpa: 3.0,
-        graduationYear: parsedGradYear,
-      });
-      router.push("/");
-    } catch (err: any) {
-      setError(err.message || "Registration failed. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+    await handleRequestOtp();
   };
 
   const passwordRules = [
@@ -167,6 +215,7 @@ export default function Register() {
           )}
 
           {/* Registration Form */}
+          {step === "register" ? (
           <form onSubmit={handleSubmit} noValidate className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="space-y-2">
@@ -346,6 +395,66 @@ export default function Register() {
               )}
             </Button>
           </form>
+          ) : (
+            <form onSubmit={handleVerifyOtpAndRegister} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+              <div className="text-center space-y-2 mb-6">
+                <h3 className="text-xl font-semibold text-foreground">Verify your email</h3>
+                <p className="text-sm text-muted-foreground">We sent a 6-digit code to <span className="font-semibold text-foreground">{email}</span></p>
+              </div>
+              
+              <div className="space-y-4">
+                <Input
+                  type="text"
+                  maxLength={6}
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                  placeholder="000000"
+                  className="h-16 text-center text-3xl tracking-[1em] font-mono rounded-xl bg-background/50 border-border/50 focus-visible:ring-indigo-500/50 transition-all duration-200 shadow-sm"
+                  required
+                  autoFocus
+                />
+                
+                <Button
+                  type="submit"
+                  disabled={isLoading || otp.length !== 6}
+                  className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-base transition-all duration-200 shadow-lg shadow-indigo-500/25"
+                >
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Verifying...</span>
+                    </div>
+                  ) : (
+                    "Verify Code"
+                  )}
+                </Button>
+
+                <div className="text-center pt-4">
+                  {countdown > 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      Resend code in <span className="font-semibold text-foreground">{countdown}s</span>
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleRequestOtp}
+                      disabled={isLoading}
+                      className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+                    >
+                      Resend Verification Code
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setStep("register")}
+                    className="block w-full mt-4 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Back to Registration
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
 
           {/* Login Link */}
           <div className="mt-8 text-center">
