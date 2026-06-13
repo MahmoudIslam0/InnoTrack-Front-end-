@@ -9,8 +9,8 @@ import { PageHeader } from "@/app/_components/DashboardUI";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { MoreHorizontal, AlertTriangle, RefreshCcw, Star, StarOff, PencilRuler, UserPlus } from "lucide-react";
-import { normalizeStatusTone } from "@/lib/student-api";
+import { MoreHorizontal, AlertTriangle, RefreshCcw, Star, StarOff, PencilRuler, UserPlus, Search } from "lucide-react";
+import { normalizeStatusTone, studentApi } from "@/lib/student-api";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +38,15 @@ export default function AdminProjects() {
   const [isResetting, setIsResetting] = useState(false);
   const [professors, setProfessors] = useState<AdminProfessorDto[]>([]);
 
+  const [searchInput, setSearchInput] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterDomainId, setFilterDomainId] = useState<number | "all">("all");
+  const [filterAcademicYearId, setFilterAcademicYearId] = useState<number | "all">("all");
+
+  const [domains, setDomains] = useState<{id: number, name: string}[]>([]);
+  const [academicYears, setAcademicYears] = useState<{id: number, name: string}[]>([]);
+
   // Status Override Modal State
   const [isOverrideOpen, setIsOverrideOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<AdminProjectDto | null>(null);
@@ -58,6 +67,10 @@ export default function AdminProjects() {
       const result = await adminApi.getProjects({
         pageNumber: pagination.pageIndex + 1,
         pageSize: pagination.pageSize,
+        search: searchTerm || undefined,
+        status: filterStatus !== "all" ? filterStatus : undefined,
+        domainId: filterDomainId !== "all" ? filterDomainId : undefined,
+        academicYearId: filterAcademicYearId !== "all" ? filterAcademicYearId : undefined,
       });
       setData(result.items);
       setPageCount(result.totalPages);
@@ -70,12 +83,15 @@ export default function AdminProjects() {
 
   useEffect(() => {
     fetchProjects();
-  }, [pagination]);
+  }, [pagination, searchTerm, filterStatus, filterDomainId, filterAcademicYearId]);
 
   useEffect(() => {
     adminApi.getProfessors({ pageSize: 1000 })
       .then(res => setProfessors(res.items.filter((p: any) => p.isActive)))
       .catch(err => console.error("Failed to load professors", err));
+      
+    studentApi.getDomains().then(res => setDomains(res.data)).catch(console.error);
+    adminApi.getAcademicYears({ pageSize: 1000 }).then(res => setAcademicYears(res.items)).catch(console.error);
   }, []);
 
   const handleResetStuck = async () => {
@@ -237,15 +253,55 @@ export default function AdminProjects() {
           description="Monitor and manage student graduation projects, intervene on stuck projects, and reassign supervisors if needed."
         />
         
-        <Button 
-          variant="outline" 
-          className="mt-2 sm:mt-0"
-          onClick={() => setIsResetStuckOpen(true)}
-          disabled={isResetting}
-        >
-          <RefreshCcw className={`w-4 h-4 mr-2 ${isResetting ? "animate-spin" : ""}`} />
-          Reset Stuck Projects
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-3 mt-2 sm:mt-0 items-center flex-wrap justify-end">
+          <form onSubmit={(e) => { e.preventDefault(); setSearchTerm(searchInput); setPagination({ ...pagination, pageIndex: 0 }); }} className="flex items-center relative">
+            <Search className="w-4 h-4 absolute left-3 text-muted-foreground" />
+            <Input 
+              placeholder="Search projects..." 
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="pl-9 w-full sm:w-[250px]"
+            />
+          </form>
+
+          <select 
+            value={filterStatus} 
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+          >
+            <option value="all">All Statuses</option>
+            {possibleStatuses.map(status => (
+              <option key={status} value={status}>{status}</option>
+            ))}
+          </select>
+
+          <select 
+            value={filterDomainId} 
+            onChange={(e) => setFilterDomainId(e.target.value === "all" ? "all" : Number(e.target.value))}
+            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background max-w-[150px] truncate"
+          >
+            <option value="all">All Domains</option>
+            {domains.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+          </select>
+
+          <select 
+            value={filterAcademicYearId} 
+            onChange={(e) => setFilterAcademicYearId(e.target.value === "all" ? "all" : Number(e.target.value))}
+            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background max-w-[150px] truncate"
+          >
+            <option value="all">All Academic Years</option>
+            {academicYears.map(y => <option key={y.id} value={y.id}>{y.name}</option>)}
+          </select>
+
+          <Button 
+            variant="outline" 
+            onClick={() => setIsResetStuckOpen(true)}
+            disabled={isResetting}
+          >
+            <RefreshCcw className={`w-4 h-4 mr-2 ${isResetting ? "animate-spin" : ""}`} />
+            Reset Stuck
+          </Button>
+        </div>
       </div>
 
       <div className="mt-8">
