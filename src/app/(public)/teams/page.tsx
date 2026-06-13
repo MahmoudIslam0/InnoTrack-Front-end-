@@ -1068,6 +1068,7 @@ function mapTeam(value: MyTeamDto): Team {
     members: value.members.map((member: any) => ({
       id: member.studentId || member.userId || member.id,
       name: member.fullName,
+      profilePictureUrl: member.profilePictureUrl,
     })),
     supervisorName: value.supervisorName ?? undefined,
     projectTitle: value.projectTitle ?? undefined,

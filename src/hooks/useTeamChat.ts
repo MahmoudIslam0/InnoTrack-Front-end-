@@ -68,7 +68,8 @@ export function useTeamChat(teamId: number | null, onTeamUpdated?: () => void) {
             initials: m.initials,
             role: (m.role as "Professor" | "Student") || "Student",
             online: isCurrentUser ? true : (existing?.online || false),
-            lastOnlineAt: m.lastOnlineAt
+            lastOnlineAt: m.lastOnlineAt,
+            profilePictureUrl: m.profilePictureUrl
           };
         });
         setMembers(formattedMembers);

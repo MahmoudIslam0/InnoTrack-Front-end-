@@ -13,15 +13,20 @@ import {
 interface Member {
   id?: number;
   name: string;
-  role?: "Leader" | "Member";
+  role?: "Leader" | "Member" | string;
+  profilePictureUrl?: string | null;
 }
 
 export default function MemberCard({ member, isLeaderView, onRemove }: { member: Member; isLeaderView?: boolean; onRemove?: (name: string, id?: number)=>void }) {
   return (
     <div className="bg-card p-2 rounded-xl border border-border/50 flex items-center justify-between gap-2">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-primary/90 text-sm">
-          {member.name.split(" ").map(n => n[0]).join("")}
+        <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-primary/90 text-sm overflow-hidden border border-border">
+          {member.profilePictureUrl ? (
+            <img src={`${process.env.NEXT_PUBLIC_API_URL || "https://innotrack-aneshpdxd6habnd6.uaenorth-01.azurewebsites.net"}${member.profilePictureUrl}`} alt={member.name} className="w-full h-full object-cover" />
+          ) : (
+            member.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
+          )}
         </div>
         <div>
           {member.id ? (

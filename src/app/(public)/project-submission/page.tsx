@@ -132,6 +132,8 @@ function ProjectSubmissionPage() {
     if (isDetailsOnly) return "";
     if (blocksNewSubmission) return "Your team already has an active or submitted project.";
     if (missingRequiredFields.length > 0) return `Complete ${missingRequiredFields.join(", ")} before sending to a supervisor.`;
+    if (formData.abstract.trim().split(/\s+/).filter(Boolean).length > 120) return "Abstract cannot exceed 120 words.";
+    if (formData.description.trim().split(/\s+/).filter(Boolean).length > 280) return "Detailed description cannot exceed 280 words.";
     if (!hasRunSimilarityCheck) return "Run the similarity check before sending to a supervisor.";
     if (originalityScore < 40) return "Project originality must be at least 40% before sending to a supervisor.";
     return "";
@@ -759,15 +761,20 @@ function ProjectSubmissionPage() {
 
             <div className="space-y-6">
               <div className="space-y-1.5">
-                <Label htmlFor="abstract" className="flex flex-wrap items-center gap-2">
-                  Abstract *
-                  <span className="text-xs text-muted-foreground/80 font-normal">
-                    (AI-generated summary available after similarity check)
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="abstract" className="flex flex-wrap items-center gap-2">
+                    Abstract *
+                    <span className="text-xs text-muted-foreground/80 font-normal">
+                      (AI-generated summary available after similarity check)
+                    </span>
+                  </Label>
+                  <span className={`text-xs ${formData.abstract.trim().split(/\\s+/).filter(Boolean).length > 120 ? 'text-red-500 font-medium' : 'text-muted-foreground'}`}>
+                    {formData.abstract.trim().split(/\\s+/).filter(Boolean).length} / 120 words
                   </span>
-                </Label>
+                </div>
                 <Textarea
                   id="abstract"
-                  placeholder="Brief summary of your project (150-250 words)"
+                  placeholder="Brief summary of your project (Maximum 120 words)"
                   value={formData.abstract}
                   onChange={(e) =>
                     handleInputChange("abstract", e.target.value)
@@ -778,10 +785,15 @@ function ProjectSubmissionPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="description">Detailed Description *</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="description">Detailed Description *</Label>
+                  <span className={`text-xs ${formData.description.trim().split(/\\s+/).filter(Boolean).length > 280 ? 'text-red-500 font-medium' : 'text-muted-foreground'}`}>
+                    {formData.description.trim().split(/\\s+/).filter(Boolean).length} / 280 words
+                  </span>
+                </div>
                 <Textarea
                   id="description"
-                  placeholder="Comprehensive description of your project"
+                  placeholder="Comprehensive description of your project (Maximum 280 words)"
                   value={formData.description}
                   onChange={(e) =>
                     handleInputChange("description", e.target.value)

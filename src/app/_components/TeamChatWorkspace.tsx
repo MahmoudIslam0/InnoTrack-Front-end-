@@ -9,7 +9,7 @@ import { studentApi } from "@/lib/student-api";
 import { Theme } from 'emoji-picker-react';
 import { motion, AnimatePresence } from "framer-motion";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +55,7 @@ export interface TeamChatMember {
   role: "Professor" | "Student" | string;
   online?: boolean;
   lastOnlineAt?: string | null;
+  profilePictureUrl?: string | null;
 }
 
 export function TeamChatWorkspace({
@@ -289,6 +290,7 @@ export function TeamChatWorkspace({
                 const isOwnMessage = message.author === currentUserName;
                 const parentMsg = message.parentMessageId ? messages.find(m => m.backendId === message.parentMessageId) : null;
                 const quickEmojis = ["👍", "❤️", "😂", "😮", "😢"];
+                const authorMember = members.find(m => m.id === message.authorId?.toString() || m.name === message.author);
 
                 return (
                   <motion.div 
@@ -302,7 +304,10 @@ export function TeamChatWorkspace({
                     className={`flex items-end gap-3 group p-1 ${isOwnMessage ? "justify-end" : ""}`}
                   >
                     {!isOwnMessage && (
-                      <Avatar className="h-8 w-8 shrink-0 shadow-sm border border-border/50 mb-1\">
+                      <Avatar className="h-8 w-8 shrink-0 shadow-sm border border-border/50 mb-1">
+                        {authorMember?.profilePictureUrl && (
+                          <AvatarImage src={`${process.env.NEXT_PUBLIC_API_URL || "https://innotrack-aneshpdxd6habnd6.uaenorth-01.azurewebsites.net"}${authorMember.profilePictureUrl}`} alt={message.author} className="object-cover" />
+                        )}
                         <AvatarFallback className="bg-muted/80 text-foreground font-semibold text-xs">
                           {message.initials}
                         </AvatarFallback>

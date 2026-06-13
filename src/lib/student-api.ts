@@ -102,6 +102,7 @@ export type MyTeamDto = {
     fullName: string;
     role: string;
     email: string;
+    profilePictureUrl?: string | null;
     skills: string[];
   }[];
 };
@@ -141,6 +142,7 @@ export type ChatMemberDto = {
   fullName: string;
   role: string;
   initials: string;
+  profilePictureUrl?: string | null;
   lastOnlineAt?: string | null;
 };
 
