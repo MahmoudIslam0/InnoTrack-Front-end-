@@ -420,8 +420,10 @@ function InnoChatContent() {
   }, [messages, isTyping]);
 
   useEffect(() => {
-    const savedSessionId = localStorage.getItem("innoChatSessionId");
-    const savedMessages = localStorage.getItem("innoChatMessages");
+    if (!userId) return;
+
+    const savedSessionId = localStorage.getItem(`innoChatSessionId_${userId}`);
+    const savedMessages = localStorage.getItem(`innoChatMessages_${userId}`);
 
     if (savedSessionId && savedMessages && !projectContext?.title) {
       // Load from cache if no project context is provided (meaning a regular chat, not coming from submission)
@@ -465,16 +467,17 @@ function InnoChatContent() {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [projectContext?.title]);
+  }, [projectContext?.title, userId]);
 
   useEffect(() => {
+    if (!userId) return;
     if (messages.length > 0) {
-      localStorage.setItem("innoChatMessages", JSON.stringify(messages));
+      localStorage.setItem(`innoChatMessages_${userId}`, JSON.stringify(messages));
     }
     if (sessionId) {
-      localStorage.setItem("innoChatSessionId", sessionId);
+      localStorage.setItem(`innoChatSessionId_${userId}`, sessionId);
     }
-  }, [messages, sessionId]);
+  }, [messages, sessionId, userId]);
 
   const handleSend = async (directMessage?: string | React.MouseEvent | React.KeyboardEvent) => {
     const isDirectString = typeof directMessage === 'string';
@@ -630,8 +633,10 @@ function InnoChatContent() {
                 const initialGreeting = messages.length > 0 ? messages[0] : null;
                 const newMessages = initialGreeting ? [initialGreeting] : [];
                 setMessages(newMessages);
-                localStorage.setItem("innoChatSessionId", newSessionId);
-                localStorage.setItem("innoChatMessages", JSON.stringify(newMessages));
+                if (userId) {
+                  localStorage.setItem(`innoChatSessionId_${userId}`, newSessionId);
+                  localStorage.setItem(`innoChatMessages_${userId}`, JSON.stringify(newMessages));
+                }
                 toast.success("Started a new chat session!");
               }}
               className="text-muted-foreground hover:text-foreground"
