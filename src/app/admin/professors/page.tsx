@@ -413,7 +413,6 @@ export default function AdminProfessors() {
           variant="destructive"
           isLoading={isDeleting}
         />
-      </div>
 
       <div className="mt-8">
         <DataTable 
