@@ -652,7 +652,8 @@ export default function ProjectManagement() {
                         <Button 
                           variant="secondary" 
                           onClick={handleDownloadOriginalityReport}
-                          disabled={isDownloadingReport}
+                          disabled={isDownloadingReport || project.originalityScore == null}
+                          title={project.originalityScore == null ? "Originality score must be calculated first" : "Download Report"}
                         >
                           <Download className="w-4 h-4 mr-2" />
                           {isDownloadingReport ? "Downloading..." : "Originality Report"}
@@ -847,7 +848,8 @@ export default function ProjectManagement() {
                         variant="secondary"
                         size="sm"
                         onClick={handleDownloadOriginalityReport}
-                        disabled={isDownloadingReport}
+                        disabled={isDownloadingReport || project.originalityScore == null}
+                        title={project.originalityScore == null ? "Originality score must be calculated first" : "Download Report"}
                       >
                         <Download className="w-3 h-3 mr-1.5" />
                         {isDownloadingReport ? "Downloading..." : "Report"}
