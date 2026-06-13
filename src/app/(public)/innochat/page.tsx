@@ -701,12 +701,6 @@ function InnoChatContent() {
                           content={message.content}
                           hasTeam={!!myTeam}
                           onSendToSubmission={async (data) => {
-                            if (message.draftId) {
-                              toast.success("Opening existing draft...");
-                              router.push(`/project-submission?draft=${message.draftId}`);
-                              return;
-                            }
-
                             try {
                               toast.loading("Saving your project draft...");
                               
@@ -744,7 +738,17 @@ function InnoChatContent() {
                               };
 
                               const allDrafts = await studentApi.getMyDrafts();
-                              const existingDraft = allDrafts.find((d: any) => d.title.toLowerCase() === payload.title.toLowerCase());
+                              
+                              // 1. Check if the draftId saved in the chat message still exists
+                              let existingDraft = null;
+                              if (message.draftId) {
+                                existingDraft = allDrafts.find((d: any) => d.id === message.draftId);
+                              }
+                              
+                              // 2. Fallback: Check if a draft exists with the exact same title
+                              if (!existingDraft) {
+                                existingDraft = allDrafts.find((d: any) => d.title.toLowerCase() === payload.title.toLowerCase());
+                              }
                               
                               let draftId = 0;
                               if (existingDraft) {
