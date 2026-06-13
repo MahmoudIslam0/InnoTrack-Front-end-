@@ -74,7 +74,7 @@ type Team = {
   name: string;
   leaderId?: string;
   isLeader?: boolean;
-  members: { id: number; name: string }[];
+  members: { id: number; name: string; profilePictureUrl?: string | null }[];
   supervisorName?: string;
   projectTitle?: string;
   projectTechnologies?: string[];
@@ -247,6 +247,7 @@ export default function TeamsPage() {
   const teamMembers = (team?.members || []).map((m) => ({
     id: m.id,
     name: m.name,
+    profilePictureUrl: m.profilePictureUrl,
     role: (m.name === (team?.leaderId || "") ? "Leader" : "Member") as
       | "Leader"
       | "Member",
