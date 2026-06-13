@@ -247,13 +247,12 @@ export default function AdminProjects() {
 
   return (
     <div className="dashboard-page">
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-        <PageHeader
-          title="Projects Management"
-          description="Monitor and manage student graduation projects, intervene on stuck projects, and reassign supervisors if needed."
-        />
-        
-        <div className="flex flex-col sm:flex-row gap-3 mt-2 sm:mt-0 items-center flex-wrap justify-end">
+      <PageHeader
+        title="Projects Management"
+        description="Monitor and manage student graduation projects, intervene on stuck projects, and reassign supervisors if needed."
+      />
+      
+      <div className="flex flex-col lg:flex-row gap-3 mt-6 items-center flex-wrap">
           <form onSubmit={(e) => { e.preventDefault(); setSearchTerm(searchInput); setPagination({ ...pagination, pageIndex: 0 }); }} className="flex items-center relative">
             <Search className="w-4 h-4 absolute left-3 text-muted-foreground" />
             <Input 
@@ -302,7 +301,6 @@ export default function AdminProjects() {
             Reset Stuck
           </Button>
         </div>
-      </div>
 
       <div className="mt-8">
         <DataTable

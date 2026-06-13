@@ -275,13 +275,12 @@ export default function AdminProfessors() {
 
   return (
     <div className="dashboard-page">
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-        <PageHeader
-          title="Professor Management"
-          description="View professors, manage capacities, and provision new supervisor accounts."
-        />
-        
-        <div className="flex flex-col sm:flex-row gap-3 mt-2 sm:mt-0 items-center">
+      <PageHeader
+        title="Professor Management"
+        description="Monitor system supervisors, handle accounts, and adjust individual workloads."
+      />
+      
+      <div className="flex flex-col lg:flex-row gap-3 mt-6 items-center flex-wrap">
           <form onSubmit={handleSearch} className="flex items-center relative">
             <Search className="w-4 h-4 absolute left-3 text-muted-foreground" />
             <Input 

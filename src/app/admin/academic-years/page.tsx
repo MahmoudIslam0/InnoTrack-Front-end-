@@ -197,13 +197,12 @@ export default function AdminAcademicYears() {
 
   return (
     <div className="dashboard-page">
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-        <PageHeader
-          title="Academic Years"
-          description="Manage graduation cycles. Only one year can be active at a time."
-        />
-        
-        <div className="flex flex-col sm:flex-row gap-3 mt-2 sm:mt-0 items-center flex-wrap justify-end">
+      <PageHeader
+        title="Academic Years"
+        description="Manage graduation cycles. Only one year can be active at a time."
+      />
+      
+      <div className="flex flex-col lg:flex-row gap-3 mt-6 items-center flex-wrap">
           <form onSubmit={handleSearch} className="flex items-center relative">
             <Search className="w-4 h-4 absolute left-3 text-muted-foreground" />
             <Input 
@@ -286,7 +285,6 @@ export default function AdminAcademicYears() {
           </DialogContent>
         </Dialog>
         </div>
-      </div>
 
       <div className="mt-8">
         <DataTable

@@ -226,13 +226,12 @@ export default function AdminTeams() {
 
   return (
     <div className="dashboard-page">
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-        <PageHeader
-          title="Team Management"
-          description="Monitor student teams, supervise capacities, and reassign advisors."
-        />
-        
-        <div className="flex flex-col sm:flex-row gap-3 mt-2 sm:mt-0 items-center">
+      <PageHeader
+        title="Teams Management"
+        description="Monitor student teams, supervise capacities, and reassign advisors."
+      />
+      
+      <div className="flex flex-col lg:flex-row gap-3 mt-6 items-center flex-wrap">
           <form onSubmit={handleSearch} className="flex items-center relative">
             <Search className="w-4 h-4 absolute left-3 text-muted-foreground" />
             <Input 
@@ -267,7 +266,6 @@ export default function AdminTeams() {
             <option value="Rejected">Rejected</option>
           </select>
         </div>
-      </div>
 
       <div className="mt-8">
         <DataTable
