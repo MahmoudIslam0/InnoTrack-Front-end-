@@ -277,7 +277,7 @@ export default function AdminProjects() {
           <select 
             value={filterDomainId} 
             onChange={(e) => setFilterDomainId(e.target.value === "all" ? "all" : Number(e.target.value))}
-            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background max-w-[150px] truncate"
+            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
           >
             <option value="all">All Domains</option>
             {domains.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -286,7 +286,7 @@ export default function AdminProjects() {
           <select 
             value={filterAcademicYearId} 
             onChange={(e) => setFilterAcademicYearId(e.target.value === "all" ? "all" : Number(e.target.value))}
-            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background max-w-[150px] truncate"
+            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
           >
             <option value="all">All Academic Years</option>
             {academicYears.map(y => <option key={y.id} value={y.id}>{y.name}</option>)}
