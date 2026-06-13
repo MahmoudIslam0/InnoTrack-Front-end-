@@ -768,8 +768,8 @@ function ProjectSubmissionPage() {
                       (AI-generated summary available after similarity check)
                     </span>
                   </Label>
-                  <span className={`text-xs ${formData.abstract.trim().split(/\\s+/).filter(Boolean).length > 120 ? 'text-red-500 font-medium' : 'text-muted-foreground'}`}>
-                    {formData.abstract.trim().split(/\\s+/).filter(Boolean).length} / 120 words
+                  <span className={`text-xs ${formData.abstract.trim().split(/\s+/).filter(Boolean).length > 120 ? 'text-red-500 font-medium' : 'text-muted-foreground'}`}>
+                    {formData.abstract.trim().split(/\s+/).filter(Boolean).length} / 120 words
                   </span>
                 </div>
                 <Textarea
@@ -787,8 +787,8 @@ function ProjectSubmissionPage() {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="description">Detailed Description *</Label>
-                  <span className={`text-xs ${formData.description.trim().split(/\\s+/).filter(Boolean).length > 280 ? 'text-red-500 font-medium' : 'text-muted-foreground'}`}>
-                    {formData.description.trim().split(/\\s+/).filter(Boolean).length} / 280 words
+                  <span className={`text-xs ${formData.description.trim().split(/\s+/).filter(Boolean).length > 280 ? 'text-red-500 font-medium' : 'text-muted-foreground'}`}>
+                    {formData.description.trim().split(/\s+/).filter(Boolean).length} / 280 words
                   </span>
                 </div>
                 <Textarea
