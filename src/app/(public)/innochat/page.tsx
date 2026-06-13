@@ -137,6 +137,8 @@ function parseProjectData(content: string): Partial<SaveDraftPayload> {
       if (currentField) data[currentField] = currentValue.trim();
       currentField = 'objectives';
       currentValue = l.replace(/.*Objectives:/i, '');
+    } else if (l.match(/👉/i) || l.match(/What's next\?/i) || l.match(/You can say/i)) {
+      break; // Stop parsing fields when reaching conversational footer
     } else {
       if (currentField) currentValue += '\n' + l;
     }
@@ -327,12 +329,12 @@ function MessageContent({
     });
   }
 
-  // Handle Full Project Generated -> Send to submission
+  // Handle Full Project Generated -> Save to a draft
   if (isFullProject) {
     elements.push(
       <div key="submit-project-option" className="mt-5 p-4 border border-green-500/30 bg-green-500/5 rounded-2xl">
         <p className="text-sm font-medium text-green-700 dark:text-green-400 mb-3">
-          I've generated the full project details! Would you like to save this as a draft and review it on the submission page?
+          I've generated the full project details! Would you like to save this to a draft and review it on the submission page?
         </p>
         <Button
           onClick={() => {
@@ -350,7 +352,7 @@ function MessageContent({
           className="w-full bg-green-600 hover:bg-green-700 text-white font-medium"
         >
           <FolderKanban className="w-4 h-4 mr-2" />
-          Send to Project Submission
+          Save to a draft
         </Button>
       </div>
     );
@@ -741,14 +743,24 @@ function InnoChatContent() {
                                 objectives: data.objectives || null,
                               };
 
-                              const draft = await studentApi.saveDraft(payload);
+                              const allDrafts = await studentApi.getMyDrafts();
+                              const existingDraft = allDrafts.find((d: any) => d.title.toLowerCase() === payload.title.toLowerCase());
+                              
+                              let draftId = 0;
+                              if (existingDraft) {
+                                await studentApi.updateDraft(existingDraft.id, payload);
+                                draftId = existingDraft.id;
+                              } else {
+                                const draft = await studentApi.saveDraft(payload);
+                                draftId = draft.id;
+                              }
                               
                               // Update the message so we know it has a draft associated
-                              setMessages(prev => prev.map(m => m.id === message.id ? { ...m, draftId: draft.id } : m));
+                              setMessages(prev => prev.map(m => m.id === message.id ? { ...m, draftId } : m));
                               
                               toast.dismiss();
                               toast.success("Draft saved! Redirecting...");
-                              router.push(`/project-submission?draft=${draft.id}`);
+                              router.push(`/project-submission?draft=${draftId}`);
                             } catch (e: any) {
                               toast.dismiss();
                               const errMessage = e?.response?.data?.message || e.message || "Failed to save draft. Please try again.";
