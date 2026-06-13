@@ -425,7 +425,7 @@ export default function ProjectDetails() {
                 >
                   {student.profilePictureUrl ? (
                     <img
-                      src={student.profilePictureUrl}
+                      src={`${process.env.NEXT_PUBLIC_API_URL || "https://innotrack-aneshpdxd6habnd6.uaenorth-01.azurewebsites.net"}${student.profilePictureUrl}`}
                       alt={student.name}
                       className="w-10 h-10 rounded-full object-cover border border-border"
                     />

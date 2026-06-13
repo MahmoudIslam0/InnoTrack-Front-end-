@@ -13,7 +13,10 @@ import {
   Users,
   KeyRound,
   X,
+  Trash2,
+  Camera,
 } from "lucide-react";
+import { ImageCropperDialog } from "@/app/_components/ImageCropperDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,9 +56,11 @@ export default function ProfessorProfile() {
   const [editBannerColor, setEditBannerColor] = useState("#4f46e5");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const handleProfilePictureUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
+  const [selectedImageSrc, setSelectedImageSrc] = useState<string | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -64,10 +69,24 @@ export default function ProfessorProfile() {
       return;
     }
 
+    const reader = new FileReader();
+    reader.addEventListener("load", () => {
+      setSelectedImageSrc(reader.result?.toString() || null);
+      setIsCropperOpen(true);
+    });
+    reader.readAsDataURL(file);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleProfilePictureUpload = async (croppedImageBlob: Blob) => {
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", croppedImageBlob, "profile.jpg");
 
     try {
+      setIsUploadingPhoto(true);
       const token = localStorage.getItem("accessToken");
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL || "https://innotrack-aneshpdxd6habnd6.uaenorth-01.azurewebsites.net"}/api/Users/me/profile-picture`,
@@ -85,9 +104,38 @@ export default function ProfessorProfile() {
       }
 
       toast.success("Profile picture updated successfully");
+      setIsCropperOpen(false);
+      setSelectedImageSrc(null);
       fetchProfile();
     } catch (err: any) {
       toast.error(err.message || "Failed to upload profile picture");
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const handleDeleteProfilePicture = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const token = localStorage.getItem("accessToken");
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "https://innotrack-aneshpdxd6habnd6.uaenorth-01.azurewebsites.net"}/api/Users/me/profile-picture`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to delete profile picture");
+      }
+
+      toast.success("Profile picture removed");
+      fetchProfile();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete profile picture");
     }
   };
 
@@ -321,29 +369,45 @@ export default function ProfessorProfile() {
 
             {/* Avatar - Absolutely positioned relative to the banner to perfectly overlap without margin clipping */}
             <div
-              className="absolute -bottom-12 md:-bottom-14 left-6 md:left-8 w-24 h-24 md:w-28 md:h-28 shrink-0 rounded-2xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-4xl md:text-5xl font-bold text-white shadow-xl ring-4 ring-card z-20 group cursor-pointer overflow-hidden"
-              onClick={() => fileInputRef.current?.click()}
+              className="absolute -bottom-12 md:-bottom-14 left-6 md:left-8 w-24 h-24 md:w-28 md:h-28 shrink-0 rounded-2xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-4xl md:text-5xl font-bold text-white shadow-xl ring-4 ring-card z-20 group overflow-hidden"
             >
               {profile.profilePictureUrl ? (
                 <img
                   src={`${process.env.NEXT_PUBLIC_API_URL || "https://innotrack-aneshpdxd6habnd6.uaenorth-01.azurewebsites.net"}${profile.profilePictureUrl}`}
                   alt={`${profile.firstName} ${profile.lastName}`}
-                  className="w-full h-full object-cover group-hover:brightness-75 transition-all"
+                  className="w-full h-full object-cover group-hover:brightness-50 transition-all"
                 />
               ) : (
-                <span className="group-hover:opacity-40 transition-opacity">
+                <span className="group-hover:opacity-20 transition-opacity">
                   {initials}
                 </span>
               )}
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
-                <Pencil className="w-6 h-6 text-white" />
+              <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                  title="Upload new photo"
+                >
+                  <Camera className="w-5 h-5 text-white" />
+                </button>
+                {profile.profilePictureUrl && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteProfilePicture}
+                    className="p-2 hover:bg-red-500/40 rounded-full transition-colors"
+                    title="Remove photo"
+                  >
+                    <Trash2 className="w-5 h-5 text-white" />
+                  </button>
+                )}
               </div>
               <input
                 type="file"
                 ref={fileInputRef}
                 className="hidden"
                 accept="image/png, image/jpeg, image/jpg, image/webp"
-                onChange={handleProfilePictureUpload}
+                onChange={handleFileSelect}
               />
             </div>
           </div>
@@ -639,6 +703,19 @@ export default function ProfessorProfile() {
           </Button>
         </div>
       </div>
+
+      {selectedImageSrc && (
+        <ImageCropperDialog
+          isOpen={isCropperOpen}
+          onClose={() => {
+            setIsCropperOpen(false);
+            setSelectedImageSrc(null);
+          }}
+          imageSrc={selectedImageSrc}
+          onCropComplete={handleProfilePictureUpload}
+          isUploading={isUploadingPhoto}
+        />
+      )}
     </div>
   );
 }

@@ -828,6 +828,13 @@ export function TeamChatWorkspace({
                 >
                   <div className="relative">
                     <Avatar className="h-10 w-10 shadow-sm border border-border/50">
+                      {member.profilePictureUrl && (
+                        <AvatarImage 
+                          src={`${process.env.NEXT_PUBLIC_API_URL || "https://innotrack-aneshpdxd6habnd6.uaenorth-01.azurewebsites.net"}${member.profilePictureUrl}`} 
+                          alt={member.name} 
+                          className="object-cover" 
+                        />
+                      )}
                       <AvatarFallback className="bg-muted/80 text-foreground font-semibold">{member.initials}</AvatarFallback>
                     </Avatar>
                     <span className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-[2.5px] border-background ${member.online ? "bg-emerald-500" : "bg-slate-400"}`} />
