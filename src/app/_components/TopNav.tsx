@@ -292,6 +292,7 @@ export function TopNav({
 
       if (isProf) {
         if (isProject) {
+            if (lower.includes("submission") || lower.includes("review")) return `/professor/project-management?tab=underreview&openId=${refId}`;
             if (lower.includes("abandon") || lower.includes("recall")) return "/professor/projects";
             return `/professor/projects/${refId}`;
         }

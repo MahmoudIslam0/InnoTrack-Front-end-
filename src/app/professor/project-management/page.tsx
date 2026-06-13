@@ -178,6 +178,21 @@ export default function ProfessorProjectManagement() {
         }));
         setProjects(normalized);
         setTeams(teamRes || []);
+
+        const openId = searchParams.get('openId');
+        if (openId) {
+          const projectToOpen = normalized.find((p: any) => p.id === Number(openId) || p.id === openId);
+          if (projectToOpen) {
+            professorApi.getProjectDetails(projectToOpen.id).then(detail => {
+              setSelectedProject({ ...projectToOpen, ...detail });
+              setDialogTab("overview");
+            }).catch(e => {
+              console.error(e);
+              setSelectedProject(projectToOpen);
+              setDialogTab("overview");
+            });
+          }
+        }
       } catch (err) {
         console.error(err);
       } finally {
