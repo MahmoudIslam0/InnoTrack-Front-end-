@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
 import { adminApi, AdminProfessorDto } from "@/lib/admin-api";
+import { studentApi } from "@/lib/student-api";
 import { DataTable } from "@/app/_components/DataTable";
 import { PageHeader } from "@/app/_components/DashboardUI";
 import { Badge } from "@/components/ui/badge";
@@ -55,6 +56,11 @@ export default function AdminProfessors() {
 
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  
+  const [filterDepartmentId, setFilterDepartmentId] = useState<number | "all">("all");
+  const [filterIsActive, setFilterIsActive] = useState<boolean | "all">("all");
+  const [filterHasCapacity, setFilterHasCapacity] = useState<boolean | "all">("all");
+  const [departments, setDepartments] = useState<{id: number, name: string}[]>([]);
 
   const [professorToDelete, setProfessorToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -66,6 +72,9 @@ export default function AdminProfessors() {
         pageNumber: pagination.pageIndex + 1,
         pageSize: pagination.pageSize,
         search: searchTerm || undefined,
+        departmentId: filterDepartmentId !== "all" ? filterDepartmentId : undefined,
+        isActive: filterIsActive !== "all" ? filterIsActive : undefined,
+        hasCapacity: filterHasCapacity !== "all" ? filterHasCapacity : undefined,
       });
       setData(result.items);
       setPageCount(result.totalPages);
@@ -77,8 +86,12 @@ export default function AdminProfessors() {
   };
 
   useEffect(() => {
+    studentApi.getDepartments().then(res => setDepartments(res.data)).catch(console.error);
+  }, []);
+
+  useEffect(() => {
     fetchProfessors();
-  }, [pagination, searchTerm]);
+  }, [pagination, searchTerm, filterDepartmentId, filterIsActive, filterHasCapacity]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -268,7 +281,7 @@ export default function AdminProfessors() {
           description="View professors, manage capacities, and provision new supervisor accounts."
         />
         
-        <div className="flex flex-col sm:flex-row gap-3 mt-2 sm:mt-0">
+        <div className="flex flex-col sm:flex-row gap-3 mt-2 sm:mt-0 items-center">
           <form onSubmit={handleSearch} className="flex items-center relative">
             <Search className="w-4 h-4 absolute left-3 text-muted-foreground" />
             <Input 
@@ -278,6 +291,35 @@ export default function AdminProfessors() {
               className="pl-9 w-full sm:w-[250px]"
             />
           </form>
+
+          <select 
+            value={filterDepartmentId} 
+            onChange={(e) => setFilterDepartmentId(e.target.value === "all" ? "all" : Number(e.target.value))}
+            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+          >
+            <option value="all">All Departments</option>
+            {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+          </select>
+
+          <select 
+            value={filterIsActive as any} 
+            onChange={(e) => setFilterIsActive(e.target.value === "all" ? "all" : e.target.value === "true")}
+            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+          >
+            <option value="all">All Statuses</option>
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+
+          <select 
+            value={filterHasCapacity as any} 
+            onChange={(e) => setFilterHasCapacity(e.target.value === "all" ? "all" : e.target.value === "true")}
+            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+          >
+            <option value="all">Any Capacity</option>
+            <option value="true">Has Capacity</option>
+            <option value="false">Full</option>
+          </select>
 
           <Dialog open={isProvisionOpen} onOpenChange={setIsProvisionOpen}>
             <DialogTrigger asChild>
