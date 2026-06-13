@@ -135,7 +135,7 @@ function ProjectSubmissionPage() {
     if (formData.abstract.trim().split(/\s+/).filter(Boolean).length < 120) return "Abstract must be at least 120 words.";
     if (formData.description.trim().split(/\s+/).filter(Boolean).length < 150) return "Detailed description must be at least 150 words.";
     if (!hasRunSimilarityCheck) return "Run the similarity check before sending to a supervisor.";
-    if (originalityScore < 60) return "Project originality must be at least 60% before sending to a supervisor.";
+    if (originalityScore < 40) return "Project originality must be at least 40% before sending to a supervisor.";
     return "";
   })();
 
@@ -893,19 +893,32 @@ function ProjectSubmissionPage() {
             </div>
           )}
 
-          {originalityScore > 0 && originalityScore < 60 && (
+          {originalityScore > 0 && originalityScore < 40 && (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-5 flex items-start gap-4 animate-in slide-in-from-bottom-4">
+              <div className="bg-red-500/20 p-2 rounded-lg shrink-0">
+                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-red-900 dark:text-red-300">
+                  Auto Rejected
+                </p>
+                <p className="text-sm text-red-800/80 dark:text-red-400/80 mt-1">
+                  Project originality must be at least 40% before sending to a supervisor. Please revise your project idea to improve originality.
+                </p>
+              </div>
+            </div>
+          )}
+          {originalityScore >= 40 && (
             <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-5 flex items-start gap-4 animate-in slide-in-from-bottom-4">
               <div className="bg-yellow-500/20 p-2 rounded-lg shrink-0">
                 <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div>
                 <p className="text-sm font-semibold text-yellow-900 dark:text-yellow-300">
-                  Originality Score Below Threshold
+                  Manual Review
                 </p>
                 <p className="text-sm text-yellow-800/80 dark:text-yellow-400/80 mt-1">
-                  Your project needs an originality score above 60% to submit to
-                  a supervisor. Please revise your project idea to improve
-                  originality.
+                  Your project originality score meets the minimum threshold. It will be sent to a supervisor for manual review.
                 </p>
               </div>
             </div>
@@ -936,7 +949,7 @@ function ProjectSubmissionPage() {
                     cx="80"
                     cy="80"
                     r="72"
-                    stroke={originalityScore >= 80 ? "#10B981" : originalityScore >= 60 ? "#EAB308" : originalityScore > 0 ? "#EF4444" : "#6366f1"}
+                    stroke={originalityScore >= 80 ? "#10B981" : originalityScore >= 40 ? "#EAB308" : originalityScore > 0 ? "#EF4444" : "#6366f1"}
                     strokeWidth="12"
                     fill="none"
                     strokeDasharray={`${2 * Math.PI * 72}`}
