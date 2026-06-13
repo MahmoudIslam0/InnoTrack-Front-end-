@@ -54,7 +54,6 @@ export default function AdminProfessors() {
     maxTeamLoad: 5,
   });
 
-  const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   
   const [filterDepartmentId, setFilterDepartmentId] = useState<number | "all">("all");
@@ -90,14 +89,12 @@ export default function AdminProfessors() {
   }, []);
 
   useEffect(() => {
-    fetchProfessors();
-  }, [pagination, searchTerm, filterDepartmentId, filterIsActive, filterHasCapacity]);
+    const handler = setTimeout(() => {
+      fetchProfessors();
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [pagination.pageIndex, pagination.pageSize, searchTerm, filterDepartmentId, filterIsActive, filterHasCapacity]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSearchTerm(searchInput);
-    setPagination({ ...pagination, pageIndex: 0 });
-  };
 
   const confirmDelete = async () => {
     if (!professorToDelete) return;
@@ -280,45 +277,42 @@ export default function AdminProfessors() {
         description="Monitor system supervisors, handle accounts, and adjust individual workloads."
       />
       
-      <div className="flex flex-col lg:flex-row gap-3 mt-6 items-center flex-wrap">
-          <form onSubmit={handleSearch} className="flex items-center relative">
-            <Search className="w-4 h-4 absolute left-3 text-muted-foreground" />
-            <Input 
-              placeholder="Search professors..." 
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="pl-9 w-full sm:w-[250px]"
-            />
-          </form>
+      <div className="mt-6 flex flex-col sm:flex-row flex-wrap gap-4 items-center">
+        <input
+          placeholder="Search professors..."
+          value={searchTerm}
+          onChange={(e) => { setSearchTerm(e.target.value); setPagination({ ...pagination, pageIndex: 0 }); }}
+          className="flex h-10 w-full sm:w-64 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        />
 
-          <select 
-            value={filterDepartmentId} 
-            onChange={(e) => setFilterDepartmentId(e.target.value === "all" ? "all" : Number(e.target.value))}
-            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-          >
-            <option value="all">All Departments</option>
-            {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-          </select>
+        <select 
+          value={filterDepartmentId} 
+          onChange={(e) => { setFilterDepartmentId(e.target.value === "all" ? "all" : Number(e.target.value)); setPagination({ ...pagination, pageIndex: 0 }); }}
+          className="flex h-10 w-full sm:w-48 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <option value="all">All Departments</option>
+          {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+        </select>
 
-          <select 
-            value={filterIsActive as any} 
-            onChange={(e) => setFilterIsActive(e.target.value === "all" ? "all" : e.target.value === "true")}
-            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-          >
-            <option value="all">All Statuses</option>
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
-          </select>
+        <select 
+          value={filterIsActive as any} 
+          onChange={(e) => { setFilterIsActive(e.target.value === "all" ? "all" : e.target.value === "true"); setPagination({ ...pagination, pageIndex: 0 }); }}
+          className="flex h-10 w-full sm:w-40 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <option value="all">All Statuses</option>
+          <option value="true">Active</option>
+          <option value="false">Inactive</option>
+        </select>
 
-          <select 
-            value={filterHasCapacity as any} 
-            onChange={(e) => setFilterHasCapacity(e.target.value === "all" ? "all" : e.target.value === "true")}
-            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-          >
-            <option value="all">Any Capacity</option>
-            <option value="true">Has Capacity</option>
-            <option value="false">Full</option>
-          </select>
+        <select 
+          value={filterHasCapacity as any} 
+          onChange={(e) => { setFilterHasCapacity(e.target.value === "all" ? "all" : e.target.value === "true"); setPagination({ ...pagination, pageIndex: 0 }); }}
+          className="flex h-10 w-full sm:w-40 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <option value="all">Any Capacity</option>
+          <option value="true">Has Available Slots</option>
+          <option value="false">Full Load</option>
+        </select>
 
           <Dialog open={isProvisionOpen} onOpenChange={setIsProvisionOpen}>
             <DialogTrigger asChild>

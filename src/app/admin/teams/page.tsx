@@ -34,7 +34,6 @@ export default function AdminTeams() {
   const [pageCount, setPageCount] = useState(0);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [isLoading, setIsLoading] = useState(true);
-  const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
   const [filterHasSupervisor, setFilterHasSupervisor] = useState<boolean | "all">("all");
@@ -80,14 +79,12 @@ export default function AdminTeams() {
   };
 
   useEffect(() => {
-    fetchTeams();
-  }, [pagination, searchTerm, filterHasSupervisor, filterProjectStatus]);
+    const handler = setTimeout(() => {
+      fetchTeams();
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [pagination.pageIndex, pagination.pageSize, searchTerm, filterHasSupervisor, filterProjectStatus]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSearchTerm(searchInput);
-    setPagination({ ...pagination, pageIndex: 0 });
-  };
 
   const confirmDeleteTeam = async () => {
     if (!teamToDelete) return;
@@ -231,41 +228,38 @@ export default function AdminTeams() {
         description="Monitor student teams, supervise capacities, and reassign advisors."
       />
       
-      <div className="flex flex-col lg:flex-row gap-3 mt-6 items-center flex-wrap">
-          <form onSubmit={handleSearch} className="flex items-center relative">
-            <Search className="w-4 h-4 absolute left-3 text-muted-foreground" />
-            <Input 
-              placeholder="Search teams..." 
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="pl-9 w-full sm:w-[250px]"
-            />
-          </form>
+      <div className="mt-6 flex flex-col sm:flex-row flex-wrap gap-4 items-center">
+        <input
+          placeholder="Search teams..."
+          value={searchTerm}
+          onChange={(e) => { setSearchTerm(e.target.value); setPagination({ ...pagination, pageIndex: 0 }); }}
+          className="flex h-10 w-full sm:w-64 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        />
 
-          <select 
-            value={filterHasSupervisor as any} 
-            onChange={(e) => setFilterHasSupervisor(e.target.value === "all" ? "all" : e.target.value === "true")}
-            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-          >
-            <option value="all">All Assignments</option>
-            <option value="true">Assigned</option>
-            <option value="false">Unassigned</option>
-          </select>
+        <select 
+          value={filterHasSupervisor as any} 
+          onChange={(e) => { setFilterHasSupervisor(e.target.value === "all" ? "all" : e.target.value === "true"); setPagination({ ...pagination, pageIndex: 0 }); }}
+          className="flex h-10 w-full sm:w-48 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <option value="all">All Assignments</option>
+          <option value="true">Assigned</option>
+          <option value="false">Unassigned</option>
+        </select>
 
-          <select 
-            value={filterProjectStatus} 
-            onChange={(e) => setFilterProjectStatus(e.target.value)}
-            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-          >
-            <option value="all">All Project Statuses</option>
-            <option value="No Project">No Project</option>
-            <option value="Under Review">Under Review</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Completed">Completed</option>
-            <option value="Approved">Approved</option>
-            <option value="Rejected">Rejected</option>
-          </select>
-        </div>
+        <select 
+          value={filterProjectStatus} 
+          onChange={(e) => { setFilterProjectStatus(e.target.value); setPagination({ ...pagination, pageIndex: 0 }); }}
+          className="flex h-10 w-full sm:w-48 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <option value="all">All Project Statuses</option>
+          <option value="No Project">No Project</option>
+          <option value="Under Review">Under Review</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+          <option value="Approved">Approved</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+      </div>
 
       <div className="mt-8">
         <DataTable

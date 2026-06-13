@@ -36,7 +36,6 @@ export default function AdminAcademicYears() {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [isLoading, setIsLoading] = useState(true);
 
-  const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterIsActive, setFilterIsActive] = useState<boolean | "all">("all");
 
@@ -72,14 +71,12 @@ export default function AdminAcademicYears() {
   };
 
   useEffect(() => {
-    fetchAcademicYears();
-  }, [pagination, searchTerm, filterIsActive]);
+    const handler = setTimeout(() => {
+      fetchAcademicYears();
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [pagination.pageIndex, pagination.pageSize, searchTerm, filterIsActive]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSearchTerm(searchInput);
-    setPagination({ ...pagination, pageIndex: 0 });
-  };
 
   const handleActivate = (id: number) => {
     setYearToActivate(id);
@@ -202,30 +199,23 @@ export default function AdminAcademicYears() {
         description="Manage graduation cycles. Only one year can be active at a time."
       />
       
-      <div className="flex flex-col lg:flex-row gap-3 mt-6 items-center flex-wrap">
-          <form onSubmit={handleSearch} className="flex items-center relative">
-            <Search className="w-4 h-4 absolute left-3 text-muted-foreground" />
-            <Input 
-              placeholder="Search year name..." 
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="pl-9 w-full sm:w-[200px]"
-            />
-          </form>
+      <div className="mt-6 flex flex-col sm:flex-row flex-wrap gap-4 items-center">
+        <input
+          placeholder="Search academic years..."
+          value={searchTerm}
+          onChange={(e) => { setSearchTerm(e.target.value); setPagination({ ...pagination, pageIndex: 0 }); }}
+          className="flex h-10 w-full sm:w-64 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        />
 
-          <select 
-            value={filterIsActive as any} 
-            onChange={(e) => {
-              const val = e.target.value;
-              setFilterIsActive(val === "all" ? "all" : val === "true");
-              setPagination({ ...pagination, pageIndex: 0 });
-            }}
-            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-          >
-            <option value="all">All Statuses</option>
-            <option value="true">Active Only</option>
-            <option value="false">Inactive Only</option>
-          </select>
+        <select 
+          value={filterIsActive as any} 
+          onChange={(e) => { setFilterIsActive(e.target.value === "all" ? "all" : e.target.value === "true"); setPagination({ ...pagination, pageIndex: 0 }); }}
+          className="flex h-10 w-full sm:w-48 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <option value="all">All Statuses</option>
+          <option value="true">Active Only</option>
+          <option value="false">Inactive Only</option>
+        </select>
 
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>

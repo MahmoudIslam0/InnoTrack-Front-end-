@@ -38,7 +38,6 @@ export default function AdminProjects() {
   const [isResetting, setIsResetting] = useState(false);
   const [professors, setProfessors] = useState<AdminProfessorDto[]>([]);
 
-  const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterDomainId, setFilterDomainId] = useState<number | "all">("all");
@@ -82,8 +81,11 @@ export default function AdminProjects() {
   };
 
   useEffect(() => {
-    fetchProjects();
-  }, [pagination, searchTerm, filterStatus, filterDomainId, filterAcademicYearId]);
+    const handler = setTimeout(() => {
+      fetchProjects();
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [pagination.pageIndex, pagination.pageSize, searchTerm, filterStatus, filterDomainId, filterAcademicYearId]);
 
   useEffect(() => {
     adminApi.getProfessors({ pageSize: 1000 })
@@ -252,55 +254,53 @@ export default function AdminProjects() {
         description="Monitor and manage student graduation projects, intervene on stuck projects, and reassign supervisors if needed."
       />
       
-      <div className="flex flex-col lg:flex-row gap-3 mt-6 items-center flex-wrap">
-          <form onSubmit={(e) => { e.preventDefault(); setSearchTerm(searchInput); setPagination({ ...pagination, pageIndex: 0 }); }} className="flex items-center relative">
-            <Search className="w-4 h-4 absolute left-3 text-muted-foreground" />
-            <Input 
-              placeholder="Search projects..." 
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="pl-9 w-full sm:w-[250px]"
-            />
-          </form>
+      <div className="mt-6 flex flex-col sm:flex-row flex-wrap gap-4 items-center">
+        <input
+          placeholder="Search projects..."
+          value={searchTerm}
+          onChange={(e) => { setSearchTerm(e.target.value); setPagination({ ...pagination, pageIndex: 0 }); }}
+          className="flex h-10 w-full sm:w-64 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        />
 
-          <select 
-            value={filterStatus} 
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-          >
-            <option value="all">All Statuses</option>
-            {possibleStatuses.map(status => (
-              <option key={status} value={status}>{status}</option>
-            ))}
-          </select>
+        <select 
+          value={filterStatus} 
+          onChange={(e) => { setFilterStatus(e.target.value); setPagination({ ...pagination, pageIndex: 0 }); }}
+          className="flex h-10 w-full sm:w-48 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <option value="all">All Statuses</option>
+          {possibleStatuses.map(status => (
+            <option key={status} value={status}>{status}</option>
+          ))}
+        </select>
 
-          <select 
-            value={filterDomainId} 
-            onChange={(e) => setFilterDomainId(e.target.value === "all" ? "all" : Number(e.target.value))}
-            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-          >
-            <option value="all">All Domains</option>
-            {domains.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-          </select>
+        <select 
+          value={filterDomainId} 
+          onChange={(e) => { setFilterDomainId(e.target.value === "all" ? "all" : Number(e.target.value)); setPagination({ ...pagination, pageIndex: 0 }); }}
+          className="flex h-10 w-full sm:w-48 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <option value="all">All Domains</option>
+          {domains.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+        </select>
 
-          <select 
-            value={filterAcademicYearId} 
-            onChange={(e) => setFilterAcademicYearId(e.target.value === "all" ? "all" : Number(e.target.value))}
-            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-          >
-            <option value="all">All Academic Years</option>
-            {academicYears.map(y => <option key={y.id} value={y.id}>{y.name}</option>)}
-          </select>
+        <select 
+          value={filterAcademicYearId} 
+          onChange={(e) => { setFilterAcademicYearId(e.target.value === "all" ? "all" : Number(e.target.value)); setPagination({ ...pagination, pageIndex: 0 }); }}
+          className="flex h-10 w-full sm:w-48 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <option value="all">All Academic Years</option>
+          {academicYears.map(y => <option key={y.id} value={y.id}>{y.name}</option>)}
+        </select>
 
-          <Button 
-            variant="outline" 
-            onClick={() => setIsResetStuckOpen(true)}
-            disabled={isResetting}
-          >
-            <RefreshCcw className={`w-4 h-4 mr-2 ${isResetting ? "animate-spin" : ""}`} />
-            Reset Stuck
-          </Button>
-        </div>
+        <Button 
+          variant="outline" 
+          onClick={() => setIsResetStuckOpen(true)}
+          disabled={isResetting}
+          className="h-10"
+        >
+          <RefreshCcw className={`w-4 h-4 mr-2 ${isResetting ? "animate-spin" : ""}`} />
+          Reset Stuck
+        </Button>
+      </div>
 
       <div className="mt-8">
         <DataTable
