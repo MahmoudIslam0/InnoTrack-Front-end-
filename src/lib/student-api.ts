@@ -126,6 +126,7 @@ export type SupervisorDto = {
   currentTeamLoad: number;
   maxTeamLoad: number;
   isAvailable: boolean;
+  isActive: boolean;
 };
 
 export type SimilarityCheckResponse = {

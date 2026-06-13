@@ -13,7 +13,8 @@ import {
   FolderKanban,
   Settings,
   Package,
-  Globe
+  Globe,
+  Plus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -625,8 +626,7 @@ function InnoChatContent() {
           </div>
           <div className="ml-auto shrink-0">
             <Button
-              variant="outline"
-              size="sm"
+              variant="default"
               onClick={() => {
                 const newSessionId = Math.random().toString(36).substring(7);
                 setSessionId(newSessionId);
@@ -639,8 +639,9 @@ function InnoChatContent() {
                 }
                 toast.success("Started a new chat session!");
               }}
-              className="text-muted-foreground hover:text-foreground"
+              className="bg-primary hover:bg-primary/90 text-white shadow-md hover:shadow-lg transition-all rounded-xl px-6 py-5 text-sm font-semibold flex items-center gap-2"
             >
+              <Plus className="w-5 h-5" />
               New Chat
             </Button>
           </div>

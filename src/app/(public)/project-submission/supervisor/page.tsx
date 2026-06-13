@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, ChevronDown, Send, UserRound, CheckCircle2, Users, AlertCircle } from "lucide-react";
+import { ArrowLeft, ChevronDown, Send, UserRound, CheckCircle2, Users, AlertCircle, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -24,6 +24,7 @@ export default function SubmitToSupervisor() {
   const router = useRouter();
   const [supervisors, setSupervisors] = useState<SupervisorDto[]>([]);
   const [selectedSupervisorId, setSelectedSupervisorId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [proposalData, setProposalData] = useState({
     department: "",
     message: "",
@@ -43,7 +44,8 @@ export default function SubmitToSupervisor() {
       .then((items) => {
         if (ignore) return;
         setSupervisors(items);
-        const firstAvailable = items.find((s) => s.isAvailable) || items[0];
+        const activeItems = items.filter(s => s.isActive);
+        const firstAvailable = activeItems.find((s) => s.isAvailable) || activeItems[0];
         setSelectedSupervisorId(firstAvailable?.id ?? null);
       })
       .catch(() => {
@@ -52,6 +54,11 @@ export default function SubmitToSupervisor() {
     return () => { ignore = true; };
   }, []);
 
+  const activeSupervisors = supervisors.filter(s => s.isActive);
+  const filteredSupervisors = activeSupervisors.filter(s => 
+    s.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    s.departmentName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
   const selectedSupervisor = supervisors.find((s) => s.id === selectedSupervisorId);
   const canSubmit =
     Boolean(proposalData.department) &&
@@ -180,11 +187,23 @@ export default function SubmitToSupervisor() {
 
         {/* ── Right: Supervisor Selection ── */}
         <div className="bg-card rounded-2xl border border-border/60 shadow-sm overflow-hidden flex flex-col">
-          <div className="px-6 py-5 border-b border-border/50">
-            <h2 className="text-base font-bold text-foreground">Select Supervisor</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {supervisors.filter(s => s.isAvailable).length} of {supervisors.length} supervisors available
-            </p>
+          <div className="px-6 py-5 border-b border-border/50 space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-foreground">Select Supervisor</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {activeSupervisors.filter(s => s.isAvailable).length} of {activeSupervisors.length} active supervisors available
+              </p>
+            </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search supervisors..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-9 w-full rounded-lg border border-border bg-muted/40 pl-9 pr-4 text-sm outline-none transition-all focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 focus:bg-background"
+              />
+            </div>
           </div>
 
           {/* Supervisor list */}
@@ -194,8 +213,13 @@ export default function SubmitToSupervisor() {
                 <Users className="w-10 h-10 text-muted-foreground/40 mb-3" />
                 <p className="text-sm text-muted-foreground">Loading supervisors...</p>
               </div>
+            ) : filteredSupervisors.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Users className="w-10 h-10 text-muted-foreground/40 mb-3" />
+                <p className="text-sm text-muted-foreground">No supervisors found.</p>
+              </div>
             ) : (
-              supervisors.map((supervisor) => {
+              filteredSupervisors.map((supervisor) => {
                 const isSelected = supervisor.id === selectedSupervisorId;
                 const isFull = !supervisor.isAvailable;
                 const slotsLeft = supervisor.maxTeamLoad - supervisor.currentTeamLoad;
