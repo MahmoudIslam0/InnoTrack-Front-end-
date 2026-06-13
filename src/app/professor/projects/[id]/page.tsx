@@ -22,7 +22,8 @@ import {
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ProjectCatalogDetailDto, formatStatus, normalizeOriginalityPercent, studentApi } from "@/lib/student-api";
+import { formatStatus, normalizeOriginalityPercent } from "@/lib/student-api";
+import { professorApi } from "@/lib/professor-api";
 
 interface Project {
   id: string;
@@ -41,6 +42,8 @@ interface Project {
   dateSubmitted?: string;
   dateApproved?: string;
   originalityScore?: number;
+  proposalDepartment?: string;
+  proposalMessage?: string;
 }
 
 const allProjects: Project[] = [
@@ -219,8 +222,8 @@ export default function ProfessorProjectDetails() {
   useEffect(() => {
     let ignore = false;
 
-    studentApi
-      .getProject(id)
+    professorApi
+      .getProjectDetails(id)
       .then((project) => {
         if (!ignore) setApiProject(mapProjectDetail(project));
       })
@@ -520,6 +523,34 @@ export default function ProfessorProjectDetails() {
                   </div>
                 </div>
               )}
+
+              {project.proposalDepartment && (
+                <div className="flex items-start gap-3">
+                  <Presentation className="w-5 h-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">
+                      Proposal Department
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      {project.proposalDepartment}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {project.proposalMessage && (
+                <div className="flex items-start gap-3">
+                  <MessageSquare className="w-5 h-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">
+                      Proposal Message
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-0.5 whitespace-pre-wrap">
+                      {project.proposalMessage}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -531,21 +562,21 @@ export default function ProfessorProjectDetails() {
   );
 }
 
-function mapProjectDetail(project: ProjectCatalogDetailDto): Project {
-  const parsedYear = Number.parseInt(project.academicYear, 10);
+function mapProjectDetail(project: any): Project {
+  const parsedYear = Number.parseInt(project.academicYearName || project.academicYear, 10);
 
   return {
     id: String(project.id),
     title: project.title,
     year: Number.isFinite(parsedYear) ? parsedYear : new Date().getFullYear(),
-    category: project.domain,
+    category: project.domainName || project.domain,
     supervisor: project.supervisor || "Not assigned",
     status: formatStatus(project.status),
     technologies: project.technologies || [],
-    students: (project.students || []).map((student) => ({
-      name: student.name,
-      role: student.role.toLowerCase().includes("leader") ? "Leader" : "Member",
-      department: student.department,
+    students: (project.teamMembers || project.students || []).map((student: any) => ({
+      name: student.name || student.fullName,
+      role: (student.role || "").toLowerCase().includes("leader") ? "Leader" : "Member",
+      department: student.department || student.email, // using email as fallback for department since we don't fetch department in professor member dto
       profilePictureUrl: student.profilePictureUrl || undefined,
     })),
     description: project.description,
@@ -553,13 +584,14 @@ function mapProjectDetail(project: ProjectCatalogDetailDto): Project {
     problemStatement: project.problemStatement || undefined,
     proposedSolution: project.proposedSolution || undefined,
     objectives: project.objectives
-      ? project.objectives
-          .split(/\r?\n/)
-          .map((item) => item.replace(/^\d+[\).]\s*/, "").trim())
+      ? (Array.isArray(project.objectives) ? project.objectives : project.objectives.split(/\r?\n/))
+          .map((item: string) => item.replace(/^\d+[\).]\s*/, "").trim())
           .filter(Boolean)
       : [],
     dateSubmitted: project.submittedAt || undefined,
     dateApproved: project.approvedAt || undefined,
     originalityScore: project.originalityScore ? normalizeOriginalityPercent(project.originalityScore) : undefined,
+    proposalDepartment: project.proposalDepartment,
+    proposalMessage: project.proposalMessage,
   };
 }

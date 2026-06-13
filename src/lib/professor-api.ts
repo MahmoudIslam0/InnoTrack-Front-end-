@@ -32,7 +32,29 @@ export const professorApi = {
     api.get("/api/Professor/dashboard"),
 
   getProjectDetails: (projectId: string | number) =>
-    api.get(`/api/Professor/projects/${projectId}`),
+    api.get(`/api/Professor/projects/${projectId}`) as Promise<{
+      id: number;
+      title: string;
+      abstract: string;
+      description: string;
+      problemStatement?: string;
+      proposedSolution?: string;
+      objectives?: string[];
+      status: string;
+      progressPercent: number;
+      originalityScore?: number;
+      teamName: string;
+      domainName: string;
+      academicYearName: string;
+      teamMembers: any[];
+      technologies: string[];
+      createdAt: string;
+      submittedAt?: string;
+      feedbackHistory: any[];
+      hasOriginalityReport: boolean;
+      proposalDepartment?: string;
+      proposalMessage?: string;
+    }>,
 
   requestRevision: (projectId: string | number, reason: string) =>
     api.post(`/api/Professor/projects/${projectId}/request-revision`, { reason }),
