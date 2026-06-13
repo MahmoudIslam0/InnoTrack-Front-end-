@@ -9,7 +9,7 @@ import { PageHeader } from "@/app/_components/DashboardUI";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { MoreHorizontal, Plus, CheckCircle, Trash } from "lucide-react";
+import { MoreHorizontal, Plus, CheckCircle, Trash, Search } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +36,10 @@ export default function AdminAcademicYears() {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [isLoading, setIsLoading] = useState(true);
 
+  const [searchInput, setSearchInput] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterIsActive, setFilterIsActive] = useState<boolean | "all">("all");
+
   // Create Modal State
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createData, setCreateData] = useState({
@@ -55,6 +59,8 @@ export default function AdminAcademicYears() {
       const result = await adminApi.getAcademicYears({
         pageNumber: pagination.pageIndex + 1,
         pageSize: pagination.pageSize,
+        search: searchTerm || undefined,
+        isActive: filterIsActive !== "all" ? filterIsActive : undefined,
       });
       setData(result.items);
       setPageCount(result.totalPages);
@@ -67,7 +73,13 @@ export default function AdminAcademicYears() {
 
   useEffect(() => {
     fetchAcademicYears();
-  }, [pagination]);
+  }, [pagination, searchTerm, filterIsActive]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearchTerm(searchInput);
+    setPagination({ ...pagination, pageIndex: 0 });
+  };
 
   const handleActivate = (id: number) => {
     setYearToActivate(id);
@@ -191,13 +203,38 @@ export default function AdminAcademicYears() {
           description="Manage graduation cycles. Only one year can be active at a time."
         />
         
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button className="mt-2 sm:mt-0 bg-primary hover:bg-primary/90 text-primary-foreground">
-              <Plus className="w-4 h-4 mr-2" />
-              New Academic Year
-            </Button>
-          </DialogTrigger>
+        <div className="flex flex-col sm:flex-row gap-3 mt-2 sm:mt-0 items-center flex-wrap justify-end">
+          <form onSubmit={handleSearch} className="flex items-center relative">
+            <Search className="w-4 h-4 absolute left-3 text-muted-foreground" />
+            <Input 
+              placeholder="Search year name..." 
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="pl-9 w-full sm:w-[200px]"
+            />
+          </form>
+
+          <select 
+            value={filterIsActive as any} 
+            onChange={(e) => {
+              const val = e.target.value;
+              setFilterIsActive(val === "all" ? "all" : val === "true");
+              setPagination({ ...pagination, pageIndex: 0 });
+            }}
+            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+          >
+            <option value="all">All Statuses</option>
+            <option value="true">Active Only</option>
+            <option value="false">Inactive Only</option>
+          </select>
+
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto">
+                <Plus className="w-4 h-4 mr-2" />
+                New Academic Year
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-[425px] border-border/50 bg-background/95 backdrop-blur-xl">
             <DialogHeader>
               <DialogTitle>Create Academic Year</DialogTitle>
@@ -248,6 +285,7 @@ export default function AdminAcademicYears() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="mt-8">
