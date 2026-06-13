@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ export default function Register() {
   
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const isSubmitting = useRef(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -80,6 +81,9 @@ export default function Register() {
       setError("Please enter a 6-digit code.");
       return;
     }
+    
+    if (isSubmitting.current) return;
+    isSubmitting.current = true;
 
     setIsLoading(true);
     setError("");
@@ -108,6 +112,7 @@ export default function Register() {
       } else {
         setError(msg || err.message || "Registration failed. Please try again.");
       }
+      isSubmitting.current = false;
     } finally {
       setIsLoading(false);
     }
