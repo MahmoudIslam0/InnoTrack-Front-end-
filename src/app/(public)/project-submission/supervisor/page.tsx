@@ -9,24 +9,20 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { SupervisorDto, studentApi } from "@/lib/student-api";
+import { SupervisorDto, LookupItem, studentApi } from "@/lib/student-api";
 
 
 
-const departments = [
-  "Computer Science",
-  "Information Systems",
-  "Artificial Intelligence",
-  "Scientific Computing",
-];
+
 
 export default function SubmitToSupervisor() {
   const router = useRouter();
+  const [departments, setDepartments] = useState<LookupItem[]>([]);
   const [supervisors, setSupervisors] = useState<SupervisorDto[]>([]);
   const [selectedSupervisorId, setSelectedSupervisorId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [proposalData, setProposalData] = useState({
-    department: "",
+    departmentId: 0,
     message: "",
   });
   const [returnUrl, setReturnUrl] = useState("/project-submission");
@@ -39,8 +35,18 @@ export default function SubmitToSupervisor() {
 
   useEffect(() => {
     let ignore = false;
+    studentApi.getDepartments().then(res => {
+      if (!ignore) setDepartments(res.data);
+    }).catch(console.error);
+    return () => { ignore = true; };
+  }, []);
+
+  useEffect(() => {
+    let ignore = false;
+    
+    const depId = proposalData.departmentId || undefined;
     studentApi
-      .getSupervisors()
+      .getSupervisors(depId)
       .then((items) => {
         if (ignore) return;
         setSupervisors(items);
@@ -52,7 +58,7 @@ export default function SubmitToSupervisor() {
         if (!ignore) toast.error("Could not load supervisors.");
       });
     return () => { ignore = true; };
-  }, []);
+  }, [proposalData.departmentId]);
 
   const activeSupervisors = supervisors.filter(s => s.isActive);
   const filteredSupervisors = activeSupervisors.filter(s => 
@@ -61,12 +67,12 @@ export default function SubmitToSupervisor() {
   );
   const selectedSupervisor = supervisors.find((s) => s.id === selectedSupervisorId);
   const canSubmit =
-    Boolean(proposalData.department) &&
+    Boolean(proposalData.departmentId) &&
     Boolean(proposalData.message.trim()) &&
     Boolean(selectedSupervisor?.isAvailable);
 
   const submitProposal = async () => {
-    if (!proposalData.department || !proposalData.message) {
+    if (!proposalData.departmentId || !proposalData.message) {
       toast.error("Please complete the required proposal details");
       return;
     }
@@ -83,7 +89,7 @@ export default function SubmitToSupervisor() {
     try {
       await studentApi.submitProject(projectId, {
         supervisorId: selectedSupervisor.id,
-        department: proposalData.department,
+        departmentId: proposalData.departmentId,
         teamMembers: "",
         message: proposalData.message,
       });
@@ -137,15 +143,15 @@ export default function SubmitToSupervisor() {
               <div className="relative">
                 <select
                   id="department"
-                  value={proposalData.department}
+                  value={proposalData.departmentId}
                   onChange={(e) =>
-                    setProposalData((cur) => ({ ...cur, department: e.target.value }))
+                    setProposalData((cur) => ({ ...cur, departmentId: Number(e.target.value) }))
                   }
                   className="h-11 w-full appearance-none rounded-xl border border-border bg-muted/40 px-4 pr-10 text-sm text-foreground outline-none transition-all focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 focus:bg-background"
                 >
-                  <option value="">Select your department</option>
+                  <option value={0}>Select your department</option>
                   {departments.map((dept) => (
-                    <option key={dept} value={dept}>{dept}</option>
+                    <option key={dept.id} value={dept.id}>{dept.name}</option>
                   ))}
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

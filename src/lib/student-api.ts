@@ -189,7 +189,7 @@ export type SaveDraftPayload = {
 
 export type SubmitProjectPayload = {
   supervisorId: number;
-  department: string;
+  departmentId: number;
   teamMembers: string;
   message: string;
 };
@@ -307,8 +307,15 @@ export const studentApi = {
       oldProjectsCount: number;
     }>,
 
-  getSupervisors: () =>
-    api.get("/api/projects/supervisors") as Promise<SupervisorDto[]>,
+  getSupervisors: (departmentId?: number) => {
+    const params = departmentId ? { departmentId } : undefined;
+    return api.get("/api/projects/supervisors", { params }) as Promise<SupervisorDto[]>;
+  },
+
+  getDepartments: () =>
+    api.get("/api/Departments", { params: { pageSize: 200 } }) as Promise<
+      PagedResult<LookupItem>
+    >,
 
   getDomains: () =>
     api.get("/api/Domains", { params: { pageSize: 200 } }) as Promise<
