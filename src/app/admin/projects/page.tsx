@@ -245,7 +245,7 @@ export default function AdminProjects() {
     },
   ];
 
-  const possibleStatuses = ["Draft", "Under Review", "InProgress", "Completed", "Abandoned"];
+  const possibleStatuses = ["Draft", "Under Review", "In Progress", "Completed", "Abandoned"];
 
   return (
     <div className="dashboard-page">
