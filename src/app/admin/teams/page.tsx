@@ -37,6 +37,9 @@ export default function AdminTeams() {
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
+  const [filterHasSupervisor, setFilterHasSupervisor] = useState<boolean | "all">("all");
+  const [filterProjectStatus, setFilterProjectStatus] = useState<string>("all");
+
   // Assignment Modal State
   const [isAssignOpen, setIsAssignOpen] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<AdminTeamDto | null>(null);
@@ -55,6 +58,8 @@ export default function AdminTeams() {
         pageNumber: pagination.pageIndex + 1,
         pageSize: pagination.pageSize,
         search: searchTerm || undefined,
+        hasSupervisor: filterHasSupervisor !== "all" ? filterHasSupervisor : undefined,
+        projectStatus: filterProjectStatus !== "all" ? filterProjectStatus : undefined,
       });
       setData(result.items);
       setPageCount(result.totalPages);
@@ -76,7 +81,7 @@ export default function AdminTeams() {
 
   useEffect(() => {
     fetchTeams();
-  }, [pagination, searchTerm]);
+  }, [pagination, searchTerm, filterHasSupervisor, filterProjectStatus]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -227,15 +232,41 @@ export default function AdminTeams() {
           description="Monitor student teams, supervise capacities, and reassign advisors."
         />
         
-        <form onSubmit={handleSearch} className="flex items-center relative mt-2 sm:mt-0">
-          <Search className="w-4 h-4 absolute left-3 text-muted-foreground" />
-          <Input 
-            placeholder="Search teams..." 
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="pl-9 w-full sm:w-[250px]"
-          />
-        </form>
+        <div className="flex flex-col sm:flex-row gap-3 mt-2 sm:mt-0 items-center">
+          <form onSubmit={handleSearch} className="flex items-center relative">
+            <Search className="w-4 h-4 absolute left-3 text-muted-foreground" />
+            <Input 
+              placeholder="Search teams..." 
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="pl-9 w-full sm:w-[250px]"
+            />
+          </form>
+
+          <select 
+            value={filterHasSupervisor as any} 
+            onChange={(e) => setFilterHasSupervisor(e.target.value === "all" ? "all" : e.target.value === "true")}
+            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+          >
+            <option value="all">All Assignments</option>
+            <option value="true">Assigned</option>
+            <option value="false">Unassigned</option>
+          </select>
+
+          <select 
+            value={filterProjectStatus} 
+            onChange={(e) => setFilterProjectStatus(e.target.value)}
+            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+          >
+            <option value="all">All Project Statuses</option>
+            <option value="No Project">No Project</option>
+            <option value="Under Review">Under Review</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+            <option value="Approved">Approved</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+        </div>
       </div>
 
       <div className="mt-8">
