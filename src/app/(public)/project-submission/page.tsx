@@ -133,7 +133,7 @@ function ProjectSubmissionPage() {
     if (blocksNewSubmission) return "Your team already has an active or submitted project.";
     if (missingRequiredFields.length > 0) return `Complete ${missingRequiredFields.join(", ")} before sending to a supervisor.`;
     if (formData.abstract.trim().split(/\s+/).filter(Boolean).length < 120) return "Abstract must be at least 120 words.";
-    if (formData.description.trim().split(/\s+/).filter(Boolean).length < 280) return "Detailed description must be at least 280 words.";
+    if (formData.description.trim().split(/\s+/).filter(Boolean).length < 150) return "Detailed description must be at least 150 words.";
     if (!hasRunSimilarityCheck) return "Run the similarity check before sending to a supervisor.";
     if (originalityScore < 40) return "Project originality must be at least 40% before sending to a supervisor.";
     return "";
@@ -787,13 +787,13 @@ function ProjectSubmissionPage() {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="description">Detailed Description *</Label>
-                  <span className={`text-xs ${formData.description.trim().split(/\s+/).filter(Boolean).length < 280 ? 'text-red-500 font-medium' : 'text-emerald-500 font-medium'}`}>
-                    {formData.description.trim().split(/\s+/).filter(Boolean).length} / 280 words minimum
+                  <span className={`text-xs ${formData.description.trim().split(/\s+/).filter(Boolean).length < 150 ? 'text-red-500 font-medium' : 'text-emerald-500 font-medium'}`}>
+                    {formData.description.trim().split(/\s+/).filter(Boolean).length} / 150 words minimum
                   </span>
                 </div>
                 <Textarea
                   id="description"
-                  placeholder="Comprehensive description of your project (Minimum 280 words)"
+                  placeholder="Comprehensive description of your project (Minimum 150 words)"
                   value={formData.description}
                   onChange={(e) =>
                     handleInputChange("description", e.target.value)
